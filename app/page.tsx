@@ -13,6 +13,7 @@ import { getSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
 import { APP_NAME } from "@/lib/config";
 import { buttonVariants } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -115,9 +116,12 @@ export default async function Home() {
               </a>
             ))}
           </nav>
-          <Link href="/login" className={buttonVariants({ variant: "outline" })}>
-            Masuk
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link href="/login" className={buttonVariants({ variant: "outline" })}>
+              Masuk
+            </Link>
+          </div>
         </div>
       </header>
 
