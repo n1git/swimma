@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { PlanLanes } from "@/components/pricing/plan-lanes";
+import { PlanCards } from "@/components/pricing/plan-cards";
 import { getActivePlans, type OwnSubscription } from "@/lib/data/platform-plan";
 import { getJakartaDateString } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ export async function PlanStatusBanner({
             Supaya klub tetap berjalan setelah trial, pilih salah satu paket di bawah lalu hubungi
             admin platform {APP_NAME}. Pembayaran dan aktivasi paket dilakukan langsung oleh tim kami.
           </p>
-          <PlanLanes plans={paidPlans} compact />
+          <PlanCards plans={paidPlans} compact />
         </CardContent>
       ) : null}
     </Card>

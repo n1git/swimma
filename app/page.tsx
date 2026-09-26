@@ -13,7 +13,7 @@ import { getSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
 import { APP_NAME, TRIAL_DAYS } from "@/lib/config";
 import { getActivePlans } from "@/lib/data/platform-plan";
-import { PlanLanes } from "@/components/pricing/plan-lanes";
+import { PlanCards } from "@/components/pricing/plan-cards";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -245,7 +245,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="mt-10">
-            <PlanLanes plans={plans} ctaHref="/daftar" />
+            <PlanCards plans={plans} ctaHref="/daftar" />
           </div>
           <p className="mt-6 max-w-2xl text-sm text-muted-foreground">
             Anggota aktif adalah anak yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
