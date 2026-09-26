@@ -44,6 +44,13 @@ export function trialEndsAtFromToday(): string {
   return getJakartaDateString(new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000));
 }
 
+const DEFAULT_PLANS: PlatformPlan[] = [
+  { id: "default-trial", name: "Trial", price: 0, billingCycle: "monthly", memberLimit: 20, locationLimit: 1 },
+  { id: "default-starter", name: "Starter", price: 300000, billingCycle: "monthly", memberLimit: 75, locationLimit: 1 },
+  { id: "default-growth", name: "Growth", price: 750000, billingCycle: "monthly", memberLimit: 250, locationLimit: 3 },
+  { id: "default-pro", name: "Pro", price: 1500000, billingCycle: "monthly", memberLimit: null, locationLimit: null },
+];
+
 export async function getActivePlans(): Promise<PlatformPlan[]> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -52,9 +59,9 @@ export async function getActivePlans(): Promise<PlatformPlan[]> {
       .select(PLAN_COLUMNS)
       .eq("is_active", true)
       .order("price");
-    return ((data ?? []) as PlanRow[]).map(toPlan);
+    return data?.length ? (data as PlanRow[]).map(toPlan) : DEFAULT_PLANS;
   } catch {
-    return [];
+    return DEFAULT_PLANS;
   }
 }
 

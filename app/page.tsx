@@ -245,13 +245,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="mt-10">
-            {plans.length > 0 ? (
-              <PlanLanes plans={plans} ctaHref="/daftar" />
-            ) : (
-              <Link href="/daftar" className={buttonVariants({ size: "lg" })}>
-                Daftarkan klub
-              </Link>
-            )}
+            <PlanLanes plans={plans} ctaHref="/daftar" />
           </div>
           <p className="mt-6 max-w-2xl text-sm text-muted-foreground">
             Anggota aktif adalah anak yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
