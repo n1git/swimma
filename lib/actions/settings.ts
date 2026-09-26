@@ -47,7 +47,12 @@ export async function createLocation(
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.from("locations").insert({ name, address: address || null });
-  if (error) return { ok: false, error: "Gagal menyimpan lokasi (mungkin sudah ada)" };
+  if (error) {
+    return {
+      ok: false,
+      error: error.code === "SW002" ? error.message : "Gagal menyimpan lokasi (mungkin sudah ada)",
+    };
+  }
 
   revalidatePath("/admin/settings");
   return { ok: true };

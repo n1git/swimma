@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSession, clearSession } from "./session";
+import { getSession } from "./session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { roleHome, type AppRole } from "./roles";
 
@@ -13,13 +13,16 @@ export async function requireRole(role: AppRole) {
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active, must_change_password, full_name")
+    .select("id, is_active, must_change_password, full_name, tenants(is_active)")
     .eq("id", session.sub)
     .maybeSingle();
 
   if (!profile || !profile.is_active) {
-    await clearSession();
-    redirect("/login?deactivated=1");
+    redirect("/api/auth/session-ended?reason=deactivated");
+  }
+  const tenant = profile.tenants as unknown as { is_active: boolean } | null;
+  if (!tenant?.is_active) {
+    redirect("/api/auth/session-ended?reason=suspended");
   }
   if (profile.must_change_password) {
     redirect("/change-password");

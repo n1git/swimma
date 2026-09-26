@@ -97,11 +97,70 @@ which generates invoices for every active tenant in one run.
 ## Onboarding a new club
 
 Because isolation is enforced at the database level (RLS + `tenant_id`),
-new clubs are onboarded onto the **same** deployment and Supabase project
-by running `npm run seed:admin` again with a new `SEED_TENANT_SLUG`/
-`SEED_TENANT_NAME` — no new Supabase project or Vercel deployment needed.
+new clubs are onboarded onto the **same** deployment and Supabase project —
+no new Supabase project or Vercel deployment needed. Two ways in:
+
+- **Self-service** (`/daftar`): a club owner enters club name, club code,
+  and their own name/email/password and lands in `/admin` already logged
+  in. The club starts on the **Trial** plan (14 days, 20 active children,
+  1 location). If the Trial plan is missing or any step fails, nothing is
+  left behind (tenant/profile/credentials are rolled back).
+- **Manual** (`npm run seed:admin` with a new `SEED_TENANT_SLUG`/
+  `SEED_TENANT_NAME`). Clubs created this way have no platform
+  subscription row and are therefore **not** limited until a superadmin
+  assigns them a plan.
+
 The new admin then sets their own club name/logo/color from Admin ->
 Pengaturan.
+
+## Platform billing (superadmin)
+
+Swimma bills clubs separately from how a club bills its parents. A
+superadmin is not tied to any tenant and manages every club's plan and
+status from `/superadmin`.
+
+- Bootstrap the first superadmin from the CLI (there is deliberately no UI
+  for this):
+  ```bash
+  SEED_SUPERADMIN_EMAIL=you@example.com SEED_SUPERADMIN_PASSWORD='a-long-password' \
+  npm run seed:superadmin
+  ```
+- `/superadmin/login` uses its own `superadmin_session` cookie. The JWT
+  carries `{ sub, superadmin: true, email, full_name }` with audience
+  `swimma-superadmin`, is never sent to Supabase as a bearer token, and a
+  tenant session JWT is rejected there. Every portal query uses the
+  service-role client; `superadmins`, `platform_tenant_usage`, and writes to
+  `platform_subscriptions` are unreachable from `anon`/`authenticated`.
+- Plans live in `platform_plans` (`member_limit`, `location_limit`; `null`
+  means unlimited). Limits are enforced by triggers on `children`
+  (insert and re-activation) and `locations`, error codes `SW001`/`SW002`.
+  A tenant without a `platform_subscriptions` row is not limited.
+- Status **suspended** or **cancelled** sets `tenants.is_active = false`:
+  new logins are refused and live sessions lose access immediately
+  (`is_active_user()` checks the tenant too). No data is deleted; switching
+  back to **trial** or **active** restores access to everything.
+- Club admins can read the plan menu and their own subscription (dashboard
+  banner during trial) but cannot change either, and can only update
+  `name`, `logo_url`, `primary_color` on `tenants`.
+- There is no payment gateway: a superadmin sets a club to **active** after
+  being paid outside the app. Trial expiry is shown on `/superadmin` but not
+  enforced automatically.
+
+### Pricing model
+
+Prices are derived from the fixed monthly infrastructure floor, because one
+deployment serves every tenant:
+
+- Vercel Pro ≈ $24/mo, Supabase Pro ≈ $25/mo, plus a usage buffer ≈ $20–30
+  → **≈ Rp 1.300.000/bulan** at ≈ Rp 17.900/USD. Verify current prices and
+  FX before relying on this.
+- Marginal cost per extra tenant ≈ Rp 0 until usage pushes Supabase/Vercel
+  into a higher tier.
+- Starter Rp 300.000 (75 members, 1 location), Growth Rp 750.000 (250
+  members, 3 locations), Pro Rp 1.500.000 (unlimited). Break-even ≈ 5
+  Starter, 2 Growth, or 1 Pro club.
+- The landing page and dashboard read prices from `platform_plans`, so
+  editing a plan there updates what clubs see.
 
 ## Notes / out of scope
 
@@ -115,6 +174,21 @@ Pengaturan.
   parents register themselves would undermine the duplicate-child check.
 
 ## Changelog
+
+### 2026-09-26
+
+- Platform billing: `superadmins`, `platform_plans`, `platform_subscriptions`,
+  `platform_tenant_usage` (migration `20250101000010_platform_billing.sql`),
+  `/superadmin` portal, `npm run seed:superadmin`.
+- Plan member and location limits enforced in the database.
+- Suspended/cancelled clubs lose access immediately, including live
+  sessions; `tenants` is now column-restricted for club admins.
+- Self-service club signup at `/daftar` with a 14-day trial.
+- Landing page pricing section and admin trial banner, both reading
+  `platform_plans`.
+- Deactivated/suspended sessions are cleared through
+  `/api/auth/session-ended` (cookies can't be deleted during Server
+  Component render).
 
 ### 2026-09-22
 

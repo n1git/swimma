@@ -142,7 +142,10 @@ export async function createChild(
   });
 
   if (childError) {
-    return { ok: false, error: "Gagal menyimpan data anak" };
+    return {
+      ok: false,
+      error: childError.code === "SW001" ? childError.message : "Gagal menyimpan data anak",
+    };
   }
 
   revalidatePath("/admin/members");

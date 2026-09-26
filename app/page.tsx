@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
-import { APP_NAME } from "@/lib/config";
+import { APP_NAME, TRIAL_DAYS } from "@/lib/config";
+import { getActivePlans } from "@/lib/data/platform-plan";
+import { PlanLanes } from "@/components/pricing/plan-lanes";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,7 @@ const NAV_LINKS = [
   { href: "#fitur", label: "Fitur" },
   { href: "#cara-kerja", label: "Cara Kerja" },
   { href: "#multi-klub", label: "Multi Klub" },
+  { href: "#harga", label: "Harga" },
   { href: "#dasbor", label: "Dasbor" },
 ];
 
@@ -103,6 +106,7 @@ const DEMO_OVERDUE = [
 export default async function Home() {
   const session = await getSession();
   if (session) redirect(roleHome(session.app_role));
+  const plans = await getActivePlans();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -121,6 +125,9 @@ export default async function Home() {
             <Link href="/login" className={buttonVariants({ variant: "outline" })}>
               Masuk
             </Link>
+            <Link href="/daftar" className={buttonVariants({ className: "hidden sm:inline-flex" })}>
+              Daftarkan klub
+            </Link>
           </div>
         </div>
       </header>
@@ -136,11 +143,11 @@ export default async function Home() {
               atau puluhan klub sekaligus.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4 motion-safe:animate-fade-up motion-safe:[animation-delay:150ms]">
-              <Link href="/login" className={buttonVariants({ size: "lg" })}>
-                Masuk ke Akun Klub
+              <Link href="/daftar" className={buttonVariants({ size: "lg" })}>
+                Coba gratis {TRIAL_DAYS} hari
               </Link>
-              <a href="#cara-kerja" className={buttonVariants({ variant: "ghost", size: "lg" })}>
-                Lihat cara kerjanya
+              <a href="#harga" className={buttonVariants({ variant: "ghost", size: "lg" })}>
+                Lihat harga
               </a>
             </div>
           </div>
@@ -227,6 +234,31 @@ export default async function Home() {
           </div>
         </section>
 
+        <section id="harga" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-end">
+            <h2 className="max-w-lg font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              Satu langganan per klub, sesuai jumlah anggota aktif.
+            </h2>
+            <p className="max-w-md text-muted-foreground">
+              Admin, pelatih, dan orang tua tidak dihitung per akun. Semua klub mulai dari trial {TRIAL_DAYS}{" "}
+              hari tanpa kartu kredit, lalu pilih paket saat sudah yakin.
+            </p>
+          </div>
+          <div className="mt-10">
+            {plans.length > 0 ? (
+              <PlanLanes plans={plans} ctaHref="/daftar" />
+            ) : (
+              <Link href="/daftar" className={buttonVariants({ size: "lg" })}>
+                Daftarkan klub
+              </Link>
+            )}
+          </div>
+          <p className="mt-6 max-w-2xl text-sm text-muted-foreground">
+            Anggota aktif adalah anak yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
+            tim {APP_NAME} setelah pembayaran diterima; belum ada pembayaran online di dalam aplikasi.
+          </p>
+        </section>
+
         <section id="dasbor" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <h2 className="max-w-lg font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Dasbor yang langsung menjawab: apa yang butuh perhatian hari ini?
@@ -278,12 +310,21 @@ export default async function Home() {
             <h2 className="max-w-lg font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
               Siap kelola klub renang Anda dengan lebih rapi?
             </h2>
-            <Link
-              href="/login"
-              className={buttonVariants({ variant: "secondary", size: "lg" })}
-            >
-              Masuk ke Akun Klub
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/daftar" className={buttonVariants({ variant: "secondary", size: "lg" })}>
+                Daftarkan klub
+              </Link>
+              <Link
+                href="/login"
+                className={buttonVariants({
+                  variant: "ghost",
+                  size: "lg",
+                  className: "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground",
+                })}
+              >
+                Masuk ke akun klub
+              </Link>
+            </div>
           </div>
         </section>
       </main>
@@ -293,7 +334,7 @@ export default async function Home() {
           <span>
             © {new Date().getFullYear()} {APP_NAME}. Manajemen klub renang anak.
           </span>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {NAV_LINKS.map((link) => (
               <a key={link.href} href={link.href} className="transition-colors hover:text-foreground">
                 {link.label}
@@ -301,6 +342,9 @@ export default async function Home() {
             ))}
             <Link href="/login" className="transition-colors hover:text-foreground">
               Masuk
+            </Link>
+            <Link href="/daftar" className="transition-colors hover:text-foreground">
+              Daftarkan klub
             </Link>
           </div>
         </div>
