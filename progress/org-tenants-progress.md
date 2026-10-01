@@ -4,8 +4,8 @@ Hierarchy: organization (owner) → tenants (klub) → coaches → members.
 
 ## Status
 
-- [ ] Phase 0: preparation and plan. Waiting for OK.
-- [ ] Phase 1: database, organizations
+- [x] Phase 0: preparation and plan. OK received; defaults accepted; push only to `main`.
+- [x] Phase 1: database, organizations
 - [ ] Phase 2: database, members
 - [ ] Phase 3: auth and server
 - [ ] Phase 4: UI
@@ -85,3 +85,11 @@ Scripts/docs: `scripts/seed-admin.ts`, `README.md`, `KAJIAN_PAKET.md`, `CLAUDE.m
 ### Known risks (not new work)
 - Email-only login means anyone who knows an email can trigger the 15-minute lockout; per-IP rate limit still limits scale.
 - Local DB verification uses the Postgres 16 binaries installed in this container; Supabase-specific objects (`auth.jwt()`, `storage.*`) will be stubbed for the check.
+
+## Phase 1 done
+
+- `supabase/migrations/20250101000012_organizations.sql`: organizations, org_owners, tenants.organization_id, profiles.owner_id, backfill, global email rules, SW004 trigger, `is_active_user` owner check, `register_organization` / `create_tenant_for_owner`, `platform_tenant_usage` (+`organization_id`) and `platform_organization_usage`.
+- Applied locally (Postgres 16, stubbed Supabase roles/auth) on an empty DB and on 001-011 plus sample rows (case-mixed emails, one admin email in two tenants, tenant without admin). Backfill result checked.
+- Note: the migration moves owner credentials into `org_owners`; the old login route cannot sign them in until Phase 3. Do not deploy the migration before Phase 3.
+- Superadmin portal grouping by organization is a TS change, done in Phase 4.
+- Check commands: `npx next typegen` is needed once so `LayoutProps` types exist; `npm run lint` fails only on pre-existing `.claude/skills/**/*.cjs` files, so lint is run as `npx eslint app components lib proxy.ts scripts` (clean).
