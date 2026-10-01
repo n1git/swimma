@@ -9,7 +9,7 @@ Hierarchy: organization (owner) → tenants (klub) → coaches → members.
 - [x] Phase 2: database, members
 - [x] Phase 3: auth and server
 - [x] Phase 4: UI
-- [ ] Phase 5: cleanup and final checks
+- [x] Phase 5: cleanup and final checks
 
 ## Phase 0 findings
 
@@ -117,3 +117,14 @@ Scripts/docs: `scripts/seed-admin.ts`, `README.md`, `KAJIAN_PAKET.md`, `CLAUDE.m
 - Superadmin portal grouped by organization: tenant count / `max_tenants`, form to raise the limit, owner activate/deactivate (kills all tenants of that owner at once). Tenant slug no longer shown.
 - Landing and auth copy reworded (no parent / club code wording).
 - Final grep caveat: `parent` also matches `transparent` in Tailwind classes and `child` matches React `children`; check will exclude those two.
+
+## Phase 5 done
+
+- README (multi-tenancy, auth, onboarding, billing notes, changelog), KAJIAN_PAKET.md, CLAUDE.md notes updated. `mvp/` untouched and not referenced by this app: open.
+- `eslint.config.mjs` now ignores `.claude/**` so `npm run lint` passes (it failed only on skill scripts).
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`.
+- Migrations apply on an empty DB and on 001-011 + sample rows; counts equal before/after (members 3, bookings 1, subscriptions 1, invoices 1).
+- Isolation (local Postgres, JWT claims simulated): owner in A sees nothing of B until a switch; two-club owner sees each club only with that club's profile; forged tenant claim sees 0; other org owner sees only theirs; coach sees only own members and bookings and cannot book another coach's member; anon denied; deactivated owner loses data access in all clubs.
+- SW001 fires at the 76th active member (Starter); SW004 fires on the 4th club of a default org; same email cannot be owner and coach, nor coach in two clubs.
+- Grep: only `:last-child` (CSS) remains after excluding React `children` and Tailwind `transparent`.
+- Not run: the app against a real Supabase/PostgREST (login route, `switchTenant`, `createTenant` are type-checked and built, not executed end to end).
