@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
 import { getOwnSubscription } from "@/lib/data/platform-plan";
 import { PlanStatusBanner } from "@/components/admin/plan-status-banner";
 import { StatCard } from "@/components/reports/stat-card";
@@ -20,11 +21,11 @@ function formatRupiah(value: number) {
 }
 
 function formatTime(value: string) {
-  return new Date(value).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  return formatJakartaTime(value, { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("id-ID");
+  return formatJakartaDate(value);
 }
 
 const CASH_CATEGORY_LABEL: Record<string, string> = {

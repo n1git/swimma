@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
 
 interface ChildWithBookings {
   id: string;
@@ -48,8 +49,8 @@ export default async function ParentSchedulePage() {
                     <div>
                       <p className="font-medium">{b.classes.class_types?.name ?? "Kelas"}</p>
                       <p className="text-muted-foreground">
-                        {new Date(b.classes.start_time).toLocaleString("id-ID")} —{" "}
-                        {new Date(b.classes.end_time).toLocaleTimeString("id-ID")} ·{" "}
+                        {formatJakartaDateTime(b.classes.start_time)} —{" "}
+                        {formatJakartaTime(b.classes.end_time)} ·{" "}
                         {b.classes.locations?.name}
                       </p>
                     </div>

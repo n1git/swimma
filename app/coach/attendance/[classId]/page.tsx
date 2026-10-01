@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BackLink } from "@/components/shared/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { AttendanceRoster } from "@/components/attendance/attendance-roster";
+import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
@@ -64,10 +65,10 @@ export default async function AttendancePage({
 
       <Card>
         <CardContent className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-4">
-          <InfoItem label="Tanggal" value={new Date(info.start_time).toLocaleDateString("id-ID")} />
+          <InfoItem label="Tanggal" value={formatJakartaDate(info.start_time)} />
           <InfoItem
             label="Waktu"
-            value={`${new Date(info.start_time).toLocaleTimeString("id-ID")} — ${new Date(info.end_time).toLocaleTimeString("id-ID")}`}
+            value={`${formatJakartaTime(info.start_time)} — ${formatJakartaTime(info.end_time)}`}
           />
           <InfoItem label="Lokasi" value={info.locations?.name ?? "-"} />
           <InfoItem label="Jenis Kelas" value={info.class_types?.name ?? "-"} />

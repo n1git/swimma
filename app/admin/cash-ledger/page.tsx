@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AdjustmentForm } from "@/components/cash-ledger/adjustment-form";
+import { formatJakartaDateTime } from "@/lib/format";
 
 const CATEGORY_LABEL: Record<string, string> = {
   payment_received: "Pembayaran Diterima",
@@ -58,7 +59,7 @@ export default async function CashLedgerPage() {
         <TableBody>
           {(entries ?? []).map((e) => (
             <TableRow key={e.id}>
-              <TableCell>{new Date(e.entry_date).toLocaleString("id-ID")}</TableCell>
+              <TableCell>{formatJakartaDateTime(e.entry_date)}</TableCell>
               <TableCell>{CATEGORY_LABEL[e.category] ?? e.category}</TableCell>
               <TableCell>
                 <Badge variant={e.direction === "in" ? "success" : "secondary"}>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { parseJakartaLocalInput } from "@/lib/format";
 import { promoSchema } from "@/lib/validations/promo";
 import { type ActionState } from "./types";
 
@@ -42,8 +43,8 @@ export async function createPromo(
     title: parsed.data.title,
     body: parsed.data.body,
     image_url: imageUrl,
-    active_from: parsed.data.activeFrom,
-    active_until: parsed.data.activeUntil || null,
+    active_from: parseJakartaLocalInput(parsed.data.activeFrom),
+    active_until: parsed.data.activeUntil ? parseJakartaLocalInput(parsed.data.activeUntil) : null,
     author_id: session.sub,
   });
 

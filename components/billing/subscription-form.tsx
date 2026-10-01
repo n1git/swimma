@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createSubscription } from "@/lib/actions/billing";
+import { getJakartaDateString } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +61,7 @@ export function SubscriptionForm({
           name="startDate"
           type="date"
           required
-          defaultValue={new Date().toISOString().slice(0, 10)}
+          defaultValue={getJakartaDateString()}
         />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">

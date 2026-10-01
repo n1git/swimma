@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
 
 export default async function ClassDetailPage({
   params,
@@ -63,8 +64,8 @@ export default async function ClassDetailPage({
         <div>
           <h1 className="text-2xl font-semibold">{info.class_types?.name ?? "Kelas"}</h1>
           <p className="text-sm text-muted-foreground">
-            {new Date(info.start_time).toLocaleString("id-ID")} —{" "}
-            {new Date(info.end_time).toLocaleTimeString("id-ID")} · {info.locations?.name} ·{" "}
+            {formatJakartaDateTime(info.start_time)} —{" "}
+            {formatJakartaTime(info.end_time)} · {info.locations?.name} ·{" "}
             {info.profiles?.full_name}
           </p>
         </div>

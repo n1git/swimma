@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { generateInvoices } from "@/lib/actions/billing";
+import { getJakartaMonthBounds } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function GenerateInvoicesForm() {
   const [state, formAction, pending] = useActionState(generateInvoices, {});
-  const today = new Date();
-  const periodStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-  const periodEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+  const { start: periodStart, end: periodEnd } = getJakartaMonthBounds();
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

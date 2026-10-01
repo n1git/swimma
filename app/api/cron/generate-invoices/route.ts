@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getJakartaMonthBounds } from "@/lib/format";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
@@ -7,13 +8,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const today = new Date();
-  const periodStart = new Date(today.getFullYear(), today.getMonth(), 1)
-    .toISOString()
-    .slice(0, 10);
-  const periodEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    .toISOString()
-    .slice(0, 10);
+  const { start: periodStart, end: periodEnd } = getJakartaMonthBounds();
 
   const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase.rpc("generate_invoices_for_period", {

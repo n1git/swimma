@@ -1,5 +1,6 @@
 "use client";
 
+import { formatRupiahCompact, formatRupiahFull } from "@/lib/format";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export interface RevenueByProgramPoint {
@@ -14,8 +15,8 @@ export function RevenueByProgramChart({ data }: { data: RevenueByProgramPoint[] 
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="package_name" fontSize={12} />
-          <YAxis fontSize={12} />
-          <Tooltip />
+          <YAxis fontSize={12} tickFormatter={formatRupiahCompact} width={80} />
+          <Tooltip formatter={(value) => formatRupiahFull(value)} />
           <Bar dataKey="revenue" fill="var(--color-primary)" name="Pendapatan" />
         </BarChart>
       </ResponsiveContainer>

@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
 
 interface ClassRow {
   id: string;
@@ -49,8 +50,8 @@ export default async function CoachSchedulePage() {
           {classes.map((cls) => (
             <TableRow key={cls.id}>
               <TableCell>
-                {new Date(cls.start_time).toLocaleString("id-ID")} —{" "}
-                {new Date(cls.end_time).toLocaleTimeString("id-ID")}
+                {formatJakartaDateTime(cls.start_time)} —{" "}
+                {formatJakartaTime(cls.end_time)}
               </TableCell>
               <TableCell>{cls.locations?.name ?? "-"}</TableCell>
               <TableCell>{cls.class_types?.name ?? "-"}</TableCell>

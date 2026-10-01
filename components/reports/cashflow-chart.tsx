@@ -1,5 +1,6 @@
 "use client";
 
+import { formatRupiahCompact, formatRupiahFull } from "@/lib/format";
 import {
   CartesianGrid,
   Line,
@@ -24,8 +25,8 @@ export function CashflowChart({ data }: { data: CashFlowPoint[] }) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" fontSize={12} />
-          <YAxis fontSize={12} />
-          <Tooltip />
+          <YAxis fontSize={12} tickFormatter={formatRupiahCompact} width={80} />
+          <Tooltip formatter={(value) => formatRupiahFull(value)} />
           <Line type="monotone" dataKey="cash_in" stroke="var(--color-success)" name="Masuk" strokeWidth={2} />
           <Line type="monotone" dataKey="cash_out" stroke="var(--color-destructive)" name="Keluar" strokeWidth={2} />
           <Line type="monotone" dataKey="net" stroke="var(--color-primary)" name="Bersih" strokeWidth={2} />

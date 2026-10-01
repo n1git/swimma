@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateChild, toggleChildActiveForm } from "@/lib/actions/members";
+import { updateChild, toggleChildActive } from "@/lib/actions/members";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ export function MemberEditForm({
   const updateChildWithId = updateChild.bind(null, child.id);
   const [state, formAction, pending] = useActionState(updateChildWithId, {});
   useActionToast(state, "Perubahan disimpan");
+  const [toggleState, toggleAction] = useActionState(toggleChildActive, {});
+  useActionToast(toggleState, "Status anggota diperbarui");
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,7 +87,12 @@ export function MemberEditForm({
         </Button>
       </form>
 
-      <form action={toggleChildActiveForm}>
+      <form action={toggleAction} className="flex flex-col gap-3">
+        {toggleState.error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{toggleState.error}</AlertDescription>
+          </Alert>
+        ) : null}
         <input type="hidden" name="childId" value={child.id} />
         <input type="hidden" name="isActive" value={(!child.is_active).toString()} />
         <ActionSubmitButton
@@ -95,7 +102,6 @@ export function MemberEditForm({
               ? "Nonaktifkan anggota ini? Anak ini akan ditandai nonaktif."
               : undefined
           }
-          successMessage={child.is_active ? "Anggota dinonaktifkan" : "Anggota diaktifkan kembali"}
         >
           {child.is_active ? "Nonaktifkan Anggota" : "Aktifkan Kembali"}
         </ActionSubmitButton>

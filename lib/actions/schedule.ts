@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { parseJakartaLocalInput } from "@/lib/format";
 import { classSchema } from "@/lib/validations/schedule";
 import { type ActionState } from "./types";
 
@@ -25,8 +26,8 @@ export async function createClass(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
   const input = parsed.data;
-  const startIso = new Date(input.startTime).toISOString();
-  const endIso = new Date(input.endTime).toISOString();
+  const startIso = parseJakartaLocalInput(input.startTime);
+  const endIso = parseJakartaLocalInput(input.endTime);
 
   const supabase = await createServerSupabaseClient();
 

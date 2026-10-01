@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createPromo } from "@/lib/actions/promo";
+import { getJakartaLocalInputNow } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +41,7 @@ export function PromoForm() {
             name="activeFrom"
             type="datetime-local"
             required
-            defaultValue={new Date().toISOString().slice(0, 16)}
+            defaultValue={getJakartaLocalInputNow()}
           />
         </div>
         <div className="flex flex-col gap-1.5">

@@ -1,6 +1,6 @@
 import { requireSuperadmin } from "@/lib/auth/superadmin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { getJakartaDateString } from "@/lib/format";
+import { formatJakartaDate, getJakartaDateString } from "@/lib/format";
 import { STATUS_LABEL, type PlatformSubscriptionStatus } from "@/lib/validations/superadmin";
 import { StatCard } from "@/components/reports/stat-card";
 import { SubscriptionForm } from "@/components/superadmin/subscription-form";
@@ -36,7 +36,7 @@ function formatRupiah(value: number) {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return formatJakartaDate(value, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function usageLabel(used: number, limit: number | null) {

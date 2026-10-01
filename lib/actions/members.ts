@@ -193,14 +193,24 @@ export async function updateChild(
   return { ok: true };
 }
 
-export async function toggleChildActiveForm(formData: FormData): Promise<void> {
+export async function toggleChildActive(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   await requireActionRole("admin");
   const childId = String(formData.get("childId"));
   const isActive = formData.get("isActive") === "true";
 
   const supabase = await createServerSupabaseClient();
-  await supabase.from("children").update({ is_active: isActive }).eq("id", childId);
+  const { error } = await supabase.from("children").update({ is_active: isActive }).eq("id", childId);
+  if (error) {
+    return {
+      ok: false,
+      error: error.code === "SW001" ? error.message : "Gagal memperbarui status anggota",
+    };
+  }
 
   revalidatePath("/admin/members");
   revalidatePath(`/admin/members/${childId}`);
+  return { ok: true, message: isActive ? "Anggota diaktifkan kembali" : "Anggota dinonaktifkan" };
 }
