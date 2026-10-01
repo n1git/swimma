@@ -4,8 +4,8 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 
 ## Status
 
-- [ ] Phase 0: preparation and plan. Waiting for OK.
-- [ ] Phase 1: database (`20250101000014_org_billing.sql`)
+- [x] Phase 0: preparation and plan. OK received; all defaults accepted; push only to `main`.
+- [x] Phase 1: database (`20250101000014_org_billing.sql`)
 - [ ] Phase 2: server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
@@ -59,3 +59,9 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 7. **Client estimate vs server quote.** The live total on the landing and wizard uses the same formula in TypeScript on the plan rows read from the table; every authoritative figure (registration, plan change, price-change confirmation, superadmin) comes from `platform_quote`. I will test that both agree.
 8. **No staff-admin creation exists today** (only coaches). The confirmation helper is generic and wired to coach creation; the DB gate already covers staff admins. I will not build a staff-admin form unless you ask.
 9. **Branch:** the session assigns `claude/swimma-org-tenants-bk1kpc`, your task says `main` only. Following your task: everything goes to `main`.
+
+## Phase 1 done
+
+- `supabase/migrations/20250101000014_org_billing.sql`: `subscription_plans` (seeded), `platform_modules` (seeded), `organization_subscriptions` (RLS: org admins read, writes service role), backfill, `platform_quote`, `organization_internal_users`, SW001/SW002 triggers and functions dropped, `enforce_billing_gate` (SW003; no-op while the organization has no club) wired to members, club insert, non-owner admin/coach profiles and owner insert, SW004 trigger on club insert (locks the subscription row) and on plan/override change, new `register_organization(.., plan, period)`, `create_tenant_for_owner(owner, name)`, `set_organization_status`, recreated `platform_organization_usage`.
+- Applied on an empty DB and on 001-013 + sample rows. Backfill result: advanced+active (old Pro and tenant D), standard+active with override 5 (old Starter, `max_tenants` 5), advanced+active "Dimigrasi tanpa langganan lama" (no old rows), standard+trial with the latest trial date (mixed trial/suspended).
+- Smoke: quotes 600000 / 6900000 / 500000; Standard 4th club SW004; Advanced pending blocks club, member and coach (SW003); 1000 members on an active Standard org insert fine; internal users counted once per owner; `set_organization_status` flips all tenants.
