@@ -5,6 +5,7 @@ import { ThemeToggle } from "./theme-toggle";
 export interface NavItem {
   href: string;
   label: string;
+  exact?: boolean;
 }
 
 export function AppShell({
@@ -41,7 +42,7 @@ export function AppShell({
       <div className="flex flex-1 flex-col sm:flex-row">
         <nav className="flex shrink-0 gap-1 overflow-x-auto bg-sidebar p-2 sm:w-56 sm:flex-col sm:gap-0.5 sm:border-r sm:border-sidebar-border sm:p-4">
           {navItems.map((item) => (
-            <NavLink key={item.href} href={item.href} exact={item.href.split("/").length <= 2}>
+            <NavLink key={item.href} href={item.href} exact={item.exact ?? item.href.split("/").length <= 2}>
               {item.label}
             </NavLink>
           ))}

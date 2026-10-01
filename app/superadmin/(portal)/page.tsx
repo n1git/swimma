@@ -1,10 +1,12 @@
 import { requireSuperadmin } from "@/lib/auth/superadmin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { formatJakartaDate, getJakartaDateString } from "@/lib/format";
+import { formatRupiah, PERIOD_LABEL, type PricingPlan } from "@/lib/pricing";
+import { PLAN_COLUMNS, toPlan } from "@/lib/data/platform-pricing";
 import { STATUS_LABEL, type PlatformSubscriptionStatus } from "@/lib/validations/superadmin";
 import { StatCard } from "@/components/reports/stat-card";
-import { SubscriptionForm } from "@/components/superadmin/subscription-form";
 import { OrganizationControls, type OwnerRow } from "@/components/superadmin/organization-controls";
+import { PlanEditor } from "@/components/superadmin/plan-editor";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -23,183 +25,157 @@ const STATUS_VARIANT: Record<PlatformSubscriptionStatus, "success" | "secondary"
   cancelled: "secondary",
 };
 
-interface PlanRow {
-  id: string;
+interface UsageRow {
+  organization_id: string;
   name: string;
-  price: number | string;
-  billing_cycle: "monthly" | "yearly";
-  member_limit: number | null;
-  location_limit: number | null;
-  is_active: boolean;
-}
-
-function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString("id-ID")}`;
+  plan_code: string | null;
+  billing_period: "monthly" | "yearly" | null;
+  status: PlatformSubscriptionStatus | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  club_limit_override: number | null;
+  club_limit: number | null;
+  clubs: number;
+  members: number;
+  internal_users: number;
+  total: number | string | null;
+  per_month: number | string | null;
 }
 
 function formatDate(value: string) {
   return formatJakartaDate(value, { day: "numeric", month: "short", year: "numeric" });
 }
 
-function usageLabel(used: number, limit: number | null) {
-  return limit ? `${used} / ${limit}` : `${used}`;
-}
-
 export default async function SuperadminDashboardPage() {
   await requireSuperadmin();
   const supabase = createAdminSupabaseClient();
-
-  const [{ data: tenants }, { data: subscriptions }, { data: plans }, { data: usage }, { data: organizations }, { data: owners }] = await Promise.all([
-    supabase
-      .from("tenants")
-      .select("id, name, is_active, created_at, organization_id")
-      .order("created_at", { ascending: false }),
-    supabase.from("platform_subscriptions").select("tenant_id, plan_id, status, trial_ends_at, notes"),
-    supabase
-      .from("platform_plans")
-      .select("id, name, price, billing_cycle, member_limit, location_limit, is_active")
-      .order("price"),
-    supabase.from("platform_tenant_usage").select("tenant_id, active_members, locations"),
-    supabase.from("organizations").select("id, name, max_tenants, created_at").order("created_at", { ascending: false }),
-    supabase.from("org_owners").select("id, organization_id, email, full_name, is_active"),
-  ]);
-
-  const planRows = (plans ?? []) as PlanRow[];
-  const planById = new Map(planRows.map((plan) => [plan.id, plan]));
-  const subscriptionByTenant = new Map((subscriptions ?? []).map((s) => [s.tenant_id as string, s]));
-  const usageByTenant = new Map((usage ?? []).map((u) => [u.tenant_id as string, u]));
   const today = getJakartaDateString();
 
-  const allSubscriptions = subscriptions ?? [];
-  const isTrialExpired = (s: { status: string; trial_ends_at: string | null }) =>
-    s.status === "trial" && !!s.trial_ends_at && s.trial_ends_at < today;
-  const monthlyRevenue = allSubscriptions
-    .filter((s) => s.status === "active")
-    .reduce((sum, s) => {
-      const plan = planById.get(s.plan_id);
-      if (!plan) return sum;
-      const price = Number(plan.price);
-      return sum + (plan.billing_cycle === "yearly" ? price / 12 : price);
-    }, 0);
-  const activeCount = allSubscriptions.filter((s) => s.status === "active").length;
+  const [{ data: usage }, { data: tenants }, { data: owners }, { data: planRows }, { data: organizations }] = await Promise.all([
+    supabase.from("platform_organization_usage").select("*"),
+    supabase.from("tenants").select("id, name, is_active, created_at, organization_id").order("created_at"),
+    supabase.from("org_owners").select("id, organization_id, email, full_name, is_active"),
+    supabase.from("subscription_plans").select(`${PLAN_COLUMNS}, is_active`).order("price_per_user_month"),
+    supabase.from("organizations").select("id, created_at").order("created_at", { ascending: false }),
+  ]);
+
+  const rows = (usage ?? []) as UsageRow[];
+  const usageById = new Map(rows.map((r) => [r.organization_id, r]));
+  const plans = (planRows ?? []) as unknown as (Parameters<typeof toPlan>[0] & { is_active: boolean })[];
+  const isTrialExpired = (r: UsageRow) => r.status === "trial" && !!r.trial_ends_at && r.trial_ends_at < today;
+  const isOverdue = (r: UsageRow) => r.status === "active" && !!r.current_period_end && r.current_period_end < today;
+  const monthlyRevenue = rows.filter((r) => r.status === "active").reduce((sum, r) => sum + Number(r.per_month ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Dasbor Platform</h1>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total organisasi / klub" value={`${(organizations ?? []).length} / ${(tenants ?? []).length}`} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard title="Organisasi / klub" value={`${rows.length} / ${(tenants ?? []).length}`} />
+        <StatCard title="Menunggu aktivasi" value={String(rows.filter((r) => r.status === "pending").length)} />
+        <StatCard title="Trial berjalan" value={String(rows.filter((r) => r.status === "trial" && !isTrialExpired(r)).length)} />
+        <StatCard title="Trial berakhir" value={String(rows.filter(isTrialExpired).length)} />
         <StatCard
-          title="Trial berjalan"
-          value={String(allSubscriptions.filter((s) => s.status === "trial" && !isTrialExpired(s)).length)}
+          title={`Pendapatan bulanan (${rows.filter((r) => r.status === "active").length} aktif)`}
+          value={formatRupiah(monthlyRevenue)}
         />
-        <StatCard title="Trial sudah berakhir" value={String(allSubscriptions.filter(isTrialExpired).length)} />
-        <StatCard title={`Pendapatan bulanan (${activeCount} klub aktif)`} value={formatRupiah(Math.round(monthlyRevenue))} />
       </div>
 
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Paket</h2>
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Harga, batas klub, hari trial, dan bulan gratis tahunan hanya disimpan di sini. Perubahan berlaku untuk
+          perhitungan berikutnya.
+        </p>
+        <div className="grid gap-3">
+          {plans.map((plan) => (
+            <PlanEditor key={plan.code} plan={toPlan(plan) as PricingPlan} isActive={plan.is_active} />
+          ))}
+        </div>
+      </section>
+
       <p className="max-w-3xl text-sm text-muted-foreground">
-        Ubah status ke Aktif setelah pembayaran klub diterima. Ditangguhkan dan Dibatalkan langsung memutus akses
-        seluruh pengguna klub; datanya tetap tersimpan dan kembali saat status diubah ke Trial atau Aktif. Pemilik
-        yang dinonaktifkan kehilangan akses ke semua klubnya sekaligus.
+        Ubah status ke Aktif setelah pembayaran organisasi diterima. Ditangguhkan dan Dibatalkan langsung memutus akses
+        seluruh klub organisasi; datanya tetap tersimpan. Pemilik yang dinonaktifkan kehilangan akses ke semua klubnya
+        sekaligus. Tidak ada penangguhan otomatis saat periode berakhir; periode lewat jatuh tempo hanya ditandai.
       </p>
 
       {(organizations ?? []).map((organization) => {
+        const row = usageById.get(organization.id as string);
+        if (!row) return null;
         const orgTenants = (tenants ?? []).filter((t) => t.organization_id === organization.id);
         const orgOwners = (owners ?? []).filter((o) => o.organization_id === organization.id) as unknown as OwnerRow[];
+        const status = row.status;
         return (
-          <section key={organization.id} className="flex flex-col gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">{organization.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {orgTenants.length} / {organization.max_tenants} klub — terdaftar {formatDate(organization.created_at)}
-              </p>
+          <section key={row.organization_id} className="flex flex-col gap-3 rounded-lg border border-border p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold">{row.name}</h2>
+              {status ? <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge> : <Badge variant="outline">Tanpa langganan</Badge>}
+              {isTrialExpired(row) ? <Badge variant="destructive">Trial berakhir</Badge> : null}
+              {isOverdue(row) ? <Badge variant="destructive">Lewat jatuh tempo</Badge> : null}
+            </div>
+            <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <div className="text-xs text-muted-foreground">Paket</div>
+                {row.plan_code ? `${row.plan_code === "advanced" ? "Advanced" : "Standard"} · ${PERIOD_LABEL[row.billing_period ?? "monthly"]}` : "-"}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Pengguna internal</div>
+                {row.internal_users}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Klub / batas · Anggota</div>
+                {row.clubs} / {row.club_limit ?? "∞"} · {row.members}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Total · per bulan</div>
+                {row.total !== null ? `${formatRupiah(Number(row.total))} · ${formatRupiah(Number(row.per_month))}` : "-"}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Akhir periode</div>
+                {row.current_period_end ? formatDate(row.current_period_end) : "Belum diatur"}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Trial berakhir</div>
+                {row.trial_ends_at ? formatDate(row.trial_ends_at) : "-"}
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Terdaftar</div>
+                {formatDate(organization.created_at as string)}
+              </div>
             </div>
             <OrganizationControls
-              organizationId={organization.id}
-              maxTenants={organization.max_tenants}
+              organizationId={row.organization_id}
+              status={status}
+              trialEndsAt={row.trial_ends_at}
+              clubLimitOverride={row.club_limit_override}
+              today={today}
               owners={orgOwners}
             />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Klub</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Paket</TableHead>
-              <TableHead>Anggota</TableHead>
-              <TableHead>Lokasi</TableHead>
-              <TableHead>Trial berakhir</TableHead>
-              <TableHead>Ubah langganan</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orgTenants.map((tenant) => {
-              const subscription = subscriptionByTenant.get(tenant.id);
-              const plan = subscription ? planById.get(subscription.plan_id) : undefined;
-              const tenantUsage = usageByTenant.get(tenant.id);
-              const status = (subscription?.status ?? null) as PlatformSubscriptionStatus | null;
-              const planOptions = planRows
-                .filter((p) => p.is_active || p.id === subscription?.plan_id)
-                .map((p) => ({ id: p.id, name: p.is_active ? p.name : `${p.name} (nonaktif)` }));
-
-              return (
-                <TableRow key={tenant.id}>
-                  <TableCell>
-                    <div className="font-medium">{tenant.name}</div>
-                    <div className="text-xs text-muted-foreground">Terdaftar {formatDate(tenant.created_at)}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {status ? (
-                        <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>
-                      ) : (
-                        <Badge variant="outline">Tanpa paket</Badge>
-                      )}
-                      {subscription && isTrialExpired(subscription) ? (
-                        <Badge variant="destructive">Trial berakhir</Badge>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {plan ? (
-                      <>
-                        <div>{plan.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatRupiah(Number(plan.price))}/{plan.billing_cycle === "yearly" ? "thn" : "bln"}
-                        </div>
-                      </>
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>{usageLabel(Number(tenantUsage?.active_members ?? 0), plan?.member_limit ?? null)}</TableCell>
-                  <TableCell>{usageLabel(Number(tenantUsage?.locations ?? 0), plan?.location_limit ?? null)}</TableCell>
-                  <TableCell>{subscription?.trial_ends_at ? formatDate(subscription.trial_ends_at) : "-"}</TableCell>
-                  <TableCell>
-                    <SubscriptionForm
-                      tenantId={tenant.id}
-                      tenantName={tenant.name}
-                      plans={planOptions}
-                      planId={subscription?.plan_id ?? null}
-                      status={status}
-                      notes={subscription?.notes ?? null}
-                    />
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Klub</TableHead>
+                  <TableHead>Akses</TableHead>
+                  <TableHead>Terdaftar</TableHead>
                 </TableRow>
-              );
-            })}
-            {orgTenants.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Organisasi ini belum punya klub.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {orgTenants.map((tenant) => (
+                  <TableRow key={tenant.id}>
+                    <TableCell className="font-medium">{tenant.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={tenant.is_active ? "success" : "destructive"}>{tenant.is_active ? "Aktif" : "Diputus"}</Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(tenant.created_at)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </section>
         );
       })}
-      {(organizations ?? []).length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Belum ada organisasi. Organisasi baru muncul di sini setelah mendaftar lewat halaman /daftar.
         </p>

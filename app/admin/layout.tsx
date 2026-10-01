@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const switcher = tenants.length > 1 ? <TenantSwitcher tenants={tenants} currentId={session.tenantId} /> : null;
   return (
     <AppShell
-      navItems={owner ? [{ href: "/admin/klub", label: "Klub" }, ...NAV_ITEMS] : NAV_ITEMS}
+      navItems={owner ? [{ href: "/admin/klub", label: "Klub", exact: true }, { href: "/admin/klub/langganan", label: "Langganan" }, ...NAV_ITEMS] : NAV_ITEMS}
       fullName={session.fullName}
       roleLabel="Admin"
       clubName={tenant?.name ?? APP_NAME}

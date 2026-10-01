@@ -7,13 +7,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { computeQuote, formatRupiah, PERIOD_LABEL, type BillingPeriod, type PlanCode, type PricingPlan } from "@/lib/pricing";
+import { PeriodToggle, PlanCard, UsersInput } from "@/components/pricing/pricing-picker";
 
-const FIELDS = ["tenantName", "ownerFullName", "ownerEmail", "password"] as const;
-
-export function RegisterClubForm() {
+export function RegisterClubForm({
+  plans,
+  initialPlan,
+  initialPeriod,
+  initialUsers,
+}: {
+  plans: PricingPlan[];
+  initialPlan: PlanCode;
+  initialPeriod: BillingPeriod;
+  initialUsers: number;
+}) {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [planCode, setPlanCode] = useState<PlanCode>(initialPlan);
+  const [period, setPeriod] = useState<BillingPeriod>(initialPeriod);
+  const [users, setUsers] = useState(initialUsers);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const plan = plans.find((p) => p.code === planCode) ?? plans[0];
+
+  if (!plan) {
+    return <p className="text-sm text-muted-foreground">Pendaftaran belum dibuka. Coba lagi nanti.</p>;
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,7 +44,15 @@ export function RegisterClubForm() {
     const res = await fetch("/api/onboarding/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(Object.fromEntries(FIELDS.map((field) => [field, formData.get(field)]))),
+      body: JSON.stringify({
+        tenantName: formData.get("tenantName"),
+        ownerFullName: formData.get("ownerFullName"),
+        ownerEmail: formData.get("ownerEmail"),
+        password: formData.get("password"),
+        planCode: plan.code,
+        billingPeriod: period,
+        estimatedUsers: users,
+      }),
     });
     const data = await res.json().catch(() => ({}));
 
@@ -38,46 +66,96 @@ export function RegisterClubForm() {
     router.refresh();
   }
 
+  const quote = computeQuote(plan, period, users);
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={cn("flex flex-col gap-4 transition-opacity duration-300", loading && "opacity-50")}
-    >
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tenantName">Nama klub</Label>
-        <Input id="tenantName" name="tenantName" required maxLength={100} autoComplete="organization" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="ownerFullName">Nama Anda</Label>
-        <Input id="ownerFullName" name="ownerFullName" required maxLength={100} autoComplete="name" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="ownerEmail">Email</Label>
-        <Input id="ownerEmail" name="ownerEmail" type="email" required autoComplete="email" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Kata sandi</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          aria-describedby="password-hint"
-        />
-        <p id="password-hint" className="text-xs text-muted-foreground">
-          Minimal 8 karakter, berisi huruf dan angka.
-        </p>
-      </div>
-      <Button type="submit" disabled={loading}>
-        {loading ? "Mendaftarkan..." : "Daftarkan klub"}
-      </Button>
-    </form>
+    <div className="flex flex-col gap-4">
+      <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
+        Langkah {step} dari 2: {step === 1 ? "Pilih paket" : "Data pemilik dan klub"}
+      </p>
+
+      {step === 1 ? (
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-end gap-6">
+            <PeriodToggle period={period} onChange={setPeriod} freeMonths={Math.max(...plans.map((p) => p.yearlyFreeMonths))} />
+            <UsersInput id="register-users" users={users} onChange={setUsers} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {plans.map((p) => (
+              <PlanCard
+                key={p.code}
+                plan={p}
+                period={period}
+                users={users}
+                selected={p.code === plan.code}
+                onSelect={setPlanCode}
+              />
+            ))}
+          </div>
+          <Button type="button" className="w-fit" onClick={() => setStep(2)}>
+            Lanjut
+          </Button>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          className={cn("flex max-w-sm flex-col gap-4 transition-opacity duration-300", loading && "opacity-50")}
+        >
+          <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+            <p className="font-medium">
+              {plan.name} · {PERIOD_LABEL[period]}
+            </p>
+            <p className="text-muted-foreground">
+              Perkiraan {formatRupiah(quote.total)}/{period === "yearly" ? "tahun" : "bulan"} untuk {quote.users} pengguna.
+              {plan.trialDays > 0
+                ? ` Gratis ${plan.trialDays} hari pertama.`
+                : " Paket aktif setelah pembayaran diterima admin platform."}
+            </p>
+            <button
+              type="button"
+              className="mt-1 font-medium text-primary underline-offset-4 hover:underline"
+              onClick={() => setStep(1)}
+            >
+              Ubah paket
+            </button>
+          </div>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="tenantName">Nama klub</Label>
+            <Input id="tenantName" name="tenantName" required maxLength={100} autoComplete="organization" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ownerFullName">Nama Anda</Label>
+            <Input id="ownerFullName" name="ownerFullName" required maxLength={100} autoComplete="name" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ownerEmail">Email</Label>
+            <Input id="ownerEmail" name="ownerEmail" type="email" required autoComplete="email" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Kata sandi</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              aria-describedby="password-hint"
+            />
+            <p id="password-hint" className="text-xs text-muted-foreground">
+              Minimal 8 karakter, berisi huruf dan angka.
+            </p>
+          </div>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Mendaftarkan..." : "Daftarkan klub"}
+          </Button>
+        </form>
+      )}
+    </div>
   );
 }

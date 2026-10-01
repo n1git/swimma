@@ -193,3 +193,42 @@ export async function internalUserCostChange(organizationId: string): Promise<In
     perMonthAfter: after.perMonth,
   };
 }
+
+export interface InternalUserRow {
+  key: string;
+  name: string;
+  email: string;
+  roleLabel: string;
+  clubName: string | null;
+}
+
+export async function listInternalUsers(organizationId: string): Promise<InternalUserRow[]> {
+  const supabase = createAdminSupabaseClient();
+  const [{ data: owners }, { data: staff }] = await Promise.all([
+    supabase.from("org_owners").select("id, full_name, email").eq("organization_id", organizationId).eq("is_active", true),
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, role, tenants!inner(name, organization_id)")
+      .eq("tenants.organization_id", organizationId)
+      .is("owner_id", null)
+      .in("role", ["admin", "coach"])
+      .eq("is_active", true)
+      .order("full_name"),
+  ]);
+  return [
+    ...(owners ?? []).map((o) => ({
+      key: `owner-${o.id}`,
+      name: o.full_name as string,
+      email: o.email as string,
+      roleLabel: "Pemilik",
+      clubName: null,
+    })),
+    ...(staff ?? []).map((p) => ({
+      key: `profile-${p.id}`,
+      name: p.full_name as string,
+      email: p.email as string,
+      roleLabel: p.role === "coach" ? "Pelatih" : "Admin",
+      clubName: (p.tenants as unknown as { name: string }).name,
+    })),
+  ];
+}

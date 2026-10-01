@@ -7,7 +7,7 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 - [x] Phase 0: preparation and plan. OK received; all defaults accepted; push only to `main`.
 - [x] Phase 1: database (`20250101000014_org_billing.sql`)
 - [x] Phase 2: server
-- [ ] Phase 3: UI
+- [x] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
 ## Phase 0 findings
@@ -73,3 +73,12 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 - `lib/actions/superadmin.ts`: added `activateOrganization` (period start defaults to today WIB, end computed in SQL), `setOrganizationStatus`, `extendTrial`, `setClubLimitOverride`, `updatePlan`. Validations added; status `pending` added.
 - Register route takes plan, period, estimated users, recomputes the quote on the server and returns it; `createTenant`, `createCoach` and coach reactivation map SW003/SW004 to their message; `PLAN_LIMIT_CODES` is now SW003/SW004; `seed-admin` takes `SEED_PLAN` / `SEED_PERIOD`; `organization.ts` reads the club limit from the subscription.
 - Deliberately left for Phase 3 (they still have UI importers, deleted together with the UI): `lib/data/platform-plan.ts`, `TRIAL_DAYS` in `lib/config.ts`, `updateTenantSubscription` and `updateOrganizationLimit`, old pricing/banner/superadmin components.
+
+## Phase 3 done
+
+- `ui-ux-pro-max` consulted (step indicator, visible labels, accessible toggle with `aria-pressed`; the toggle query had no database match, so general defaults were used). Only existing components and the existing button-pair toggle pattern; `AuthPageShell` got a `wide` option for the wizard and `NavItem` an `exact` option.
+- Landing pricing: `components/pricing/{pricing-picker,landing-pricing}.tsx` (two plan cards from `subscription_plans`, monthly/yearly toggle, internal-user input, live total, module badges with "Segera hadir"). CTA carries plan, period and users to `/daftar`.
+- `/daftar`: two-step wizard (plan, then owner and club) in `register-club-form.tsx`, preselects from query params.
+- Owner: `/admin/klub/langganan` (status, plan, internal users with cost, total and per month, change-plan form, modules), nav item, link from `/admin/klub`; `SubscriptionBanner` on the dashboard (pending, trial, expired trial). Adding a coach first shows the server-computed monthly price change and asks to confirm.
+- Superadmin portal: plans editor, per-organization card (plan, period, status, internal users, clubs vs limit, members, total and per month, period end with overdue flag, "Belum diatur" when empty) with activate-with-dates, status, extend trial, club-limit override and owner toggles.
+- Retired and deleted: `lib/data/platform-plan.ts`, `plan-cards.tsx`, `plan-status-banner.tsx`, `subscription-form.tsx`, `TRIAL_DAYS`, `updateTenantSubscription`, `updateOrganizationLimit`. No code in `app components lib scripts` references `platform_plans`, `platform_subscriptions`, `max_tenants`, SW001 or SW002.

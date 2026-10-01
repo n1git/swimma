@@ -11,9 +11,9 @@ import {
 } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
-import { APP_NAME, TRIAL_DAYS } from "@/lib/config";
-import { getActivePlans } from "@/lib/data/platform-plan";
-import { PlanCards } from "@/components/pricing/plan-cards";
+import { APP_NAME } from "@/lib/config";
+import { getActivePlans, getModules } from "@/lib/data/platform-pricing";
+import { LandingPricing } from "@/components/pricing/landing-pricing";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -106,7 +106,8 @@ const DEMO_OVERDUE = [
 export default async function Home() {
   const session = await getSession();
   if (session) redirect(roleHome(session.app_role));
-  const plans = await getActivePlans();
+  const [plans, modules] = await Promise.all([getActivePlans(), getModules()]);
+  const trialDays = Math.max(0, ...plans.map((p) => p.trialDays));
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -144,7 +145,7 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4 motion-safe:animate-fade-up motion-safe:[animation-delay:150ms]">
               <Link href="/daftar" className={buttonVariants({ size: "lg" })}>
-                Coba gratis {TRIAL_DAYS} hari
+                {trialDays > 0 ? `Coba gratis ${trialDays} hari` : "Daftarkan klub"}
               </Link>
               <a href="#harga" className={buttonVariants({ variant: "ghost", size: "lg" })}>
                 Lihat harga
@@ -237,19 +238,19 @@ export default async function Home() {
         <section id="harga" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-end">
             <h2 className="max-w-lg font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Satu langganan per klub, sesuai jumlah anggota aktif.
+              Satu langganan per organisasi, sesuai jumlah pengguna internal.
             </h2>
             <p className="max-w-md text-muted-foreground">
-              Admin dan pelatih tidak dihitung per akun. Semua klub mulai dari trial {TRIAL_DAYS}{" "}
-              hari tanpa kartu kredit, lalu pilih paket saat sudah yakin.
+              Yang dihitung hanya pemilik, admin, dan pelatih. Anggota tidak dibatasi dan tidak dihitung. Semua
+              modul termasuk di kedua paket.
             </p>
           </div>
           <div className="mt-10">
-            <PlanCards plans={plans} ctaHref="/daftar" />
+            <LandingPricing plans={plans} modules={modules} />
           </div>
           <p className="mt-6 max-w-2xl text-sm text-muted-foreground">
-            Anggota aktif adalah anggota yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
-            tim {APP_NAME} setelah pembayaran diterima; belum ada pembayaran online di dalam aplikasi.
+            Total dihitung dari jumlah pengguna internal saat itu. Paket diaktifkan oleh tim {APP_NAME} setelah
+            pembayaran diterima; belum ada pembayaran online di dalam aplikasi.
           </p>
         </section>
 

@@ -8,11 +8,13 @@ export function AuthPageShell({
   title,
   description,
   footer,
+  wide,
   children,
 }: {
   title: string;
   description: string;
   footer?: React.ReactNode;
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -24,7 +26,7 @@ export function AuthPageShell({
         </Link>
         <ThemeToggle />
       </div>
-      <Card className="w-full max-w-sm">
+      <Card className={wide ? "w-full max-w-3xl" : "w-full max-w-sm"}>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>

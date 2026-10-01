@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { requireOwner } from "@/lib/auth/owner";
 import { getOrganizationOverview } from "@/lib/data/organization";
 import { CreateTenantButton } from "@/components/organization/create-tenant-form";
 import { SwitchTenantButton } from "@/components/organization/switch-tenant-button";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -29,7 +31,12 @@ export default async function OrganizationPage() {
             {full ? " — batas tercapai. Hubungi admin platform untuk menambah." : ""}
           </p>
         </div>
-        <CreateTenantButton disabled={full} />
+        <div className="flex items-center gap-2">
+          <Link href="/admin/klub/langganan" className={buttonVariants({ variant: "outline" })}>
+            Langganan
+          </Link>
+          <CreateTenantButton disabled={full} />
+        </div>
       </div>
       <Table>
         <TableHeader>
