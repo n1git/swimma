@@ -6,7 +6,7 @@ Hierarchy: organization (owner) → tenants (klub) → coaches → members.
 
 - [x] Phase 0: preparation and plan. OK received; defaults accepted; push only to `main`.
 - [x] Phase 1: database, organizations
-- [ ] Phase 2: database, members
+- [x] Phase 2: database, members
 - [ ] Phase 3: auth and server
 - [ ] Phase 4: UI
 - [ ] Phase 5: cleanup and final checks
@@ -93,3 +93,10 @@ Scripts/docs: `scripts/seed-admin.ts`, `README.md`, `KAJIAN_PAKET.md`, `CLAUDE.m
 - Note: the migration moves owner credentials into `org_owners`; the old login route cannot sign them in until Phase 3. Do not deploy the migration before Phase 3.
 - Superadmin portal grouping by organization is a TS change, done in Phase 4.
 - Check commands: `npx next typegen` is needed once so `LayoutProps` types exist; `npm run lint` fails only on pre-existing `.claude/skills/**/*.cjs` files, so lint is run as `npx eslint app components lib proxy.ts scripts` (clean).
+
+## Phase 2 done
+
+- `supabase/migrations/20250101000013_members.sql`: children→members, child_id→member_id (tables, indexes, constraints, triggers, functions, views), `coach_id`/`contact_*`, parent data copied then `parent_id`, parent profiles, `is_parent`, `owns_child`, `enforce_children_parent_role` removed, `profiles.role in ('admin','coach')`, new members/bookings/subscriptions/invoices policies, `coach_owns_member`, coach-only-notes trigger, `search_similar_members`.
+- `enforce_booking_capacity` is now `security definer` (revoked from public) so a coach's capacity count is not cut by RLS.
+- Checked locally: counts before/after equal (members 3, bookings 1, subscriptions 1, invoices 1); coach sees only own members/bookings and can change only notes; owner of A sees nothing of B; forged tenant claim sees 0; other org owner sees only theirs; anon denied; deactivated owner loses data access in all tenants; SW001 fires at the 76th active member on Starter.
+- Note: the `tenants` select policy only checks `id = current_tenant_id()` (unchanged), so a deactivated owner's old JWT can still read its own tenant row; all data tables are blocked and the app guard redirects.
