@@ -13,10 +13,10 @@ export default function RegisterClubPage() {
   return (
     <AuthPageShell
       title="Daftarkan klub Anda"
-      description={`Gratis ${TRIAL_DAYS} hari. Tidak perlu kartu kredit; Anda langsung masuk sebagai admin klub.`}
+      description={`Gratis ${TRIAL_DAYS} hari. Tidak perlu kartu kredit; Anda langsung masuk sebagai pemilik klub.`}
       footer={
         <>
-          Sudah punya akun klub?{" "}
+          Sudah punya akun?{" "}
           <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
             Masuk
           </Link>

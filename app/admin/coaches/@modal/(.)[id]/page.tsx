@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Dialog } from "@/components/ui/dialog";
 import { CoachEditForm } from "@/components/coaches/coach-edit-form";
+import { CoachMembers } from "@/components/coaches/coach-members";
 
 export default async function CoachDetailModal({
   params,
@@ -26,6 +27,9 @@ export default async function CoachDetailModal({
         <p className="text-sm text-muted-foreground">{coach.email}</p>
       </div>
       <CoachEditForm coach={coach} />
+      <div className="mt-6">
+        <CoachMembers coachId={coach.id} />
+      </div>
     </Dialog>
   );
 }

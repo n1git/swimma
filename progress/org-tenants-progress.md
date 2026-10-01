@@ -8,7 +8,7 @@ Hierarchy: organization (owner) → tenants (klub) → coaches → members.
 - [x] Phase 1: database, organizations
 - [x] Phase 2: database, members
 - [x] Phase 3: auth and server
-- [ ] Phase 4: UI
+- [x] Phase 4: UI
 - [ ] Phase 5: cleanup and final checks
 
 ## Phase 0 findings
@@ -108,3 +108,12 @@ Scripts/docs: `scripts/seed-admin.ts`, `README.md`, `KAJIAN_PAKET.md`, `CLAUDE.m
 - Compile-forced UI done early: member form/edit form/list/detail, `app/parent` deleted, dashboard/billing/schedule/attendance/reports member renames.
 - Left for Phase 4: login and `/daftar` forms still show club code, org page `/admin/klub`, "Tambah klub" dialog, tenant switcher, coach detail "Anggota", coach home/roster scope, superadmin grouping by organization (+ raise `max_tenants`), landing wording.
 - Final grep note: `children` (React prop) matches the requested `child` grep everywhere; final check will exclude `children` and say so.
+
+## Phase 4 done
+
+- `/login` and `/daftar` without club code (register sends `ownerFullName`/`ownerEmail`).
+- Owner: `/admin/klub` org page (tenant list with member and coach counts, "Buka" switch, "Tambah klub" dialog, limit message), tenant switcher in the app shell, "Klub" nav item. Uses existing Table/Dialog/Select components only; no new visual style.
+- Members: shared `MemberFields` (coach select, contact fields); list shows coach and contact; coach detail and modal show "Anggota"; coach home shows "Anggota Saya".
+- Superadmin portal grouped by organization: tenant count / `max_tenants`, form to raise the limit, owner activate/deactivate (kills all tenants of that owner at once). Tenant slug no longer shown.
+- Landing and auth copy reworded (no parent / club code wording).
+- Final grep caveat: `parent` also matches `transparent` in Tailwind classes and `child` matches React `children`; check will exclude those two.

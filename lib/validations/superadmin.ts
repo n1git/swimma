@@ -17,3 +17,13 @@ export const STATUS_LABEL: Record<PlatformSubscriptionStatus, string> = {
   suspended: "Ditangguhkan",
   cancelled: "Dibatalkan",
 };
+
+export const organizationLimitSchema = z.object({
+  organizationId: z.string().uuid("Organisasi tidak valid"),
+  maxTenants: z.coerce.number().int("Batas klub tidak valid").min(1, "Batas klub minimal 1").max(1000, "Batas klub terlalu besar"),
+});
+
+export const ownerActiveSchema = z.object({
+  ownerId: z.string().uuid("Pemilik tidak valid"),
+  isActive: z.enum(["true", "false"]),
+});

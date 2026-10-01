@@ -9,7 +9,7 @@ export interface OwnerContext {
   tenantId: string;
 }
 
-async function loadOwner(profileId: string, tenantId: string): Promise<OwnerContext | null> {
+export async function loadOwner(profileId: string, tenantId: string): Promise<OwnerContext | null> {
   const { data } = await createAdminSupabaseClient()
     .from("profiles")
     .select("owner_id, org_owners(id, organization_id, is_active)")
@@ -34,8 +34,4 @@ export async function requireOwnerAction(): Promise<OwnerContext> {
   const owner = await loadOwner(session.sub, session.tenant_id);
   if (!owner) throw new UnauthorizedError("Hanya pemilik organisasi yang dapat melakukan aksi ini");
   return owner;
-}
-
-export async function isOwnerProfile(profileId: string, tenantId: string): Promise<boolean> {
-  return (await loadOwner(profileId, tenantId)) !== null;
 }

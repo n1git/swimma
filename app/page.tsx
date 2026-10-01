@@ -37,9 +37,9 @@ const NAV_LINKS = [
 const FEATURES = [
   {
     icon: Users,
-    title: "Anggota & keluarga",
+    title: "Anggota & pelatih",
     description:
-      "Data anak dan orang tua dalam satu profil, dengan deteksi duplikat otomatis saat mendaftarkan anggota baru.",
+      "Data anggota lengkap dengan pelatih utama dan kontak, dengan deteksi duplikat otomatis saat mendaftarkan anggota baru.",
   },
   {
     icon: CalendarClock,
@@ -51,13 +51,13 @@ const FEATURES = [
     icon: ClipboardCheck,
     title: "Presensi pelatih",
     description:
-      "Pelatih mencatat kehadiran langsung dari kelasnya sendiri, lengkap dengan catatan per anak.",
+      "Pelatih mencatat kehadiran langsung dari kelasnya sendiri, lengkap dengan catatan per anggota.",
   },
   {
     icon: Wallet,
     title: "Paket & tagihan",
     description:
-      "Langganan bulanan atau paket sesi dengan masa berlaku—tagihan terbit otomatis, orang tua tinggal melihat statusnya.",
+      "Langganan bulanan atau paket sesi dengan masa berlaku—tagihan terbit otomatis, admin tinggal memantau statusnya.",
   },
   {
     icon: BarChart3,
@@ -69,22 +69,22 @@ const FEATURES = [
     icon: ShieldCheck,
     title: "Laporan yang bisa dipercaya",
     description:
-      "Pendapatan, tunggakan, dan biaya operasional dihitung dari data yang sama dengan yang dilihat orang tua—bukan rekap terpisah.",
+      "Pendapatan, tunggakan, dan biaya operasional dihitung dari data yang sama dengan yang dilihat admin klub—bukan rekap terpisah.",
   },
 ];
 
 const STEPS = [
   {
     title: "Daftarkan klub Anda",
-    description: "Kode klub, admin pertama, dan lokasi kolam disiapkan dalam satu proses onboarding.",
+    description: "Akun pemilik, klub pertama, dan lokasi kolam disiapkan dalam satu proses onboarding.",
   },
   {
     title: "Atur jadwal & pelatih",
     description: "Buat jenis kelas, jadwal mingguan, dan akun pelatih dalam hitungan menit.",
   },
   {
-    title: "Anggota booking, pelatih presensi",
-    description: "Orang tua melihat jadwal anaknya, pelatih mencatat kehadiran langsung dari kelas.",
+    title: "Admin menjadwalkan, pelatih presensi",
+    description: "Admin mendaftarkan anggota ke kelas, pelatih mencatat kehadiran langsung dari kelas.",
   },
   {
     title: "Tagihan & laporan berjalan sendiri",
@@ -99,8 +99,8 @@ const DEMO_CLUBS = [
 ];
 
 const DEMO_OVERDUE = [
-  { child: "Adiba Ramadhani", due: "12 Sep 2026", amount: "Rp 450.000" },
-  { child: "Bagas Wicaksono", due: "15 Sep 2026", amount: "Rp 600.000" },
+  { member: "Adiba Ramadhani", due: "12 Sep 2026", amount: "Rp 450.000" },
+  { member: "Bagas Wicaksono", due: "15 Sep 2026", amount: "Rp 600.000" },
 ];
 
 export default async function Home() {
@@ -214,7 +214,7 @@ export default async function Home() {
               </p>
               <div className="mt-8 flex items-center gap-3 text-sm text-sidebar-muted-foreground">
                 <Building2 className="size-5 shrink-0" aria-hidden />
-                <span>Kelola sebanyak apapun klub dari satu dasbor yang sama.</span>
+                <span>Satu akun pemilik, banyak klub, dengan pindah klub tanpa masuk ulang.</span>
               </div>
             </div>
             <div className="flex flex-col gap-3">
@@ -240,7 +240,7 @@ export default async function Home() {
               Satu langganan per klub, sesuai jumlah anggota aktif.
             </h2>
             <p className="max-w-md text-muted-foreground">
-              Admin, pelatih, dan orang tua tidak dihitung per akun. Semua klub mulai dari trial {TRIAL_DAYS}{" "}
+              Admin dan pelatih tidak dihitung per akun. Semua klub mulai dari trial {TRIAL_DAYS}{" "}
               hari tanpa kartu kredit, lalu pilih paket saat sudah yakin.
             </p>
           </div>
@@ -248,7 +248,7 @@ export default async function Home() {
             <PlanCards plans={plans} ctaHref="/daftar" />
           </div>
           <p className="mt-6 max-w-2xl text-sm text-muted-foreground">
-            Anggota aktif adalah anak yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
+            Anggota aktif adalah anggota yang berstatus aktif di klub Anda. Setelah trial, paket diaktifkan oleh
             tim {APP_NAME} setelah pembayaran diterima; belum ada pembayaran online di dalam aplikasi.
           </p>
         </section>
@@ -278,15 +278,15 @@ export default async function Home() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Anak</TableHead>
+                    <TableHead>Anggota</TableHead>
                     <TableHead>Jatuh Tempo</TableHead>
                     <TableHead>Jumlah</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {DEMO_OVERDUE.map((row) => (
-                    <TableRow key={row.child}>
-                      <TableCell>{row.child}</TableCell>
+                    <TableRow key={row.member}>
+                      <TableCell>{row.member}</TableCell>
                       <TableCell>
                         <Badge variant="destructive">{row.due}</Badge>
                       </TableCell>

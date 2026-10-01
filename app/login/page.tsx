@@ -22,7 +22,7 @@ export default async function LoginPage({
   return (
     <AuthPageShell
       title={APP_NAME}
-      description="Masuk ke akun klub renang Anda"
+      description="Masuk dengan email dan kata sandi Anda"
       footer={
         <>
           Klub Anda belum terdaftar?{" "}

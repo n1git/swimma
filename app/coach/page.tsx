@@ -32,6 +32,13 @@ export default async function CoachSchedulePage() {
     .order("start_time");
 
   const classes = (data ?? []) as unknown as ClassRow[];
+  const { data: memberRows } = await supabase
+    .from("members")
+    .select("id, full_name, contact_name, contact_phone")
+    .eq("coach_id", session?.sub)
+    .eq("is_active", true)
+    .order("full_name");
+  const members = memberRows ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,6 +76,33 @@ export default async function CoachSchedulePage() {
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">
                 Belum ada kelas terjadwal.
+              </TableCell>
+            </TableRow>
+          ) : null}
+        </TableBody>
+      </Table>
+
+      <h2 className="text-xl font-semibold">Anggota Saya ({members.length})</h2>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nama</TableHead>
+            <TableHead>Kontak</TableHead>
+            <TableHead>Telepon</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.map((m) => (
+            <TableRow key={m.id}>
+              <TableCell>{m.full_name}</TableCell>
+              <TableCell>{m.contact_name ?? "-"}</TableCell>
+              <TableCell>{m.contact_phone ?? "-"}</TableCell>
+            </TableRow>
+          ))}
+          {members.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center text-muted-foreground">
+                Belum ada anggota.
               </TableCell>
             </TableRow>
           ) : null}

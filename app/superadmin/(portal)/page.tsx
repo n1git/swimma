@@ -4,6 +4,7 @@ import { formatJakartaDate, getJakartaDateString } from "@/lib/format";
 import { STATUS_LABEL, type PlatformSubscriptionStatus } from "@/lib/validations/superadmin";
 import { StatCard } from "@/components/reports/stat-card";
 import { SubscriptionForm } from "@/components/superadmin/subscription-form";
+import { OrganizationControls, type OwnerRow } from "@/components/superadmin/organization-controls";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -47,14 +48,19 @@ export default async function SuperadminDashboardPage() {
   await requireSuperadmin();
   const supabase = createAdminSupabaseClient();
 
-  const [{ data: tenants }, { data: subscriptions }, { data: plans }, { data: usage }] = await Promise.all([
-    supabase.from("tenants").select("id, name, slug, is_active, created_at").order("created_at", { ascending: false }),
+  const [{ data: tenants }, { data: subscriptions }, { data: plans }, { data: usage }, { data: organizations }, { data: owners }] = await Promise.all([
+    supabase
+      .from("tenants")
+      .select("id, name, is_active, created_at, organization_id")
+      .order("created_at", { ascending: false }),
     supabase.from("platform_subscriptions").select("tenant_id, plan_id, status, trial_ends_at, notes"),
     supabase
       .from("platform_plans")
       .select("id, name, price, billing_cycle, member_limit, location_limit, is_active")
       .order("price"),
     supabase.from("platform_tenant_usage").select("tenant_id, active_members, locations"),
+    supabase.from("organizations").select("id, name, max_tenants, created_at").order("created_at", { ascending: false }),
+    supabase.from("org_owners").select("id, organization_id, email, full_name, is_active"),
   ]);
 
   const planRows = (plans ?? []) as PlanRow[];
@@ -81,7 +87,7 @@ export default async function SuperadminDashboardPage() {
       <h1 className="text-2xl font-semibold">Dasbor Platform</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total klub" value={String((tenants ?? []).length)} />
+        <StatCard title="Total organisasi / klub" value={`${(organizations ?? []).length} / ${(tenants ?? []).length}`} />
         <StatCard
           title="Trial berjalan"
           value={String(allSubscriptions.filter((s) => s.status === "trial" && !isTrialExpired(s)).length)}
@@ -90,13 +96,28 @@ export default async function SuperadminDashboardPage() {
         <StatCard title={`Pendapatan bulanan (${activeCount} klub aktif)`} value={formatRupiah(Math.round(monthlyRevenue))} />
       </div>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Semua klub</h2>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Ubah status ke Aktif setelah pembayaran klub diterima. Ditangguhkan dan Dibatalkan langsung
-          memutus akses seluruh pengguna klub; datanya tetap tersimpan dan kembali saat status diubah
-          ke Trial atau Aktif.
-        </p>
+      <p className="max-w-3xl text-sm text-muted-foreground">
+        Ubah status ke Aktif setelah pembayaran klub diterima. Ditangguhkan dan Dibatalkan langsung memutus akses
+        seluruh pengguna klub; datanya tetap tersimpan dan kembali saat status diubah ke Trial atau Aktif. Pemilik
+        yang dinonaktifkan kehilangan akses ke semua klubnya sekaligus.
+      </p>
+
+      {(organizations ?? []).map((organization) => {
+        const orgTenants = (tenants ?? []).filter((t) => t.organization_id === organization.id);
+        const orgOwners = (owners ?? []).filter((o) => o.organization_id === organization.id) as unknown as OwnerRow[];
+        return (
+          <section key={organization.id} className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">{organization.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {orgTenants.length} / {organization.max_tenants} klub — terdaftar {formatDate(organization.created_at)}
+              </p>
+            </div>
+            <OrganizationControls
+              organizationId={organization.id}
+              maxTenants={organization.max_tenants}
+              owners={orgOwners}
+            />
         <Table>
           <TableHeader>
             <TableRow>
@@ -110,7 +131,7 @@ export default async function SuperadminDashboardPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(tenants ?? []).map((tenant) => {
+            {orgTenants.map((tenant) => {
               const subscription = subscriptionByTenant.get(tenant.id);
               const plan = subscription ? planById.get(subscription.plan_id) : undefined;
               const tenantUsage = usageByTenant.get(tenant.id);
@@ -123,7 +144,6 @@ export default async function SuperadminDashboardPage() {
                 <TableRow key={tenant.id}>
                   <TableCell>
                     <div className="font-medium">{tenant.name}</div>
-                    <div className="text-xs text-muted-foreground">Kode: {tenant.slug}</div>
                     <div className="text-xs text-muted-foreground">Terdaftar {formatDate(tenant.created_at)}</div>
                   </TableCell>
                   <TableCell>
@@ -166,16 +186,23 @@ export default async function SuperadminDashboardPage() {
                 </TableRow>
               );
             })}
-            {(tenants ?? []).length === 0 ? (
+            {orgTenants.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Belum ada klub. Klub baru muncul di sini setelah mendaftar lewat halaman /daftar.
+                  Organisasi ini belum punya klub.
                 </TableCell>
               </TableRow>
             ) : null}
           </TableBody>
         </Table>
-      </section>
+          </section>
+        );
+      })}
+      {(organizations ?? []).length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Belum ada organisasi. Organisasi baru muncul di sini setelah mendaftar lewat halaman /daftar.
+        </p>
+      ) : null}
     </div>
   );
 }

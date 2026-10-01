@@ -12,12 +12,14 @@ export function AppShell({
   fullName,
   roleLabel,
   clubName,
+  tenantSwitcher,
   children,
 }: {
   navItems: NavItem[];
   fullName: string;
   roleLabel: string;
   clubName: string;
+  tenantSwitcher?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -28,6 +30,7 @@ export function AppShell({
           <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
             {roleLabel}
           </span>
+          {tenantSwitcher}
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{fullName}</span>

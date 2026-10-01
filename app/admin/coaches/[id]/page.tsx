@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BackLink } from "@/components/shared/back-link";
 import { CoachEditForm } from "@/components/coaches/coach-edit-form";
+import { CoachMembers } from "@/components/coaches/coach-members";
 
 export default async function CoachDetailPage({
   params,
@@ -27,6 +28,7 @@ export default async function CoachDetailPage({
         <p className="text-sm text-muted-foreground">{coach.email}</p>
       </div>
       <CoachEditForm coach={coach} />
+      <CoachMembers coachId={coach.id} />
     </div>
   );
 }

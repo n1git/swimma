@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
-const FIELDS = ["tenantName", "tenantSlug", "adminFullName", "adminEmail", "password"] as const;
+const FIELDS = ["tenantName", "ownerFullName", "ownerEmail", "password"] as const;
 
 export function RegisterClubForm() {
   const router = useRouter();
@@ -53,30 +53,12 @@ export function RegisterClubForm() {
         <Input id="tenantName" name="tenantName" required maxLength={100} autoComplete="organization" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tenantSlug">Kode klub</Label>
-        <Input
-          id="tenantSlug"
-          name="tenantSlug"
-          required
-          minLength={3}
-          maxLength={40}
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          autoCapitalize="none"
-          spellCheck={false}
-          aria-describedby="tenantSlug-hint"
-        />
-        <p id="tenantSlug-hint" className="text-xs text-muted-foreground">
-          Diketik semua anggota klub saat masuk. Huruf kecil, angka, dan tanda hubung, misalnya
-          melati-swim.
-        </p>
+        <Label htmlFor="ownerFullName">Nama Anda</Label>
+        <Input id="ownerFullName" name="ownerFullName" required maxLength={100} autoComplete="name" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="adminFullName">Nama Anda</Label>
-        <Input id="adminFullName" name="adminFullName" required maxLength={100} autoComplete="name" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="adminEmail">Email</Label>
-        <Input id="adminEmail" name="adminEmail" type="email" required autoComplete="email" />
+        <Label htmlFor="ownerEmail">Email</Label>
+        <Input id="ownerEmail" name="ownerEmail" type="email" required autoComplete="email" />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Kata sandi</Label>

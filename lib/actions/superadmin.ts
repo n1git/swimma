@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperadminAction } from "@/lib/auth/superadmin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { trialEndsAtFromToday } from "@/lib/data/platform-plan";
-import { tenantSubscriptionSchema } from "@/lib/validations/superadmin";
+import { tenantSubscriptionSchema, organizationLimitSchema, ownerActiveSchema } from "@/lib/validations/superadmin";
 import { type ActionState } from "./types";
 
 export async function updateTenantSubscription(
@@ -65,4 +65,53 @@ export async function updateTenantSubscription(
 
   revalidatePath("/superadmin");
   return { ok: true, message: "Langganan klub diperbarui" };
+}
+
+export async function updateOrganizationLimit(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSuperadminAction();
+  } catch {
+    return { ok: false, error: "Sesi Anda berakhir. Masuk ulang sebagai admin platform." };
+  }
+
+  const parsed = organizationLimitSchema.safeParse({
+    organizationId: formData.get("organizationId"),
+    maxTenants: formData.get("maxTenants"),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
+
+  const { error } = await createAdminSupabaseClient()
+    .from("organizations")
+    .update({ max_tenants: parsed.data.maxTenants })
+    .eq("id", parsed.data.organizationId);
+  if (error) return { ok: false, error: "Gagal menyimpan batas klub" };
+
+  revalidatePath("/superadmin");
+  return { ok: true, message: "Batas klub diperbarui" };
+}
+
+export async function toggleOwnerActive(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    await requireSuperadminAction();
+  } catch {
+    return { ok: false, error: "Sesi Anda berakhir. Masuk ulang sebagai admin platform." };
+  }
+
+  const parsed = ownerActiveSchema.safeParse({
+    ownerId: formData.get("ownerId"),
+    isActive: formData.get("isActive"),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
+
+  const { error } = await createAdminSupabaseClient()
+    .from("org_owners")
+    .update({ is_active: parsed.data.isActive === "true" })
+    .eq("id", parsed.data.ownerId);
+  if (error) return { ok: false, error: "Gagal memperbarui status pemilik" };
+
+  revalidatePath("/superadmin");
+  return { ok: true, message: parsed.data.isActive === "true" ? "Pemilik diaktifkan" : "Pemilik dinonaktifkan" };
 }
