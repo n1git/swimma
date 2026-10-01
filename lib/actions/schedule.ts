@@ -79,22 +79,22 @@ export async function addBooking(
   formData: FormData
 ): Promise<ActionState> {
   await requireActionRole("admin");
-  const childId = String(formData.get("childId") ?? "");
-  if (!childId) {
-    return { ok: false, error: "Pilih anak yang akan didaftarkan" };
+  const memberId = String(formData.get("memberId") ?? "");
+  if (!memberId) {
+    return { ok: false, error: "Pilih anggota yang akan didaftarkan" };
   }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("bookings").insert({ child_id: childId, class_id: classId });
+  const { error } = await supabase.from("bookings").insert({ member_id: memberId, class_id: classId });
 
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, error: "Anak ini sudah terdaftar di kelas ini" };
+      return { ok: false, error: "Anggota ini sudah terdaftar di kelas ini" };
     }
     if (error.message?.includes("class is full")) {
       return { ok: false, error: "Kelas sudah penuh" };
     }
-    return { ok: false, error: "Gagal menambahkan anak ke kelas" };
+    return { ok: false, error: "Gagal menambahkan anggota ke kelas" };
   }
 
   revalidatePath(`/admin/schedule/${classId}`);
@@ -107,7 +107,7 @@ export async function removeBooking(_prevState: ActionState, formData: FormData)
   const classId = String(formData.get("classId"));
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.from("bookings").delete().eq("id", bookingId).select("id");
-  if (error || !data?.length) return { ok: false, error: "Gagal mengeluarkan anak dari kelas" };
+  if (error || !data?.length) return { ok: false, error: "Gagal mengeluarkan anggota dari kelas" };
   revalidatePath(`/admin/schedule/${classId}`);
-  return { ok: true, message: "Anak dikeluarkan dari kelas" };
+  return { ok: true, message: "Anggota dikeluarkan dari kelas" };
 }

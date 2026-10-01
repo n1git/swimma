@@ -9,10 +9,10 @@ import type { Lookup } from "@/lib/data/lookups";
 
 export function AddBookingForm({
   classId,
-  availableChildren,
+  availableMembers,
 }: {
   classId: string;
-  availableChildren: Lookup[];
+  availableMembers: Lookup[];
 }) {
   const addBookingWithClassId = addBooking.bind(null, classId);
   const [state, formAction, pending] = useActionState(addBookingWithClassId, {});
@@ -25,11 +25,11 @@ export function AddBookingForm({
         </Alert>
       ) : null}
       <div className="flex flex-1 flex-col gap-1.5">
-        <Select id="childId" name="childId" required defaultValue="">
+        <Select id="memberId" name="memberId" required defaultValue="">
           <option value="" disabled>
-            Pilih anak untuk didaftarkan
+            Pilih anggota untuk didaftarkan
           </option>
-          {availableChildren.map((c) => (
+          {availableMembers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>

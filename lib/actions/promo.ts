@@ -53,7 +53,6 @@ export async function createPromo(
   }
 
   revalidatePath("/admin/promo");
-  revalidatePath("/parent/promo");
   return { ok: true };
 }
 
@@ -64,6 +63,5 @@ export async function deletePromo(_prevState: ActionState, formData: FormData): 
   const { data, error } = await supabase.from("promo").delete().eq("id", promoId).select("id");
   if (error || !data?.length) return { ok: false, error: "Gagal menghapus promo" };
   revalidatePath("/admin/promo");
-  revalidatePath("/parent/promo");
   return { ok: true, message: "Promo dihapus" };
 }

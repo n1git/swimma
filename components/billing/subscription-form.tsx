@@ -12,10 +12,10 @@ import { useActionToast } from "@/components/shared/use-action-toast";
 import type { Lookup } from "@/lib/data/lookups";
 
 export function SubscriptionForm({
-  childOptions,
+  memberOptions,
   packages,
 }: {
-  childOptions: Lookup[];
+  memberOptions: Lookup[];
   packages: Lookup[];
 }) {
   const [state, formAction, pending] = useActionState(createSubscription, {});
@@ -29,12 +29,12 @@ export function SubscriptionForm({
         </Alert>
       ) : null}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="childId">Anak</Label>
-        <Select id="childId" name="childId" required defaultValue="">
+        <Label htmlFor="memberId">Anggota</Label>
+        <Select id="memberId" name="memberId" required defaultValue="">
           <option value="" disabled>
-            Pilih anak
+            Pilih anggota
           </option>
-          {childOptions.map((c) => (
+          {memberOptions.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>

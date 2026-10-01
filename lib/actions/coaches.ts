@@ -25,14 +25,12 @@ export async function createCoach(
   const input = parsed.data;
 
   const supabase = createAdminSupabaseClient();
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("tenant_id", session.tenant_id)
-    .eq("email", input.email)
-    .maybeSingle();
+  const [{ data: existing }, { data: ownerExisting }] = await Promise.all([
+    supabase.from("profiles").select("id").eq("email", input.email).is("owner_id", null).maybeSingle(),
+    supabase.from("org_owners").select("id").eq("email", input.email).maybeSingle(),
+  ]);
 
-  if (existing) {
+  if (existing || ownerExisting) {
     return { ok: false, error: "Email sudah terdaftar" };
   }
 
@@ -50,7 +48,7 @@ export async function createCoach(
     .single();
 
   if (error || !coach) {
-    return { ok: false, error: "Gagal membuat akun pelatih" };
+    return { ok: false, error: error?.code === "23505" ? "Email sudah terdaftar" : "Gagal membuat akun pelatih" };
   }
 
   const tempPassword = generateTempPassword();

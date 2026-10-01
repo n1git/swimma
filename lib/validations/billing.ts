@@ -19,7 +19,7 @@ export const packageSchema = z.discriminatedUnion("pricingMode", [
 ]);
 
 export const subscriptionSchema = z.object({
-  childId: z.string().uuid("Pilih anak"),
+  memberId: z.string().uuid("Pilih anggota"),
   packageId: z.string().uuid("Pilih paket"),
   startDate: z.string().min(1, "Tanggal mulai wajib diisi"),
 });

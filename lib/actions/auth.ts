@@ -29,19 +29,24 @@ export async function changePassword(
 
   const supabase = createAdminSupabaseClient();
   const passwordHash = await hashPassword(parsed.data.newPassword);
+  const validAfter = new Date(Math.floor(Date.now() / 1000) * 1000).toISOString();
 
-  await supabase
-    .from("auth_credentials")
-    .update({ password_hash: passwordHash })
-    .eq("profile_id", session.sub);
-
-  await supabase
+  const { data: own } = await supabase
     .from("profiles")
-    .update({
-      must_change_password: false,
-      sessions_valid_after: new Date(Math.floor(Date.now() / 1000) * 1000).toISOString(),
-    })
-    .eq("id", session.sub);
+    .select("owner_id")
+    .eq("id", session.sub)
+    .maybeSingle();
+
+  if (own?.owner_id) {
+    await supabase.from("org_owners").update({ password_hash: passwordHash }).eq("id", own.owner_id);
+    await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("owner_id", own.owner_id);
+  } else {
+    await supabase.from("auth_credentials").update({ password_hash: passwordHash }).eq("profile_id", session.sub);
+    await supabase
+      .from("profiles")
+      .update({ must_change_password: false, sessions_valid_after: validAfter })
+      .eq("id", session.sub);
+  }
 
   await createSession({
     id: session.sub,
@@ -49,6 +54,7 @@ export async function changePassword(
     fullName: session.full_name,
     role: session.app_role,
     tenantId: session.tenant_id,
+    orgId: session.org_id,
   });
 
   redirect(roleHome(session.app_role));

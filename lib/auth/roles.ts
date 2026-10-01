@@ -1,6 +1,8 @@
-export type AppRole = "admin" | "coach" | "parent";
+export type AppRole = "admin" | "coach";
 
-export const APP_ROLES: AppRole[] = ["admin", "coach", "parent"];
+export const APP_ROLES: AppRole[] = ["admin", "coach"];
+
+export const OWNER_HOME = "/admin/klub";
 
 export function roleHome(role: AppRole): string {
   switch (role) {
@@ -8,7 +10,5 @@ export function roleHome(role: AppRole): string {
       return "/admin";
     case "coach":
       return "/coach";
-    case "parent":
-      return "/parent";
   }
 }

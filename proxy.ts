@@ -8,9 +8,8 @@ const SUPERADMIN_AUDIENCE = "swimma-superadmin";
 const ROLE_HOMES: Record<string, string> = {
   admin: "/admin",
   coach: "/coach",
-  parent: "/parent",
 };
-const PROTECTED_PREFIXES = ["/admin", "/coach", "/parent", "/change-password"];
+const PROTECTED_PREFIXES = ["/admin", "/coach", "/change-password"];
 const GUEST_ONLY_PREFIXES = ["/login", "/daftar"];
 
 function getSecret() {
@@ -60,7 +59,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const roleSection = pathname.split("/")[1];
-  if (appRole && ["admin", "coach", "parent"].includes(roleSection) && roleSection !== appRole) {
+  if (appRole && ["admin", "coach"].includes(roleSection) && roleSection !== appRole) {
     return NextResponse.redirect(new URL(ROLE_HOMES[appRole] ?? "/login", request.url));
   }
 

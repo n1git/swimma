@@ -7,7 +7,7 @@ Hierarchy: organization (owner) → tenants (klub) → coaches → members.
 - [x] Phase 0: preparation and plan. OK received; defaults accepted; push only to `main`.
 - [x] Phase 1: database, organizations
 - [x] Phase 2: database, members
-- [ ] Phase 3: auth and server
+- [x] Phase 3: auth and server
 - [ ] Phase 4: UI
 - [ ] Phase 5: cleanup and final checks
 
@@ -100,3 +100,11 @@ Scripts/docs: `scripts/seed-admin.ts`, `README.md`, `KAJIAN_PAKET.md`, `CLAUDE.m
 - `enforce_booking_capacity` is now `security definer` (revoked from public) so a coach's capacity count is not cut by RLS.
 - Checked locally: counts before/after equal (members 3, bookings 1, subscriptions 1, invoices 1); coach sees only own members/bookings and can change only notes; owner of A sees nothing of B; forged tenant claim sees 0; other org owner sees only theirs; anon denied; deactivated owner loses data access in all tenants; SW001 fires at the 76th active member on Starter.
 - Note: the `tenants` select policy only checks `id = current_tenant_id()` (unchanged), so a deactivated owner's old JWT can still read its own tenant row; all data tables are blocked and the app guard redirects.
+
+## Phase 3 done
+
+- Auth: `roles.ts` (no parent, `OWNER_HOME=/admin/klub`), JWT/session carry `org_id`, `proxy.ts`, `guard.ts` (checks owner active), new `lib/auth/owner.ts` (`requireOwner`, `requireOwnerAction`), login route (email lookup in `org_owners` then coach/staff profiles, shared lockout and generic error), register route (single `register_organization` RPC), `changePassword` (owner branch revokes all owner sessions).
+- Server: `lib/actions/owner.ts` (`createTenant`, `switchTenant`), `lib/data/organization.ts`, `members.ts` (no parent logic, `createMember`/`updateMember`/`toggleMemberActive`), `coaches.ts` (global email check), `accounts.ts` (coaches only), billing/schedule/promo/lookups/dashboard renamed to members, validations, `seed-admin.ts` (org + owner + first tenant via RPC; env `SEED_TENANT_NAME`, optional `SEED_ORGANIZATION_NAME`, no slug).
+- Compile-forced UI done early: member form/edit form/list/detail, `app/parent` deleted, dashboard/billing/schedule/attendance/reports member renames.
+- Left for Phase 4: login and `/daftar` forms still show club code, org page `/admin/klub`, "Tambah klub" dialog, tenant switcher, coach detail "Anggota", coach home/roster scope, superadmin grouping by organization (+ raise `max_tenants`), landing wording.
+- Final grep note: `children` (React prop) matches the requested `child` grep everywhere; final check will exclude `children` and say so.

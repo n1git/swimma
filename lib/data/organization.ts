@@ -1,0 +1,69 @@
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+
+export interface OrganizationTenant {
+  id: string;
+  name: string;
+  isActive: boolean;
+  members: number;
+  coaches: number;
+}
+
+export interface OrganizationOverview {
+  name: string;
+  maxTenants: number;
+  tenants: OrganizationTenant[];
+}
+
+export async function getOrganizationOverview(organizationId: string, ownerId: string): Promise<OrganizationOverview | null> {
+  const supabase = createAdminSupabaseClient();
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name, max_tenants, org_owners!inner(id)")
+    .eq("id", organizationId)
+    .eq("org_owners.id", ownerId)
+    .maybeSingle();
+  if (!org) return null;
+
+  const { data: tenants } = await supabase
+    .from("tenants")
+    .select("id, name, is_active, created_at")
+    .eq("organization_id", organizationId)
+    .order("created_at");
+  const ids = (tenants ?? []).map((t) => t.id as string);
+
+  const [{ data: members }, { data: coaches }] = await Promise.all([
+    supabase.from("members").select("tenant_id").in("tenant_id", ids).eq("is_active", true),
+    supabase.from("profiles").select("tenant_id").in("tenant_id", ids).eq("role", "coach").eq("is_active", true),
+  ]);
+  const count = (rows: { tenant_id: string }[] | null, id: string) => (rows ?? []).filter((r) => r.tenant_id === id).length;
+
+  return {
+    name: org.name as string,
+    maxTenants: org.max_tenants as number,
+    tenants: (tenants ?? []).map((t) => ({
+      id: t.id as string,
+      name: t.name as string,
+      isActive: t.is_active as boolean,
+      members: count(members, t.id as string),
+      coaches: count(coaches, t.id as string),
+    })),
+  };
+}
+
+export interface SwitchableTenant {
+  id: string;
+  name: string;
+}
+
+export async function getSwitchableTenants(ownerId: string): Promise<SwitchableTenant[]> {
+  const { data } = await createAdminSupabaseClient()
+    .from("profiles")
+    .select("tenant_id, tenants!inner(name, is_active, created_at)")
+    .eq("owner_id", ownerId)
+    .eq("is_active", true)
+    .eq("tenants.is_active", true);
+  return (data ?? [])
+    .map((p) => ({ id: p.tenant_id as string, ...(p.tenants as unknown as { name: string; created_at: string }) }))
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .map(({ id, name }) => ({ id, name }));
+}

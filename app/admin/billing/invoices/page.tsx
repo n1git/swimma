@@ -36,10 +36,10 @@ export default async function InvoicesPage({
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("invoices")
-    .select("id, amount, status, due_date, period_start, period_end, children!inner(full_name)")
+    .select("id, amount, status, due_date, period_start, period_end, members!inner(full_name)")
     .order("due_date", { ascending: false });
   if (status) query = query.eq("status", status);
-  if (q) query = query.ilike("children.full_name", `%${q}%`);
+  if (q) query = query.ilike("members.full_name", `%${q}%`);
   const { data: invoices } = await query;
 
   return (
@@ -48,7 +48,7 @@ export default async function InvoicesPage({
       <h2 className="text-sm font-semibold text-muted-foreground">Daftar Tagihan</h2>
       <ListFilters
         fields={[
-          { type: "search", name: "q", placeholder: "Cari nama anak..." },
+          { type: "search", name: "q", placeholder: "Cari nama anggota..." },
           {
             type: "select",
             name: "status",
@@ -64,7 +64,7 @@ export default async function InvoicesPage({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Anak</TableHead>
+            <TableHead>Anggota</TableHead>
             <TableHead>Periode</TableHead>
             <TableHead>Jatuh Tempo</TableHead>
             <TableHead>Jumlah</TableHead>
@@ -81,11 +81,11 @@ export default async function InvoicesPage({
               due_date: string;
               period_start: string;
               period_end: string;
-              children: { full_name: string } | null;
+              members: { full_name: string } | null;
             };
             return (
               <TableRow key={row.id}>
-                <TableCell>{row.children?.full_name ?? "-"}</TableCell>
+                <TableCell>{row.members?.full_name ?? "-"}</TableCell>
                 <TableCell>
                   {row.period_start} – {row.period_end}
                 </TableCell>

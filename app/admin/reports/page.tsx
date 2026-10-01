@@ -36,7 +36,7 @@ export default async function ReportsPage() {
     supabase.from("report_cash_flow").select("month, cash_in, cash_out, net"),
     supabase.from("report_revenue_by_program").select("package_name, revenue"),
     supabase.from("report_payroll_cost").select("month, payroll_cost"),
-    supabase.from("report_member_counts").select("active_children, inactive_children").maybeSingle(),
+    supabase.from("report_member_counts").select("active_members, inactive_members").maybeSingle(),
   ]);
 
   const totalRevenue = (revenue ?? []).reduce((sum, r) => sum + Number(r.revenue), 0);
@@ -67,7 +67,7 @@ export default async function ReportsPage() {
         <StatCard title="Total Biaya Gaji" value={formatRupiah(totalPayrollCost)} />
         <StatCard
           title="Anggota Aktif / Nonaktif"
-          value={`${memberCounts?.active_children ?? 0} / ${memberCounts?.inactive_children ?? 0}`}
+          value={`${memberCounts?.active_members ?? 0} / ${memberCounts?.inactive_members ?? 0}`}
         />
       </div>
 

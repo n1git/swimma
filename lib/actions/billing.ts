@@ -67,7 +67,7 @@ export async function createSubscription(
 ): Promise<ActionState> {
   await requireActionRole("admin");
   const parsed = subscriptionSchema.safeParse({
-    childId: formData.get("childId"),
+    memberId: formData.get("memberId"),
     packageId: formData.get("packageId"),
     startDate: formData.get("startDate"),
   });
@@ -77,14 +77,14 @@ export async function createSubscription(
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.from("subscriptions").insert({
-    child_id: parsed.data.childId,
+    member_id: parsed.data.memberId,
     package_id: parsed.data.packageId,
     start_date: parsed.data.startDate,
   });
 
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, error: "Anak ini sudah memiliki langganan aktif" };
+      return { ok: false, error: "Anggota ini sudah memiliki langganan aktif" };
     }
     return { ok: false, error: "Gagal menyimpan langganan" };
   }

@@ -11,11 +11,13 @@ export async function createSession(user: {
   fullName: string;
   role: AppRole;
   tenantId: string;
+  orgId: string;
 }) {
   const token = await signSession({
     sub: user.id,
     app_role: user.role,
     tenant_id: user.tenantId,
+    org_id: user.orgId,
     email: user.email,
     full_name: user.fullName,
   });

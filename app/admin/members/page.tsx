@@ -13,12 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface ChildRow {
+interface MemberRow {
   id: string;
   full_name: string;
   date_of_birth: string;
   is_active: boolean;
-  profiles: { full_name: string } | null;
+  contact_name: string | null;
+  coach: { full_name: string } | null;
   locations: { name: string } | null;
 }
 
@@ -41,15 +42,15 @@ export default async function MembersPage({
   const { q, status, location } = await searchParams;
   const [supabase, locations] = await Promise.all([createServerSupabaseClient(), getLocations()]);
   let query = supabase
-    .from("children")
-    .select("id, full_name, date_of_birth, is_active, profiles(full_name), locations(name)")
+    .from("members")
+    .select("id, full_name, date_of_birth, is_active, contact_name, coach:profiles!coach_id(full_name), locations(name)")
     .order("full_name");
   if (q) query = query.ilike("full_name", `%${q}%`);
   if (status) query = query.eq("is_active", status === "active");
   if (location) query = query.eq("preferred_location_id", location);
   const { data } = await query;
 
-  const children = (data ?? []) as unknown as ChildRow[];
+  const members = (data ?? []) as unknown as MemberRow[];
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,7 +62,7 @@ export default async function MembersPage({
       </div>
       <ListFilters
         fields={[
-          { type: "search", name: "q", placeholder: "Cari nama anak..." },
+          { type: "search", name: "q", placeholder: "Cari nama anggota..." },
           {
             type: "select",
             name: "status",
@@ -82,29 +83,31 @@ export default async function MembersPage({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nama Anak</TableHead>
+            <TableHead>Nama Anggota</TableHead>
             <TableHead>Usia</TableHead>
-            <TableHead>Orang Tua</TableHead>
+            <TableHead>Pelatih</TableHead>
+            <TableHead>Kontak</TableHead>
             <TableHead>Lokasi</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {children.map((child) => (
-            <TableRow key={child.id}>
-              <TableCell>{child.full_name}</TableCell>
-              <TableCell>{calculateAge(child.date_of_birth)} th</TableCell>
-              <TableCell>{child.profiles?.full_name ?? "-"}</TableCell>
-              <TableCell>{child.locations?.name ?? "-"}</TableCell>
+          {members.map((member) => (
+            <TableRow key={member.id}>
+              <TableCell>{member.full_name}</TableCell>
+              <TableCell>{calculateAge(member.date_of_birth)} th</TableCell>
+              <TableCell>{member.coach?.full_name ?? "-"}</TableCell>
+              <TableCell>{member.contact_name ?? "-"}</TableCell>
+              <TableCell>{member.locations?.name ?? "-"}</TableCell>
               <TableCell>
-                <Badge variant={child.is_active ? "success" : "secondary"}>
-                  {child.is_active ? "Aktif" : "Nonaktif"}
+                <Badge variant={member.is_active ? "success" : "secondary"}>
+                  {member.is_active ? "Aktif" : "Nonaktif"}
                 </Badge>
               </TableCell>
               <TableCell>
                 <Link
-                  href={`/admin/members/${child.id}`}
+                  href={`/admin/members/${member.id}`}
                   className="text-sm font-medium text-primary underline-offset-2 hover:underline"
                 >
                   Kelola
@@ -112,9 +115,9 @@ export default async function MembersPage({
               </TableCell>
             </TableRow>
           ))}
-          {children.length === 0 ? (
+          {members.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
                 Belum ada anggota.
               </TableCell>
             </TableRow>

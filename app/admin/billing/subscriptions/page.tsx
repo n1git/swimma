@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getActiveChildren, getActivePackages } from "@/lib/data/lookups";
+import { getActiveMembers, getActivePackages } from "@/lib/data/lookups";
 import { cancelSubscription } from "@/lib/actions/billing";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { ListFilters } from "@/components/shared/list-filters";
@@ -33,14 +33,14 @@ export default async function SubscriptionsPage({
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("subscriptions")
-    .select("id, status, start_date, end_date, children(full_name), membership_packages(name)")
+    .select("id, status, start_date, end_date, members(full_name), membership_packages(name)")
     .order("start_date", { ascending: false });
   if (status) query = query.eq("status", status);
   if (packageId) query = query.eq("package_id", packageId);
-  const [{ data: subscriptions }, { data: usageRows }, childOptions, packages] = await Promise.all([
+  const [{ data: subscriptions }, { data: usageRows }, memberOptions, packages] = await Promise.all([
     query,
     supabase.from("subscription_usage").select("subscription_id, sessions_used, sessions_included"),
-    getActiveChildren(),
+    getActiveMembers(),
     getActivePackages(),
   ]);
   const usageBySubscription = new Map(
@@ -53,7 +53,7 @@ export default async function SubscriptionsPage({
         <h1 className="text-2xl font-semibold">Langganan</h1>
         <TriggerDialog trigger={<span className={buttonVariants({})}>Tambah Langganan</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah Langganan</h2>
-          <SubscriptionForm childOptions={childOptions} packages={packages} />
+          <SubscriptionForm memberOptions={memberOptions} packages={packages} />
         </TriggerDialog>
       </div>
       <h2 className="text-sm font-semibold text-muted-foreground">Daftar Langganan</h2>
@@ -81,7 +81,7 @@ export default async function SubscriptionsPage({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Anak</TableHead>
+            <TableHead>Anggota</TableHead>
             <TableHead>Paket</TableHead>
             <TableHead>Mulai</TableHead>
             <TableHead>Status</TableHead>
@@ -95,13 +95,13 @@ export default async function SubscriptionsPage({
               id: string;
               status: string;
               start_date: string;
-              children: { full_name: string } | null;
+              members: { full_name: string } | null;
               membership_packages: { name: string } | null;
             };
             const usage = usageBySubscription.get(row.id);
             return (
               <TableRow key={row.id}>
-                <TableCell>{row.children?.full_name ?? "-"}</TableCell>
+                <TableCell>{row.members?.full_name ?? "-"}</TableCell>
                 <TableCell>{row.membership_packages?.name ?? "-"}</TableCell>
                 <TableCell>{row.start_date}</TableCell>
                 <TableCell>

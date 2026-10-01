@@ -30,7 +30,7 @@ export default async function AttendancePage({
       .maybeSingle(),
     supabase
       .from("bookings")
-      .select("id, is_attended, notes, children(full_name)")
+      .select("id, is_attended, notes, members(full_name)")
       .eq("class_id", classId),
   ]);
 
@@ -48,13 +48,13 @@ export default async function AttendancePage({
       id: string;
       is_attended: boolean;
       notes: string | null;
-      children: { full_name: string };
+      members: { full_name: string };
     };
     return {
       id: booking.id,
       isAttended: booking.is_attended,
       notes: booking.notes,
-      childName: booking.children.full_name,
+      memberName: booking.members.full_name,
     };
   });
 

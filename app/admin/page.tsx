@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Dasbor Admin</h1>
 
-      <PlanStatusBanner subscription={subscription} activeMemberCount={data.activeChildren} />
+      <PlanStatusBanner subscription={subscription} activeMemberCount={data.activeMembers} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Pendapatan" value={formatRupiah(data.totalRevenue)} />
@@ -59,7 +59,7 @@ export default async function AdminDashboardPage() {
         <StatCard title="Saldo Kas" value={formatRupiah(data.cashBalance)} />
         <StatCard
           title="Anggota Aktif / Nonaktif"
-          value={`${data.activeChildren} / ${data.inactiveChildren}`}
+          value={`${data.activeMembers} / ${data.inactiveMembers}`}
         />
       </div>
 
@@ -72,7 +72,7 @@ export default async function AdminDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Anak</TableHead>
+                  <TableHead>Anggota</TableHead>
                   <TableHead>Jatuh Tempo</TableHead>
                   <TableHead>Jumlah</TableHead>
                 </TableRow>
@@ -80,7 +80,7 @@ export default async function AdminDashboardPage() {
               <TableBody>
                 {data.overdueInvoices.map((inv) => (
                   <TableRow key={inv.id}>
-                    <TableCell>{inv.childName}</TableCell>
+                    <TableCell>{inv.memberName}</TableCell>
                     <TableCell>
                       <Badge variant="destructive">{formatDate(inv.dueDate)}</Badge>
                     </TableCell>
@@ -107,7 +107,7 @@ export default async function AdminDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Anak</TableHead>
+                  <TableHead>Anggota</TableHead>
                   <TableHead>Paket</TableHead>
                   <TableHead>Berakhir</TableHead>
                 </TableRow>
@@ -115,7 +115,7 @@ export default async function AdminDashboardPage() {
               <TableBody>
                 {data.expiringSubscriptions.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell>{s.childName}</TableCell>
+                    <TableCell>{s.memberName}</TableCell>
                     <TableCell>{s.packageName}</TableCell>
                     <TableCell>
                       <Badge variant="warning">{formatDate(s.endDate)}</Badge>

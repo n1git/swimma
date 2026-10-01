@@ -19,7 +19,7 @@ export interface AttendanceBooking {
   id: string;
   isAttended: boolean;
   notes: string | null;
-  childName: string;
+  memberName: string;
 }
 
 export function AttendanceRoster({
@@ -35,7 +35,7 @@ export function AttendanceRoster({
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return bookings;
-    return bookings.filter((b) => b.childName.toLowerCase().includes(term));
+    return bookings.filter((b) => b.memberName.toLowerCase().includes(term));
   }, [bookings, search]);
 
   return (
@@ -48,7 +48,7 @@ export function AttendanceRoster({
 
       {bookings.length > 5 ? (
         <Input
-          placeholder="Cari nama anak..."
+          placeholder="Cari nama anggota..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
@@ -58,7 +58,7 @@ export function AttendanceRoster({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nama Anak</TableHead>
+            <TableHead>Nama Anggota</TableHead>
             <TableHead>Kehadiran</TableHead>
             <TableHead>Catatan (opsional)</TableHead>
             <TableHead>Aksi</TableHead>
@@ -67,7 +67,7 @@ export function AttendanceRoster({
         <TableBody>
           {visible.map((b) => (
             <TableRow key={b.id}>
-              <TableCell className="font-medium">{b.childName}</TableCell>
+              <TableCell className="font-medium">{b.memberName}</TableCell>
               <TableCell>
                 <Badge variant={b.isAttended ? "success" : "outline"}>
                   {b.isAttended ? "Hadir" : "Belum Hadir"}
@@ -106,7 +106,7 @@ export function AttendanceRoster({
               <TableCell colSpan={4} className="text-center text-muted-foreground">
                 {bookings.length === 0
                   ? "Belum ada peserta terdaftar di kelas ini."
-                  : "Tidak ada anak yang cocok dengan pencarian."}
+                  : "Tidak ada anggota yang cocok dengan pencarian."}
               </TableCell>
             </TableRow>
           ) : null}

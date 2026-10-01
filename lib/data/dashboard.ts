@@ -6,8 +6,8 @@ export interface DashboardData {
   outstandingCount: number;
   outstandingAmount: number;
   totalPayrollCost: number;
-  activeChildren: number;
-  inactiveChildren: number;
+  activeMembers: number;
+  inactiveMembers: number;
   cashBalance: number;
   activePromoCount: number;
   todaysClasses: {
@@ -22,13 +22,13 @@ export interface DashboardData {
   }[];
   expiringSubscriptions: {
     id: string;
-    childName: string;
+    memberName: string;
     packageName: string;
     endDate: string;
   }[];
   overdueInvoices: {
     id: string;
-    childName: string;
+    memberName: string;
     amount: number;
     dueDate: string;
   }[];
@@ -61,7 +61,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     supabase.from("report_revenue").select("revenue"),
     supabase.from("report_outstanding").select("outstanding_count, outstanding_amount").maybeSingle(),
     supabase.from("report_payroll_cost").select("payroll_cost"),
-    supabase.from("report_member_counts").select("active_children, inactive_children").maybeSingle(),
+    supabase.from("report_member_counts").select("active_members, inactive_members").maybeSingle(),
     supabase
       .from("cash_ledger_with_balance")
       .select("id, entry_date, category, direction, amount, running_balance")
@@ -80,14 +80,14 @@ export async function getDashboardData(): Promise<DashboardData> {
       .order("start_time"),
     supabase
       .from("subscriptions")
-      .select("id, end_date, children(full_name), membership_packages(name)")
+      .select("id, end_date, members(full_name), membership_packages(name)")
       .eq("status", "active")
       .gte("end_date", today)
       .lte("end_date", in7Days)
       .order("end_date"),
     supabase
       .from("invoices")
-      .select("id, amount, due_date, children(full_name)")
+      .select("id, amount, due_date, members(full_name)")
       .eq("status", "outstanding")
       .lt("due_date", today)
       .order("due_date")
@@ -102,8 +102,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     outstandingCount: outstanding?.outstanding_count ?? 0,
     outstandingAmount: Number(outstanding?.outstanding_amount ?? 0),
     totalPayrollCost,
-    activeChildren: memberCounts?.active_children ?? 0,
-    inactiveChildren: memberCounts?.inactive_children ?? 0,
+    activeMembers: memberCounts?.active_members ?? 0,
+    inactiveMembers: memberCounts?.inactive_members ?? 0,
     cashBalance: Number(cashEntries?.[0]?.running_balance ?? 0),
     activePromoCount: promoCount ?? 0,
     todaysClasses: (todaysClasses ?? []).map((c) => {
@@ -132,12 +132,12 @@ export async function getDashboardData(): Promise<DashboardData> {
       const row = s as unknown as {
         id: string;
         end_date: string;
-        children: { full_name: string } | null;
+        members: { full_name: string } | null;
         membership_packages: { name: string } | null;
       };
       return {
         id: row.id,
-        childName: row.children?.full_name ?? "-",
+        memberName: row.members?.full_name ?? "-",
         packageName: row.membership_packages?.name ?? "-",
         endDate: row.end_date,
       };
@@ -147,11 +147,11 @@ export async function getDashboardData(): Promise<DashboardData> {
         id: string;
         amount: number;
         due_date: string;
-        children: { full_name: string } | null;
+        members: { full_name: string } | null;
       };
       return {
         id: row.id,
-        childName: row.children?.full_name ?? "-",
+        memberName: row.members?.full_name ?? "-",
         amount: Number(row.amount),
         dueDate: row.due_date,
       };

@@ -24,7 +24,7 @@ export default async function ClassDetailModal({
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const [{ data: cls }, { data: bookings }, { data: allChildren }] = await Promise.all([
+  const [{ data: cls }, { data: bookings }, { data: allMembers }] = await Promise.all([
     supabase
       .from("classes")
       .select(
@@ -34,18 +34,18 @@ export default async function ClassDetailModal({
       .maybeSingle(),
     supabase
       .from("bookings")
-      .select("id, is_attended, children(id, full_name)")
+      .select("id, is_attended, members(id, full_name)")
       .eq("class_id", id),
-    supabase.from("children").select("id, full_name").eq("is_active", true).order("full_name"),
+    supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
   ]);
 
   if (!cls) notFound();
 
-  const bookedChildIds = new Set(
-    (bookings ?? []).map((b) => (b as unknown as { children: { id: string } }).children.id)
+  const bookedMemberIds = new Set(
+    (bookings ?? []).map((b) => (b as unknown as { members: { id: string } }).members.id)
   );
-  const availableChildren = (allChildren ?? [])
-    .filter((c) => !bookedChildIds.has(c.id))
+  const availableMembers = (allMembers ?? [])
+    .filter((c) => !bookedMemberIds.has(c.id))
     .map((c) => ({ id: c.id, name: c.full_name }));
 
   const info = cls as unknown as {
@@ -87,7 +87,7 @@ export default async function ClassDetailModal({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nama Anak</TableHead>
+              <TableHead>Nama Anggota</TableHead>
               <TableHead>Kehadiran</TableHead>
               <TableHead>Aksi</TableHead>
             </TableRow>
@@ -97,11 +97,11 @@ export default async function ClassDetailModal({
               const booking = b as unknown as {
                 id: string;
                 is_attended: boolean;
-                children: { full_name: string };
+                members: { full_name: string };
               };
               return (
                 <TableRow key={booking.id}>
-                  <TableCell>{booking.children.full_name}</TableCell>
+                  <TableCell>{booking.members.full_name}</TableCell>
                   <TableCell>{booking.is_attended ? "Hadir" : "Belum"}</TableCell>
                   <TableCell>
                     <ActionForm action={removeBooking}>
@@ -124,7 +124,7 @@ export default async function ClassDetailModal({
             ) : null}
           </TableBody>
         </Table>
-        <AddBookingForm classId={id} availableChildren={availableChildren} />
+        <AddBookingForm classId={id} availableMembers={availableMembers} />
       </div>
     </Dialog>
   );

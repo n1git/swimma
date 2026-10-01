@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "./session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { roleHome, type AppRole } from "./roles";
 
 export class UnauthorizedError extends Error {}
@@ -13,7 +14,7 @@ export async function requireRole(role: AppRole) {
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active, must_change_password, full_name, sessions_valid_after, tenants(is_active)")
+    .select("id, is_active, must_change_password, full_name, sessions_valid_after, owner_id, tenants(is_active)")
     .eq("id", session.sub)
     .maybeSingle();
 
@@ -30,6 +31,14 @@ export async function requireRole(role: AppRole) {
   if (!tenant?.is_active) {
     redirect("/api/auth/session-ended?reason=suspended");
   }
+  if (profile.owner_id) {
+    const { data: owner } = await createAdminSupabaseClient()
+      .from("org_owners")
+      .select("is_active")
+      .eq("id", profile.owner_id)
+      .maybeSingle();
+    if (!owner?.is_active) redirect("/api/auth/session-ended?reason=deactivated");
+  }
   if (profile.must_change_password) {
     redirect("/change-password");
   }
@@ -39,6 +48,7 @@ export async function requireRole(role: AppRole) {
     email: session.email,
     role: session.app_role,
     tenantId: session.tenant_id,
+    orgId: session.org_id,
     fullName: profile.full_name as string,
   };
 }

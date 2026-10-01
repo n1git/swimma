@@ -28,10 +28,10 @@ export async function getActiveCoaches(): Promise<Lookup[]> {
   return (data ?? []).map((c) => ({ id: c.id, name: c.full_name }));
 }
 
-export async function getActiveChildren(): Promise<Lookup[]> {
+export async function getActiveMembers(): Promise<Lookup[]> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
-    .from("children")
+    .from("members")
     .select("id, full_name")
     .eq("is_active", true)
     .order("full_name");
