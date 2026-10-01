@@ -2,36 +2,58 @@
 
 Multi-tenant swimming club management platform: membership, scheduling,
 attendance, billing, cash ledger, coach payroll, and promo announcements, for
-admin/coach/parent roles. One deployment can serve many independent clubs
-(tenants), each with its own isolated data and branding.
+owner/admin/coach roles. One deployment serves many organizations, each
+owning one or more independent clubs (tenants) with isolated data and
+branding. Members (swimmers) have no login.
 
 Stack: Next.js (App Router) + TypeScript, Supabase Postgres with Row Level
 Security, Tailwind CSS, Vercel deployment.
 
 ## Multi-tenancy model
 
-Every club is a row in `tenants`. All club-owned data (profiles, locations,
-class types, children, classes, bookings, packages, subscriptions, invoices,
+Hierarchy: **organization (owner account) → tenants (clubs) → coaches →
+members**. An organization (`organizations`) has one or more owners
+(`org_owners`) and up to `max_tenants` clubs (default 3, only a superadmin
+raises it; enforced by a trigger, error `SW004`).
+
+Every club is a row in `tenants` with a mandatory `organization_id`. All
+club-owned data (profiles, locations, class types, members, classes, bookings, packages, subscriptions, invoices,
 cash ledger, payroll, promo) carries a `tenant_id` and is isolated by
 Postgres Row Level Security — the database, not the frontend, is the
 isolation boundary. `current_tenant_id()` reads the tenant id embedded in the
 caller's session JWT, and every RLS policy filters by it; cross-tenant
-foreign key references (e.g. a booking's child and class must belong to the
+foreign key references (e.g. a booking's member and class must belong to the
 same tenant) are additionally rejected by trigger checks at write time.
 
-A profile (login identity) belongs to exactly one tenant with one role
-(admin/coach/parent). The same email address can hold separate accounts in
-different clubs. A club's own name, logo, and primary color live in
+A profile belongs to exactly one tenant with one role (`admin` or `coach`).
+Each member has one primary coach (`members.coach_id`, same tenant, role
+coach) plus plain-text `contact_name` / `contact_phone`. Coaches see only
+their own members and classes. An email is unique across owners and coach
+profiles (database-enforced), so a coach belongs to one club only. A club's own name, logo, and primary color live in
 `tenants` and are edited from Admin -> Pengaturan; they are not environment
 variables.
 
 ## Auth model
 
-Authentication is **custom** (bcrypt password hashes in our own
-`auth_credentials` table), not Supabase Auth. On login (email + password +
-club code), the server verifies the password and mints its own JWT signed
-with the Supabase project's JWT secret, carrying `sub` (profile id),
-`tenant_id`, and `app_role` (admin/coach/parent). That JWT is stored in an
+Authentication is **custom** (bcrypt password hashes in `auth_credentials` for coaches
+and in `org_owners` for owners), not Supabase Auth. There is one `/login`
+(email + password, no club code). The server looks the email up in
+`org_owners` first, then in coach/staff profiles, with the same generic error
+for unknown email and wrong password, plus per-IP rate limit and a 15-minute
+lockout after 5 failures. It then mints its own JWT signed with the Supabase
+project's JWT secret, carrying `sub` (profile id), `tenant_id`, `org_id` and
+`app_role` (admin/coach).
+
+An owner has no tenant-specific password: each owner gets one `admin`
+profile per club (`profiles.owner_id`) and signs in as the profile of their
+default club, landing on `/admin/klub` (club list with member and coach
+counts, "Tambah klub"). The tenant switcher re-mints the JWT for the owner's
+admin profile in another club after checking `owner_id` in the database, with
+no second password prompt. The owner is not an RLS role: RLS still sees a
+tenant `admin`. Deactivating an owner (`org_owners.is_active`) removes access
+to all their clubs at once; changing the owner password revokes every
+owner session (`sessions_valid_after`). Coaches go to `/coach`.
+`/superadmin/login` stays a separate URL with its own isolated session. That JWT is stored in an
 httpOnly cookie and attached as the `Authorization` header on every Supabase
 request, so Postgres RLS (`auth.uid()`, `auth.jwt()`) enforces both role and
 tenant scoping exactly as it would with Supabase Auth.
@@ -44,8 +66,10 @@ tokens won't validate against PostgREST — in that case use Supabase's
 Third-Party Auth (JWKS) support instead of `lib/auth/jwt.ts` as written.
 
 The service-role key is used only in a few narrow, reviewed places (never in
-client-reachable code): login lookup, creating a parent/coach account
-together with its credentials row, the monthly invoice-generation cron and
+client-reachable code): login lookup, owner reads of `org_owners` and the
+organization overview, creating a coach account together with its
+credentials row, the `register_organization` / `create_tenant_for_owner`
+functions (execute granted to `service_role` only), the monthly invoice-generation cron and
 its "generate now" admin button. Every other read/write goes through the
 per-request JWT-bound client, so RLS is the real security boundary. Every
 service-role write to a tenant-scoped table passes `tenant_id` explicitly
@@ -54,7 +78,7 @@ read).
 
 Deactivating an account (`profiles.is_active = false`) cuts off all DB
 access immediately, even though its JWT technically hasn't expired — this is
-enforced inside the `is_admin()` / `is_coach()` / `is_parent()` SQL helper
+enforced inside the `is_admin()` / `is_coach()` SQL helper
 functions, not just in individual policies.
 
 ## Local setup
@@ -100,22 +124,24 @@ Because isolation is enforced at the database level (RLS + `tenant_id`),
 new clubs are onboarded onto the **same** deployment and Supabase project —
 no new Supabase project or Vercel deployment needed. Two ways in:
 
-- **Self-service** (`/daftar`): a club owner enters club name, club code,
-  and their own name/email/password and lands in `/admin` already logged
-  in. The club starts on the **Trial** plan (14 days, 20 active children,
-  1 location). If the Trial plan is missing or any step fails, nothing is
-  left behind (tenant/profile/credentials are rolled back).
-- **Manual** (`npm run seed:admin` with a new `SEED_TENANT_SLUG`/
-  `SEED_TENANT_NAME`). Clubs created this way have no platform
-  subscription row and are therefore **not** limited until a superadmin
-  assigns them a plan.
+- **Self-service** (`/daftar`): enter club name and your own
+  name/email/password. One database call (`register_organization`) creates
+  the organization, owner, first club, owner admin profile and **Trial**
+  subscription (14 days, 20 active members, 1 location), so nothing is left
+  half-created. The owner lands on `/admin/klub`.
+- **More clubs**: the owner adds clubs from `/admin/klub` ("Tambah klub",
+  `create_tenant_for_owner`); each also starts on Trial, up to
+  `organizations.max_tenants`.
+- **Manual** (`npm run seed:admin` with `SEED_TENANT_NAME` and optionally
+  `SEED_ORGANIZATION_NAME`) uses the same function.
 
-The new admin then sets their own club name/logo/color from Admin ->
-Pengaturan.
+Clubs that existed before the organization migration and have no platform
+subscription row are still **not** limited until a superadmin assigns a plan.
+The owner then sets club name/logo/color from Admin -> Pengaturan.
 
 ## Platform billing (superadmin)
 
-Swimma bills clubs separately from how a club bills its parents. A
+Swimma bills clubs separately from how a club bills its members. A
 superadmin is not tied to any tenant and manages every club's plan and
 status from `/superadmin`.
 
@@ -129,10 +155,12 @@ status from `/superadmin`.
   carries `{ sub, superadmin: true, email, full_name }` with audience
   `swimma-superadmin`, is never sent to Supabase as a bearer token, and a
   tenant session JWT is rejected there. Every portal query uses the
-  service-role client; `superadmins`, `platform_tenant_usage`, and writes to
+  service-role client; the portal groups clubs by organization and can raise
+  `max_tenants` or deactivate an owner. `superadmins`, `platform_tenant_usage`,
+  `platform_organization_usage`, `org_owners` and writes to
   `platform_subscriptions` are unreachable from `anon`/`authenticated`.
 - Plans live in `platform_plans` (`member_limit`, `location_limit`; `null`
-  means unlimited). Limits are enforced by triggers on `children`
+  means unlimited). Limits are enforced by triggers on `members`
   (insert and re-activation) and `locations`, error codes `SW001`/`SW002`.
   A tenant without a `platform_subscriptions` row is not limited.
 - Status **suspended** or **cancelled** sets `tenants.is_active = false`:
@@ -169,11 +197,18 @@ deployment serves every tenant:
   later.
 - WhatsApp and payment-gateway integrations are left as TODOs — invoices are
   marked paid manually by an admin for now.
-- No self-registration: admin creates parent and coach accounts (with a
-  temporary password that must be changed on first login) since letting
-  parents register themselves would undermine the duplicate-child check.
+- Admin creates coach accounts (temporary password, changed on first
+  login). Members have no login and there is no parent-facing area.
+- Not built: organization-level billing or plans, a coach in several clubs,
+  moving a club between organizations, member login.
 
 ## Changelog
+
+### 2026-10-01
+
+- Organizations own many clubs (`max_tenants`, `SW004`); one `/login` for owner, admin and coach; owner club list and switcher.
+- Parent and child accounts removed: `members` with `coach_id` and contact fields; coaches see only their own members.
+- Migrations `20250101000012_organizations.sql` and `20250101000013_members.sql`; superadmin portal grouped by organization.
 
 ### 2026-09-26
 
