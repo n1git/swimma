@@ -6,7 +6,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
 import { coachSchema, coachUpdateSchema } from "@/lib/validations/coaches";
-import { type ActionState } from "./types";
+import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 export async function createCoach(
   _prevState: ActionState,
@@ -48,7 +48,8 @@ export async function createCoach(
     .single();
 
   if (error || !coach) {
-    return { ok: false, error: error?.code === "23505" ? "Email sudah terdaftar" : "Gagal membuat akun pelatih" };
+    if (error?.code === "23505") return { ok: false, error: "Email sudah terdaftar" };
+    return { ok: false, error: error && PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal membuat akun pelatih" };
   }
 
   const tempPassword = generateTempPassword();
@@ -108,7 +109,9 @@ export async function toggleCoachActive(_prevState: ActionState, formData: FormD
     .eq("id", coachId)
     .eq("role", "coach")
     .select("id");
-  if (error || !data?.length) return { ok: false, error: "Gagal memperbarui status pelatih" };
+  if (error || !data?.length) {
+    return { ok: false, error: error && PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal memperbarui status pelatih" };
+  }
 
   revalidatePath("/admin/coaches");
   revalidatePath(`/admin/coaches/${coachId}`);

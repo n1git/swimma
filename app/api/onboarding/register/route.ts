@@ -3,7 +3,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { OWNER_HOME } from "@/lib/auth/roles";
-import { TRIAL_DAYS } from "@/lib/config";
+import { serverQuote } from "@/lib/data/platform-pricing";
 import { registerClubSchema } from "@/lib/validations/onboarding";
 import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 
@@ -20,7 +20,12 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const { tenantName, ownerFullName, ownerEmail, password } = parsed.data;
+  const { tenantName, ownerFullName, ownerEmail, password, planCode, billingPeriod, estimatedUsers } = parsed.data;
+
+  const quote = await serverQuote(planCode, billingPeriod, estimatedUsers);
+  if (!quote) {
+    return NextResponse.json({ error: "Paket tidak tersedia" }, { status: 400 });
+  }
 
   const { data, error } = await createAdminSupabaseClient().rpc("register_organization", {
     p_organization_name: tenantName,
@@ -28,7 +33,8 @@ export async function POST(request: Request) {
     p_owner_name: ownerFullName,
     p_owner_email: ownerEmail,
     p_password_hash: await hashPassword(password),
-    p_trial_days: TRIAL_DAYS,
+    p_plan: planCode,
+    p_period: billingPeriod,
   });
 
   const created = (data as { organization_id: string; tenant_id: string; profile_id: string }[] | null)?.[0];
@@ -36,8 +42,8 @@ export async function POST(request: Request) {
     if (error?.code === "23505") {
       return NextResponse.json({ error: "Email sudah terdaftar. Masuk dengan email tersebut." }, { status: 409 });
     }
-    if (error?.message.includes("trial plan")) {
-      return NextResponse.json({ error: "Pendaftaran klub sedang ditutup. Coba lagi nanti." }, { status: 503 });
+    if (error?.message.includes("plan not available")) {
+      return NextResponse.json({ error: "Paket tidak tersedia" }, { status: 400 });
     }
     return NextResponse.json({ error: "Gagal mendaftarkan klub" }, { status: 500 });
   }
@@ -51,5 +57,5 @@ export async function POST(request: Request) {
     orgId: created.organization_id,
   });
 
-  return NextResponse.json({ redirectTo: OWNER_HOME });
+  return NextResponse.json({ redirectTo: OWNER_HOME, quote });
 }

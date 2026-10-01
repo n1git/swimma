@@ -17,7 +17,7 @@ export default async function OrganizationPage() {
   const overview = await getOrganizationOverview(owner.organizationId, owner.ownerId);
   if (!overview) return null;
 
-  const full = overview.tenants.length >= overview.maxTenants;
+  const full = overview.clubLimit !== null && overview.tenants.length >= overview.clubLimit;
 
   return (
     <div className="flex flex-col gap-4">
@@ -25,7 +25,7 @@ export default async function OrganizationPage() {
         <div>
           <h1 className="text-2xl font-semibold">{overview.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {overview.tenants.length} / {overview.maxTenants} klub
+            {overview.tenants.length}{overview.clubLimit !== null ? ` / ${overview.clubLimit}` : ""} klub
             {full ? " — batas tercapai. Hubungi admin platform untuk menambah." : ""}
           </p>
         </div>

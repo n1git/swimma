@@ -6,7 +6,7 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 
 - [x] Phase 0: preparation and plan. OK received; all defaults accepted; push only to `main`.
 - [x] Phase 1: database (`20250101000014_org_billing.sql`)
-- [ ] Phase 2: server
+- [x] Phase 2: server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
@@ -65,3 +65,11 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 - `supabase/migrations/20250101000014_org_billing.sql`: `subscription_plans` (seeded), `platform_modules` (seeded), `organization_subscriptions` (RLS: org admins read, writes service role), backfill, `platform_quote`, `organization_internal_users`, SW001/SW002 triggers and functions dropped, `enforce_billing_gate` (SW003; no-op while the organization has no club) wired to members, club insert, non-owner admin/coach profiles and owner insert, SW004 trigger on club insert (locks the subscription row) and on plan/override change, new `register_organization(.., plan, period)`, `create_tenant_for_owner(owner, name)`, `set_organization_status`, recreated `platform_organization_usage`.
 - Applied on an empty DB and on 001-013 + sample rows. Backfill result: advanced+active (old Pro and tenant D), standard+active with override 5 (old Starter, `max_tenants` 5), advanced+active "Dimigrasi tanpa langganan lama" (no old rows), standard+trial with the latest trial date (mixed trial/suspended).
 - Smoke: quotes 600000 / 6900000 / 500000; Standard 4th club SW004; Advanced pending blocks club, member and coach (SW003); 1000 members on an active Standard org insert fine; internal users counted once per owner; `set_organization_status` flips all tenants.
+
+## Phase 2 done
+
+- `lib/pricing.ts` (pure formula, `formatRupiah`, types) and `lib/data/platform-pricing.ts` (plans and modules without any fallback prices, own subscription via RLS, `serverQuote` / `internalUserCount` via service role, `getOrganizationBilling`, `internalUserCostChange`).
+- `lib/actions/subscription.ts`: owner `changePlan` (DB trigger enforces the downgrade rule), `previewInternalUserCost` (server computes the monthly change for the confirmation).
+- `lib/actions/superadmin.ts`: added `activateOrganization` (period start defaults to today WIB, end computed in SQL), `setOrganizationStatus`, `extendTrial`, `setClubLimitOverride`, `updatePlan`. Validations added; status `pending` added.
+- Register route takes plan, period, estimated users, recomputes the quote on the server and returns it; `createTenant`, `createCoach` and coach reactivation map SW003/SW004 to their message; `PLAN_LIMIT_CODES` is now SW003/SW004; `seed-admin` takes `SEED_PLAN` / `SEED_PERIOD`; `organization.ts` reads the club limit from the subscription.
+- Deliberately left for Phase 3 (they still have UI importers, deleted together with the UI): `lib/data/platform-plan.ts`, `TRIAL_DAYS` in `lib/config.ts`, `updateTenantSubscription` and `updateOrganizationLimit`, old pricing/banner/superadmin components.

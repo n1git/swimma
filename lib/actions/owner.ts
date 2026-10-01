@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireOwnerAction } from "@/lib/auth/owner";
 import { createSession } from "@/lib/auth/session";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { TRIAL_DAYS } from "@/lib/config";
 import { createTenantSchema } from "@/lib/validations/onboarding";
 import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
@@ -18,7 +17,6 @@ export async function createTenant(_prevState: ActionState, formData: FormData):
   const { error } = await createAdminSupabaseClient().rpc("create_tenant_for_owner", {
     p_owner_id: owner.ownerId,
     p_tenant_name: parsed.data.tenantName,
-    p_trial_days: TRIAL_DAYS,
   });
   if (error) {
     return { ok: false, error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menambah klub" };

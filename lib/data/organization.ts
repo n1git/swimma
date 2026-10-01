@@ -10,7 +10,7 @@ export interface OrganizationTenant {
 
 export interface OrganizationOverview {
   name: string;
-  maxTenants: number;
+  clubLimit: number | null;
   tenants: OrganizationTenant[];
 }
 
@@ -18,11 +18,15 @@ export async function getOrganizationOverview(organizationId: string, ownerId: s
   const supabase = createAdminSupabaseClient();
   const { data: org } = await supabase
     .from("organizations")
-    .select("name, max_tenants, org_owners!inner(id)")
+    .select("name, org_owners!inner(id), organization_subscriptions(club_limit_override, subscription_plans(club_limit))")
     .eq("id", organizationId)
     .eq("org_owners.id", ownerId)
     .maybeSingle();
   if (!org) return null;
+  const sub = org.organization_subscriptions as unknown as {
+    club_limit_override: number | null;
+    subscription_plans: { club_limit: number | null } | null;
+  } | null;
 
   const { data: tenants } = await supabase
     .from("tenants")
@@ -39,7 +43,7 @@ export async function getOrganizationOverview(organizationId: string, ownerId: s
 
   return {
     name: org.name as string,
-    maxTenants: org.max_tenants as number,
+    clubLimit: sub?.club_limit_override ?? sub?.subscription_plans?.club_limit ?? null,
     tenants: (tenants ?? []).map((t) => ({
       id: t.id as string,
       name: t.name as string,

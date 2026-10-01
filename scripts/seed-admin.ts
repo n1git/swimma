@@ -2,8 +2,6 @@ import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 
-const TRIAL_DAYS = 14;
-
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;
@@ -40,7 +38,8 @@ async function main() {
     p_owner_name: fullName,
     p_owner_email: email,
     p_password_hash: await bcrypt.hash(password, 10),
-    p_trial_days: TRIAL_DAYS,
+    p_plan: process.env.SEED_PLAN ?? "standard",
+    p_period: process.env.SEED_PERIOD ?? "monthly",
   });
 
   if (error) {
