@@ -13,8 +13,9 @@ Security, Tailwind CSS, Vercel deployment.
 
 Hierarchy: **organization (owner account) → tenants (clubs) → coaches →
 members**. An organization (`organizations`) has one or more owners
-(`org_owners`) and up to `max_tenants` clubs (default 3, only a superadmin
-raises it; enforced by a trigger, error `SW004`).
+(`org_owners`) and as many clubs as its plan allows (Standard 3 unless a
+superadmin sets `club_limit_override`, Advanced unlimited; trigger error
+`SW004`).
 
 Every club is a row in `tenants` with a mandatory `organization_id`. All
 club-owned data (profiles, locations, class types, members, classes, bookings, packages, subscriptions, invoices,
@@ -100,16 +101,15 @@ functions, not just in individual policies.
      as a bearer token once set as an env var on the project.
    - `NEXT_PUBLIC_APP_NAME` — optional; the platform name shown before a
      club is selected (login screen, browser tab). Defaults to "Swimma".
-5. Onboard the first club and its admin account:
+5. Onboard the first organization, its owner and first club:
    ```bash
-   SEED_TENANT_SLUG=my-club SEED_TENANT_NAME="My Club" \
-   SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD=ChangeMe123 \
+   SEED_TENANT_NAME="My Club" \
+   SEED_ADMIN_EMAIL=owner@example.com SEED_ADMIN_PASSWORD=ChangeMe123 \
    npm run seed:admin
    ```
-   Run it again with a different `SEED_TENANT_SLUG` to onboard another club
-   onto the same deployment/database.
-6. `npm run dev` and log in at `/login` with the club code, email, and
-   password.
+   Optional: `SEED_ORGANIZATION_NAME`, `SEED_PLAN` (`standard` or
+   `advanced`, default `standard`), `SEED_PERIOD` (`monthly` or `yearly`).
+6. `npm run dev` and log in at `/login` with the email and password.
 
 ## Deploying to Vercel
 
@@ -126,18 +126,19 @@ no new Supabase project or Vercel deployment needed. Two ways in:
 
 - **Self-service** (`/daftar`): enter club name and your own
   name/email/password. One database call (`register_organization`) creates
-  the organization, owner, first club, owner admin profile and **Trial**
-  subscription (14 days, 20 active members, 1 location), so nothing is left
-  half-created. The owner lands on `/admin/klub`.
+  the organization, subscription (chosen plan and period; Standard starts a
+  30-day `trial`, Advanced starts `pending`), owner, first club and owner
+  admin profile, so nothing is left half-created. The owner lands on
+  `/admin/klub`.
 - **More clubs**: the owner adds clubs from `/admin/klub` ("Tambah klub",
-  `create_tenant_for_owner`); each also starts on Trial, up to
-  `organizations.max_tenants`.
+  `create_tenant_for_owner`), within the plan's club limit.
 - **Manual** (`npm run seed:admin` with `SEED_TENANT_NAME` and optionally
   `SEED_ORGANIZATION_NAME`) uses the same function.
 
-Clubs that existed before the organization migration and have no platform
-subscription row are still **not** limited until a superadmin assigns a plan.
-The owner then sets club name/logo/color from Admin -> Pengaturan.
+Organizations that existed before the billing migration were backfilled
+(see migration `20250101000014_org_billing.sql`): Advanced if any old plan was
+unlimited, otherwise Standard, with the highest old status; organizations
+without any old subscription became Advanced + active. The owner then sets club name/logo/color from Admin -> Pengaturan.
 
 ## Platform billing (superadmin)
 
@@ -155,40 +156,63 @@ status from `/superadmin`.
   carries `{ sub, superadmin: true, email, full_name }` with audience
   `swimma-superadmin`, is never sent to Supabase as a bearer token, and a
   tenant session JWT is rejected there. Every portal query uses the
-  service-role client; the portal groups clubs by organization and can raise
-  `max_tenants` or deactivate an owner. `superadmins`, `platform_tenant_usage`,
-  `platform_organization_usage`, `org_owners` and writes to
-  `platform_subscriptions` are unreachable from `anon`/`authenticated`.
-- Plans live in `platform_plans` (`member_limit`, `location_limit`; `null`
-  means unlimited). Limits are enforced by triggers on `members`
-  (insert and re-activation) and `locations`, error codes `SW001`/`SW002`.
-  A tenant without a `platform_subscriptions` row is not limited.
-- Status **suspended** or **cancelled** sets `tenants.is_active = false`:
-  new logins are refused and live sessions lose access immediately
-  (`is_active_user()` checks the tenant too). No data is deleted; switching
-  back to **trial** or **active** restores access to everything.
-- Club admins can read the plan menu and their own subscription (dashboard
-  banner during trial) but cannot change either, and can only update
-  `name`, `logo_url`, `primary_color` on `tenants`.
-- There is no payment gateway: a superadmin sets a club to **active** after
-  being paid outside the app. Trial expiry is shown on `/superadmin` but not
-  enforced automatically.
+  service-role client; the portal groups clubs by organization, edits plans,
+  subscription status and the club-limit override, and can deactivate an
+  owner. `superadmins`, `platform_tenant_usage`, `platform_organization_usage`,
+  `org_owners` and every write to `organization_subscriptions` and
+  `subscription_plans` are unreachable from `anon`/`authenticated`.
+- Billing is per **organization**, not per club. `subscription_plans`
+  (Standard, Advanced) holds the only copy of prices and limits;
+  `organization_subscriptions` holds the organization's plan, period
+  (monthly or yearly), status (`pending`, `trial`, `active`, `suspended`,
+  `cancelled`), trial end, period dates and an optional club-limit override.
+  `platform_modules` is a price-free registry (`ready` / `soon`) that club
+  types will use later. `platform_plans`, `platform_subscriptions` and
+  `organizations.max_tenants` are no longer read; they stay in the schema
+  until a later cleanup migration.
+- Status **suspended** or **cancelled** sets `tenants.is_active = false` on
+  every club of the organization (`set_organization_status`): new logins are
+  refused and live sessions lose access immediately. No data is deleted.
+  Switching back to **active** or **trial** restores access.
+- The superadmin sets **active** after payment outside the app, with period
+  dates (monthly +1 month, yearly +1 year by default). A period end in the
+  past is only flagged on `/superadmin`; nothing suspends automatically
+  except the trial rule below.
+- Owners read their subscription at `/admin/klub/langganan` and can change
+  plan and period (no proration, no automatic billing); the superadmin edits
+  plans, status, trial end and club-limit override.
 
 ### Pricing model
 
-Prices are derived from the fixed monthly infrastructure floor, because one
-deployment serves every tenant:
-
-- Vercel Pro ≈ $24/mo, Supabase Pro ≈ $25/mo, plus a usage buffer ≈ $20–30
-  → **≈ Rp 1.300.000/bulan** at ≈ Rp 17.900/USD. Verify current prices and
-  FX before relying on this.
-- Marginal cost per extra tenant ≈ Rp 0 until usage pushes Supabase/Vercel
-  into a higher tier.
-- Starter Rp 300.000 (75 members, 1 location), Growth Rp 750.000 (250
-  members, 3 locations), Pro Rp 1.500.000 (unlimited). Break-even ≈ 5
-  Starter, 2 Growth, or 1 Pro club.
-- The landing page and dashboard read prices from `platform_plans`, so
-  editing a plan there updates what clubs see.
+- Price = billable internal users × `price_per_user_month` × months.
+  **Internal users** are the active owners plus active staff admins and
+  coaches (`profiles.owner_id is null`) across the organization's clubs; an
+  owner's per-club admin profiles count once; members and superadmins never
+  count; minimum 1. Monthly = 1 month; yearly = 12 − `yearly_free_months`
+  (11.5). The effective monthly price is the total ÷ 1 or ÷ 12.
+- Seeded values: Standard Rp 150.000/user/month, up to 3 clubs, 30-day trial;
+  Advanced Rp 250.000/user/month, unlimited clubs, no trial, starts
+  `pending` until activated. Members and locations are unlimited on both;
+  every `ready` module is included.
+- `platform_quote(plan, period, users)` is the server-side calculation
+  (execute revoked from clients). The landing page and wizard show a live
+  estimate with the same formula over the plan rows; every authoritative
+  figure (registration, plan change, the price-change confirmation shown
+  before adding a coach, the superadmin portal) is recomputed on the server
+  and nothing price-related is read from the client.
+- Gates (`SW003`): while the subscription is `pending`, `suspended`,
+  `cancelled` or an expired `trial`, adding members, clubs, coaches or staff
+  admins is rejected; signing in and the billing page keep working. The
+  organization's first club is exempt so registration can complete. `SW004`:
+  a new club beyond `coalesce(club_limit_override, plan club limit)` is
+  rejected (the subscription row is locked, so parallel creations cannot
+  exceed it), and a plan or override change that leaves the organization
+  over the limit is rejected, which blocks Advanced → Standard with more
+  than 3 clubs.
+- Infrastructure floor for reference: Vercel Pro ≈ $24/mo + Supabase Pro ≈
+  $25/mo + usage buffer ≈ $20–30 → ≈ Rp 1.300.000/month at ≈ Rp 17.900/USD
+  (verify before relying on it); marginal cost per extra organization ≈ 0
+  until a higher tier is needed.
 
 ## Notes / out of scope
 
@@ -199,10 +223,18 @@ deployment serves every tenant:
   marked paid manually by an admin for now.
 - Admin creates coach accounts (temporary password, changed on first
   login). Members have no login and there is no parent-facing area.
-- Not built: organization-level billing or plans, a coach in several clubs,
-  moving a club between organizations, member login.
+- Not built: payment gateway, invoices or receipts for Swimma itself,
+  proration, automatic renewal or suspension at period end, coupons,
+  per-module pricing, a coach in several clubs, moving a club between
+  organizations, member login.
 
 ## Changelog
+
+### 2026-10-02
+
+- Billing moved from club to organization: Standard and Advanced plans priced per internal user (monthly or yearly), `organization_subscriptions`, `platform_quote`.
+- Member and location limits removed (`SW001`/`SW002`); `SW003` now gates pending, suspended and expired-trial organizations; `SW004` uses the plan club limit.
+- New landing pricing, `/daftar` wizard, `/admin/klub/langganan`, price-change confirmation when adding a coach, superadmin plan and subscription editors (migration `...014_org_billing.sql`).
 
 ### 2026-10-01
 

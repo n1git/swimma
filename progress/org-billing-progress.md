@@ -8,7 +8,7 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 - [x] Phase 1: database (`20250101000014_org_billing.sql`)
 - [x] Phase 2: server
 - [x] Phase 3: UI
-- [ ] Phase 4: cleanup and final checks
+- [x] Phase 4: cleanup and final checks
 
 ## Phase 0 findings
 
@@ -82,3 +82,17 @@ Swimma's own billing moves from tenant to organization: two plans (Standard, Adv
 - Owner: `/admin/klub/langganan` (status, plan, internal users with cost, total and per month, change-plan form, modules), nav item, link from `/admin/klub`; `SubscriptionBanner` on the dashboard (pending, trial, expired trial). Adding a coach first shows the server-computed monthly price change and asks to confirm.
 - Superadmin portal: plans editor, per-organization card (plan, period, status, internal users, clubs vs limit, members, total and per month, period end with overdue flag, "Belum diatur" when empty) with activate-with-dates, status, extend trial, club-limit override and owner toggles.
 - Retired and deleted: `lib/data/platform-plan.ts`, `plan-cards.tsx`, `plan-status-banner.tsx`, `subscription-form.tsx`, `TRIAL_DAYS`, `updateTenantSubscription`, `updateOrganizationLimit`. No code in `app components lib scripts` references `platform_plans`, `platform_subscriptions`, `max_tenants`, SW001 or SW002.
+
+## Phase 4 done
+
+- README (pricing model, onboarding, billing, changelog), `KAJIAN_PAKET.md` (replaced by the two plans), `CLAUDE.md` team notes updated.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`.
+- Migration 014 applies on an empty DB and on 001-013 + sample rows; backfill matches the rules (old Pro or tenant without old row -> advanced/active; old Starter with `max_tenants` 5 -> standard + override 5; mixed trial/suspended -> standard/trial with the latest trial date; Advanced never gets an override).
+- Quotes: Standard monthly 4 users 600000, Standard yearly 4 users 6900000, Advanced monthly 2 users 500000; the TypeScript `computeQuote` and `platform_quote` agree (also 7 users yearly = 12075000).
+- Internal users: owner + 2 coaches + 1 staff admin = 4; the owner's admin profiles in two clubs count once; members and a deactivated coach are not counted.
+- Limits: Standard 4th club SW004, Advanced 5 clubs fine; two parallel club creations at limit minus 1: exactly one succeeded; Advanced to Standard with 5 clubs rejected (SW004), plan unchanged.
+- Gates: Advanced `pending` and Standard with an expired trial get SW003 on a new member, club and coach, tenants stay active (sign-in unaffected, login route does not read the subscription); 1001 members inserted on Standard without error.
+- Suspend: all tenants of the organization become inactive, an admin's data and subscription reads return 0 afterwards; anon cannot read `organization_subscriptions` but can read plans.
+- Forged price: registration and plan change take only plan code, period and estimated users (extra keys are stripped); every figure comes from `platform_quote`.
+- No code in `app components lib scripts proxy.ts` reads `platform_plans`, `platform_subscriptions` or `max_tenants`.
+- Not run: the app against real Supabase/PostgREST (RPC calls, RLS-embedded reads such as `organization_subscriptions(...)` joins are type-checked and built only).
