@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getActiveChildren, getActivePackages } from "@/lib/data/lookups";
-import { cancelSubscriptionForm } from "@/lib/actions/billing";
+import { cancelSubscription } from "@/lib/actions/billing";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { ListFilters } from "@/components/shared/list-filters";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SubscriptionForm } from "@/components/billing/subscription-form";
+import { ActionForm } from "@/components/shared/action-form";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Aktif",
@@ -113,17 +114,16 @@ export default async function SubscriptionsPage({
                 </TableCell>
                 <TableCell>
                   {row.status === "active" ? (
-                    <form action={cancelSubscriptionForm}>
+                    <ActionForm action={cancelSubscription}>
                       <input type="hidden" name="subscriptionId" value={row.id} />
                       <ActionSubmitButton
                         variant="ghost"
                         size="sm"
                         confirmMessage="Batalkan langganan ini? Tindakan ini tidak bisa dibatalkan."
-                        successMessage="Langganan dibatalkan"
                       >
                         Batalkan Langganan
                       </ActionSubmitButton>
-                    </form>
+                    </ActionForm>
                   ) : null}
                 </TableCell>
               </TableRow>

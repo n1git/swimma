@@ -15,6 +15,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useActionToast } from "@/components/shared/use-action-toast";
+import { TempPasswordNotice } from "@/components/shared/temp-password-notice";
 import type { Lookup } from "@/lib/data/lookups";
 
 export function MemberForm({ locations }: { locations: Lookup[] }) {
@@ -59,6 +60,7 @@ export function MemberForm({ locations }: { locations: Lookup[] }) {
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       ) : null}
+      <TempPasswordNotice password={state.tempPassword} />
 
       <input type="hidden" name="parentMode" value={parentMode} />
       {existingParentId ? (

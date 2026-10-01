@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { markInvoicePaidForm, voidInvoiceForm } from "@/lib/actions/billing";
+import { markInvoicePaid, voidInvoice } from "@/lib/actions/billing";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { ListFilters } from "@/components/shared/list-filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { GenerateInvoicesForm } from "@/components/billing/generate-invoices-form";
+import { ActionForm } from "@/components/shared/action-form";
 
 const STATUS_VARIANT: Record<string, "success" | "secondary" | "destructive"> = {
   paid: "success",
@@ -98,23 +99,22 @@ export default async function InvoicesPage({
                 <TableCell>
                   {row.status === "outstanding" ? (
                     <div className="flex gap-2">
-                      <form action={markInvoicePaidForm}>
+                      <ActionForm action={markInvoicePaid}>
                         <input type="hidden" name="invoiceId" value={row.id} />
-                        <ActionSubmitButton size="sm" successMessage="Tagihan ditandai lunas">
+                        <ActionSubmitButton size="sm">
                           Tandai Lunas
                         </ActionSubmitButton>
-                      </form>
-                      <form action={voidInvoiceForm}>
+                      </ActionForm>
+                      <ActionForm action={voidInvoice}>
                         <input type="hidden" name="invoiceId" value={row.id} />
                         <ActionSubmitButton
                           size="sm"
                           variant="ghost"
                           confirmMessage="Batalkan tagihan ini? Tindakan ini tidak bisa dibatalkan."
-                          successMessage="Tagihan dibatalkan"
                         >
                           Batalkan Tagihan
                         </ActionSubmitButton>
-                      </form>
+                      </ActionForm>
                     </div>
                   ) : null}
                 </TableCell>

@@ -4,12 +4,18 @@ import { verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
 import { loginSchema } from "@/lib/validations/auth";
+import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { APP_NAME } from "@/lib/config";
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
 const GENERIC_ERROR = "Email atau kata sandi salah";
 
 export async function POST(request: Request) {
+  if (await isRateLimited(request, "login", 20, 600)) {
+    return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
@@ -25,7 +31,7 @@ export async function POST(request: Request) {
     .eq("slug", tenantSlug)
     .maybeSingle();
 
-  if (!tenant || !tenant.is_active) {
+  if (!tenant) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
   }
 
@@ -71,6 +77,15 @@ export async function POST(request: Request) {
       })
       .eq("profile_id", profile.id);
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+  }
+
+  if (!tenant.is_active) {
+    return NextResponse.json(
+      {
+        error: `Akses klub Anda sedang dinonaktifkan. Data klub tetap tersimpan. Hubungi admin platform ${APP_NAME} untuk mengaktifkannya kembali.`,
+      },
+      { status: 403 }
+    );
   }
 
   await supabase

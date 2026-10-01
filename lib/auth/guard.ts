@@ -13,12 +13,18 @@ export async function requireRole(role: AppRole) {
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active, must_change_password, full_name, tenants(is_active)")
+    .select("id, is_active, must_change_password, full_name, sessions_valid_after, tenants(is_active)")
     .eq("id", session.sub)
     .maybeSingle();
 
   if (!profile || !profile.is_active) {
     redirect("/api/auth/session-ended?reason=deactivated");
+  }
+  if (
+    profile.sessions_valid_after &&
+    (session.iat ?? 0) < Math.floor(Date.parse(profile.sessions_valid_after) / 1000)
+  ) {
+    redirect("/api/auth/session-ended?reason=revoked");
   }
   const tenant = profile.tenants as unknown as { is_active: boolean } | null;
   if (!tenant?.is_active) {

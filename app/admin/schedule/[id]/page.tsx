@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { deleteClassForm, removeBookingForm } from "@/lib/actions/schedule";
+import { deleteClass, removeBooking } from "@/lib/actions/schedule";
 import { BackLink } from "@/components/shared/back-link";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
+import { ActionForm } from "@/components/shared/action-form";
 
 export default async function ClassDetailPage({
   params,
@@ -69,17 +70,16 @@ export default async function ClassDetailPage({
             {info.profiles?.full_name}
           </p>
         </div>
-        <form action={deleteClassForm}>
+        <ActionForm action={deleteClass}>
           <input type="hidden" name="classId" value={id} />
           <ActionSubmitButton
             variant="destructive"
             size="sm"
             confirmMessage={`Hapus kelas ini beserta ${(bookings ?? []).length} pendaftaran yang ada? Tindakan ini tidak bisa dibatalkan.`}
-            successMessage="Kelas dihapus"
           >
             Hapus Kelas
           </ActionSubmitButton>
-        </form>
+        </ActionForm>
       </div>
 
       <Card>
@@ -109,13 +109,13 @@ export default async function ClassDetailPage({
                     <TableCell>{booking.children.full_name}</TableCell>
                     <TableCell>{booking.is_attended ? "Hadir" : "Belum"}</TableCell>
                     <TableCell>
-                      <form action={removeBookingForm}>
+                      <ActionForm action={removeBooking}>
                         <input type="hidden" name="bookingId" value={booking.id} />
                         <input type="hidden" name="classId" value={id} />
                         <Button type="submit" variant="ghost" size="sm">
                           Batalkan Pendaftaran
                         </Button>
-                      </form>
+                      </ActionForm>
                     </TableCell>
                   </TableRow>
                 );

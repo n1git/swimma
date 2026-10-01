@@ -1,13 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateCoach, toggleCoachActiveForm } from "@/lib/actions/coaches";
+import { updateCoach, toggleCoachActive } from "@/lib/actions/coaches";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useActionToast } from "@/components/shared/use-action-toast";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
+import { ResetPasswordForm } from "@/components/shared/reset-password-form";
+import { ActionForm } from "@/components/shared/action-form";
 
 interface CoachDetail {
   id: string;
@@ -42,7 +44,9 @@ export function CoachEditForm({ coach }: { coach: CoachDetail }) {
         </Button>
       </form>
 
-      <form action={toggleCoachActiveForm}>
+      <ResetPasswordForm profileId={coach.id} label="pelatih" />
+
+      <ActionForm action={toggleCoachActive}>
         <input type="hidden" name="coachId" value={coach.id} />
         <input type="hidden" name="isActive" value={(!coach.is_active).toString()} />
         <ActionSubmitButton
@@ -52,11 +56,10 @@ export function CoachEditForm({ coach }: { coach: CoachDetail }) {
               ? "Nonaktifkan pelatih ini? Pelatih tidak akan bisa login sampai diaktifkan kembali."
               : undefined
           }
-          successMessage={coach.is_active ? "Pelatih dinonaktifkan" : "Pelatih diaktifkan kembali"}
         >
           {coach.is_active ? "Nonaktifkan Pelatih" : "Aktifkan Kembali"}
         </ActionSubmitButton>
-      </form>
+      </ActionForm>
     </div>
   );
 }

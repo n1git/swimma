@@ -6,7 +6,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
 import { childSchema, childUpdateSchema } from "@/lib/validations/members";
-import { type ActionState } from "./types";
+import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 export interface DuplicateChildMatch {
   id: string;
@@ -40,7 +40,7 @@ export interface ParentMatch {
 
 export async function searchParentByContact(contact: string): Promise<ParentMatch[]> {
   const session = await requireActionRole("admin");
-  const trimmed = contact.trim();
+  const trimmed = contact.trim().replace(/[,()"\\]/g, "");
   if (!trimmed) return [];
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
@@ -79,6 +79,7 @@ export async function createChild(
   const input = parsed.data;
 
   const supabase = createAdminSupabaseClient();
+  let tempPassword: string | undefined;
   let parentId: string | undefined =
     input.parentMode === "existing" ? input.existingParentId : undefined;
 
@@ -114,10 +115,10 @@ export async function createChild(
       return { ok: false, error: "Gagal membuat akun orang tua" };
     }
 
-    const passwordHash = await hashPassword(generateTempPassword());
+    tempPassword = generateTempPassword();
     const { error: credError } = await supabase
       .from("auth_credentials")
-      .insert({ profile_id: parent.id, password_hash: passwordHash });
+      .insert({ profile_id: parent.id, password_hash: await hashPassword(tempPassword) });
 
     if (credError) {
       await supabase.from("profiles").delete().eq("id", parent.id);
@@ -142,14 +143,15 @@ export async function createChild(
   });
 
   if (childError) {
+    if (input.parentMode === "new") await supabase.from("profiles").delete().eq("id", parentId);
     return {
       ok: false,
-      error: childError.code === "SW001" ? childError.message : "Gagal menyimpan data anak",
+      error: PLAN_LIMIT_CODES.has(childError.code) ? childError.message : "Gagal menyimpan data anak",
     };
   }
 
   revalidatePath("/admin/members");
-  return { ok: true };
+  return { ok: true, message: "Anggota berhasil ditambahkan", tempPassword };
 }
 
 export async function updateChild(
@@ -206,7 +208,7 @@ export async function toggleChildActive(
   if (error) {
     return {
       ok: false,
-      error: error.code === "SW001" ? error.message : "Gagal memperbarui status anggota",
+      error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal memperbarui status anggota",
     };
   }
 

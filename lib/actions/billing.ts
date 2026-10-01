@@ -5,6 +5,7 @@ import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { packageSchema, subscriptionSchema, generateInvoicesSchema } from "@/lib/validations/billing";
+import { getJakartaDateString } from "@/lib/format";
 import { type ActionState } from "./types";
 
 export async function createPackage(
@@ -92,15 +93,18 @@ export async function createSubscription(
   return { ok: true };
 }
 
-export async function cancelSubscriptionForm(formData: FormData): Promise<void> {
+export async function cancelSubscription(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const subscriptionId = String(formData.get("subscriptionId"));
   const supabase = await createServerSupabaseClient();
-  await supabase
+  const { data, error } = await supabase
     .from("subscriptions")
-    .update({ status: "cancelled", end_date: new Date().toISOString().slice(0, 10) })
-    .eq("id", subscriptionId);
+    .update({ status: "cancelled", end_date: getJakartaDateString() })
+    .eq("id", subscriptionId)
+    .select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal membatalkan langganan" };
   revalidatePath("/admin/billing/subscriptions");
+  return { ok: true, message: "Langganan dibatalkan" };
 }
 
 export async function generateInvoices(
@@ -131,19 +135,28 @@ export async function generateInvoices(
   return { ok: true, message: `${(data as unknown[])?.length ?? 0} tagihan baru dibuat` };
 }
 
-export async function markInvoicePaidForm(formData: FormData): Promise<void> {
+export async function markInvoicePaid(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const invoiceId = String(formData.get("invoiceId"));
   const supabase = await createServerSupabaseClient();
-  await supabase.rpc("mark_invoice_paid", { p_invoice_id: invoiceId });
+  const { error } = await supabase.rpc("mark_invoice_paid", { p_invoice_id: invoiceId });
+  if (error) return { ok: false, error: "Gagal menandai lunas. Tagihan mungkin sudah lunas atau dibatalkan." };
   revalidatePath("/admin/billing/invoices");
   revalidatePath("/admin/cash-ledger");
+  return { ok: true, message: "Tagihan ditandai lunas" };
 }
 
-export async function voidInvoiceForm(formData: FormData): Promise<void> {
+export async function voidInvoice(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const invoiceId = String(formData.get("invoiceId"));
   const supabase = await createServerSupabaseClient();
-  await supabase.from("invoices").update({ status: "void" }).eq("id", invoiceId).eq("status", "outstanding");
+  const { data, error } = await supabase
+    .from("invoices")
+    .update({ status: "void" })
+    .eq("id", invoiceId)
+    .eq("status", "outstanding")
+    .select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal membatalkan tagihan. Tagihan mungkin sudah lunas." };
   revalidatePath("/admin/billing/invoices");
+  return { ok: true, message: "Tagihan dibatalkan" };
 }

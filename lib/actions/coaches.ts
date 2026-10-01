@@ -53,10 +53,10 @@ export async function createCoach(
     return { ok: false, error: "Gagal membuat akun pelatih" };
   }
 
-  const passwordHash = await hashPassword(generateTempPassword());
+  const tempPassword = generateTempPassword();
   const { error: credError } = await supabase
     .from("auth_credentials")
-    .insert({ profile_id: coach.id, password_hash: passwordHash });
+    .insert({ profile_id: coach.id, password_hash: await hashPassword(tempPassword) });
 
   if (credError) {
     await supabase.from("profiles").delete().eq("id", coach.id);
@@ -64,7 +64,7 @@ export async function createCoach(
   }
 
   revalidatePath("/admin/coaches");
-  return { ok: true };
+  return { ok: true, message: "Pelatih berhasil ditambahkan", tempPassword };
 }
 
 export async function updateCoach(
@@ -98,14 +98,21 @@ export async function updateCoach(
   return { ok: true };
 }
 
-export async function toggleCoachActiveForm(formData: FormData): Promise<void> {
+export async function toggleCoachActive(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const coachId = String(formData.get("coachId"));
   const isActive = formData.get("isActive") === "true";
 
   const supabase = await createServerSupabaseClient();
-  await supabase.from("profiles").update({ is_active: isActive }).eq("id", coachId);
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ is_active: isActive })
+    .eq("id", coachId)
+    .eq("role", "coach")
+    .select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal memperbarui status pelatih" };
 
   revalidatePath("/admin/coaches");
   revalidatePath(`/admin/coaches/${coachId}`);
+  return { ok: true, message: isActive ? "Pelatih diaktifkan kembali" : "Pelatih dinonaktifkan" };
 }

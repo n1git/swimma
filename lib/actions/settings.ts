@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tenantBrandingSchema } from "@/lib/validations/settings";
-import { type ActionState } from "./types";
+import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 export async function updateTenantBranding(
   _prevState: ActionState,
@@ -50,7 +50,7 @@ export async function createLocation(
   if (error) {
     return {
       ok: false,
-      error: error.code === "SW002" ? error.message : "Gagal menyimpan lokasi (mungkin sudah ada)",
+      error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menyimpan lokasi (mungkin sudah ada)",
     };
   }
 

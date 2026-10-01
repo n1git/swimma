@@ -63,11 +63,12 @@ export async function createClass(
   return { ok: true };
 }
 
-export async function deleteClassForm(formData: FormData): Promise<void> {
+export async function deleteClass(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const classId = String(formData.get("classId"));
   const supabase = await createServerSupabaseClient();
-  await supabase.from("classes").delete().eq("id", classId);
+  const { data, error } = await supabase.from("classes").delete().eq("id", classId).select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal menghapus kelas" };
   revalidatePath("/admin/schedule");
   redirect("/admin/schedule");
 }
@@ -100,11 +101,13 @@ export async function addBooking(
   return { ok: true };
 }
 
-export async function removeBookingForm(formData: FormData): Promise<void> {
+export async function removeBooking(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const bookingId = String(formData.get("bookingId"));
   const classId = String(formData.get("classId"));
   const supabase = await createServerSupabaseClient();
-  await supabase.from("bookings").delete().eq("id", bookingId);
+  const { data, error } = await supabase.from("bookings").delete().eq("id", bookingId).select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal mengeluarkan anak dari kelas" };
   revalidatePath(`/admin/schedule/${classId}`);
+  return { ok: true, message: "Anak dikeluarkan dari kelas" };
 }

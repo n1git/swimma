@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getLocations } from "@/lib/data/lookups";
 import { BackLink } from "@/components/shared/back-link";
 import { MemberEditForm } from "@/components/members/member-edit-form";
+import { ResetPasswordForm } from "@/components/shared/reset-password-form";
 
 export default async function MemberDetailPage({
   params,
@@ -15,7 +16,7 @@ export default async function MemberDetailPage({
     supabase
       .from("children")
       .select(
-        "id, full_name, date_of_birth, notes, address, preferred_location_id, is_active, profiles(full_name, email, phone)"
+        "id, full_name, date_of_birth, notes, address, preferred_location_id, is_active, parent_id, profiles(full_name, email, phone)"
       )
       .eq("id", id)
       .maybeSingle(),
@@ -38,6 +39,7 @@ export default async function MemberDetailPage({
         ) : null}
       </div>
       <MemberEditForm child={child} locations={locations} />
+      <ResetPasswordForm profileId={child.parent_id} label="orang tua" />
     </div>
   );
 }

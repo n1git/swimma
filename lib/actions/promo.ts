@@ -57,11 +57,13 @@ export async function createPromo(
   return { ok: true };
 }
 
-export async function deletePromoForm(formData: FormData): Promise<void> {
+export async function deletePromo(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   await requireActionRole("admin");
   const promoId = String(formData.get("promoId"));
   const supabase = await createServerSupabaseClient();
-  await supabase.from("promo").delete().eq("id", promoId);
+  const { data, error } = await supabase.from("promo").delete().eq("id", promoId).select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal menghapus promo" };
   revalidatePath("/admin/promo");
   revalidatePath("/parent/promo");
+  return { ok: true, message: "Promo dihapus" };
 }

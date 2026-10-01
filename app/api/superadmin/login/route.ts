@@ -3,12 +3,17 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSuperadminSession } from "@/lib/auth/superadmin";
 import { superadminLoginSchema } from "@/lib/validations/auth";
+import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
 const GENERIC_ERROR = "Email atau kata sandi salah";
 
 export async function POST(request: Request) {
+  if (await isRateLimited(request, "superadmin-login", 10, 900)) {
+    return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = superadminLoginSchema.safeParse(body);
   if (!parsed.success) {

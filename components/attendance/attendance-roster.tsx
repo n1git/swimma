@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { markAttendanceForm, updateBookingNotesForm } from "@/lib/actions/attendance";
+import { markAttendance, updateBookingNotes } from "@/lib/actions/attendance";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ActionForm } from "@/components/shared/action-form";
 
 export interface AttendanceBooking {
   id: string;
@@ -74,7 +74,7 @@ export function AttendanceRoster({
                 </Badge>
               </TableCell>
               <TableCell>
-                <form action={updateBookingNotesForm}>
+                <ActionForm action={updateBookingNotes}>
                   <input type="hidden" name="bookingId" value={b.id} />
                   <input type="hidden" name="classId" value={classId} />
                   <Input
@@ -84,21 +84,20 @@ export function AttendanceRoster({
                     className="min-w-40"
                     onBlur={(e) => {
                       if (e.target.value === (b.notes ?? "")) return;
-                      toast.success("Catatan disimpan");
                       e.currentTarget.form?.requestSubmit();
                     }}
                   />
-                </form>
+                </ActionForm>
               </TableCell>
               <TableCell>
-                <form action={markAttendanceForm}>
+                <ActionForm action={markAttendance}>
                   <input type="hidden" name="bookingId" value={b.id} />
                   <input type="hidden" name="classId" value={classId} />
                   <input type="hidden" name="isAttended" value={(!b.isAttended).toString()} />
                   <Button type="submit" size="sm" variant={b.isAttended ? "outline" : "default"}>
                     {b.isAttended ? "Tandai Belum Hadir" : "Tandai Hadir"}
                   </Button>
-                </form>
+                </ActionForm>
               </TableCell>
             </TableRow>
           ))}

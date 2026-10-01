@@ -4,10 +4,15 @@ import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { trialEndsAtFromToday } from "@/lib/data/platform-plan";
 import { registerClubSchema } from "@/lib/validations/onboarding";
+import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 
 const TRIAL_PLAN_NAME = "Trial";
 
 export async function POST(request: Request) {
+  if (await isRateLimited(request, "register", 5, 3600)) {
+    return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = registerClubSchema.safeParse(body);
   if (!parsed.success) {

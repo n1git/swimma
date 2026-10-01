@@ -37,7 +37,10 @@ export async function changePassword(
 
   await supabase
     .from("profiles")
-    .update({ must_change_password: false })
+    .update({
+      must_change_password: false,
+      sessions_valid_after: new Date(Math.floor(Date.now() / 1000) * 1000).toISOString(),
+    })
     .eq("id", session.sub);
 
   await createSession({

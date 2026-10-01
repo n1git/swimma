@@ -8,6 +8,7 @@ export interface SessionClaims {
   tenant_id: string;
   email: string;
   full_name: string;
+  iat?: number;
 }
 
 const SESSION_DURATION = "7d";

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useActionToast } from "@/components/shared/use-action-toast";
+import { TempPasswordNotice } from "@/components/shared/temp-password-notice";
 
 export function CoachForm() {
   const [state, formAction, pending] = useActionState(createCoach, {});
@@ -19,6 +20,7 @@ export function CoachForm() {
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       ) : null}
+      <TempPasswordNotice password={state.tempPassword} />
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="fullName">Nama Pelatih</Label>
         <Input id="fullName" name="fullName" required />
