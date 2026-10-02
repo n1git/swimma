@@ -8,7 +8,7 @@ Generic facilities and a booking engine, per-club module toggles, and a post-sig
 - [x] Phase 1: modules and onboarding (`020_modules_onboarding.sql`)
 - [x] Phase 2: resources and booking, database and server (`021_resource_booking.sql`)
 - [x] Phase 3: booking UI
-- [ ] Phase 4: cleanup and final checks
+- [x] Phase 4: cleanup and final checks
 
 ## Repository assessment
 
@@ -92,3 +92,10 @@ Generic facilities and a booking engine, per-club module toggles, and a post-sig
 - `/admin/fasilitas` (admin): table of facilities with Ubah, Jam buka (per-weekday open/close) and Aktifkan/Nonaktifkan, add dialog, empty states that link to settings when no location exists. `/admin/booking` (admin, receptionist): day view (one column per facility) and week view (one facility, seven days), previous/next/today/date picker, click a slot to see its bookings (cancel, mark done, no-show) and create a booking for a member or a guest; class-sourced rows are read-only. `/member/booking`: facility chips, date picker limited to the advance window, slot buttons with remaining places, "Booking saya" with cancel (or the reason it cannot be cancelled) and history. Class form has an optional facility filtered by location. Navigation items are module-gated and the facility label comes from `terms`.
 - Fixed while testing: a member could book the same slot twice on a facility with capacity above 1; `book_resource_as_member` now rejects it (RB008) and `resource_availability` no longer marks such a slot as bookable.
 - Checked in a real browser (PostgREST + built app + Chromium): onboarding facilities step with preset, 4 lanes created, staff booking through the calendar dialog (slot shows 1/3), week view, facilities page, hours dialog, member booking and cancel, no horizontal page scroll at 375 px on the booking and facilities pages, member redirected away from `/admin`.
+
+## Phase 4 done
+
+- README (modules per club, facilities and booking, error codes, changelog 2026-10-05, out-of-scope wording) and `CLAUDE.md` notes updated.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`; migrations 001-021 apply on an empty DB and on a DB with sample rows.
+- Verified: 20 parallel bookings of one capacity-1 slot gave exactly one success; capacity-3 lane accepted three and rejected the rest; off-grid and outside-hours bookings rejected; class with a facility blocks the slot and moving or deleting it frees it; member rules (no subscription, advance window, cancel window, no other members' names, no double booking of own slot); tenant isolation; no client insert/update/delete on `resource_bookings`; module off gives RB003 on every RPC and 404 on admin and member pages while data stays, re-enable restores it, `members` switch is locked; onboarding finished from the UI removes the banner; navigation links of a swimming admin (17), gym admin (18) and a member (2) all return non-error pages; no horizontal page scroll at 375 px.
+- Not verified: dark mode of the new screens, and the booking dialog layout at 375 px was only opened, not reviewed in detail.

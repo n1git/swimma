@@ -208,6 +208,45 @@ limited to 10 per minute per profile. Clients cannot insert into `checkins`;
 admin, receptionist and head coach read all of the club's check-ins, coaches
 only their own members', members only their own.
 
+## Modules per club, facilities and booking
+
+A club's modules are its type's modules plus enabled overrides minus disabled
+overrides, limited to `ready` ones (`tenant_module_overrides`,
+`club_has_module`, `current_club_modules()`). The admin toggles them in
+`/admin/settings/modul` (`set_club_module`); `members` can never be disabled.
+Disabling hides navigation and returns 404 for the module's pages; data stays
+and comes back when it is enabled again. Terms (`club_types.terms`, merged
+with neutral defaults in `lib/club-type.ts`) hold the wording per type
+(`resource`, `session`, `location`, ...), so a new sport is data only.
+
+**Facilities and booking** (module `resource_booking`, swimming and gym
+types): a facility (`resources`: court, lane, studio, room, floor) belongs to
+a location and has capacity per slot, slot length, price per slot, booking
+window (`advance_days`), cancel limit (`cancel_hours`) and opening hours per
+weekday in WIB (`resource_hours`, 0 = Sunday). Bookings (`resource_bookings`)
+are written only through security definer functions (`book_resource` for
+admin and receptionist, `book_resource_as_member`, `cancel_booking`,
+`set_booking_status`); clients have select-only policies, members see only
+their own rows and `resource_availability` never returns names. Capacity is
+enforced by a trigger that locks the facility row and checks the highest
+number of overlapping bookings, so parallel requests cannot oversell a slot.
+Staff and member bookings must sit on the slot grid inside opening hours and
+not cross midnight. A class can use a facility (`classes.resource_id`): it is
+mirrored as a booking row that takes one place and follows the class when it
+moves or is deleted. Members book only with an active subscription (as in
+check-in), only future slots within `advance_days`, and cancel until
+`cancel_hours` before the start. The price is stored and shown; there is no
+payment. Error codes: `RB001` slot full, `RB002` outside hours or off grid,
+`RB003` module off, `RB004` time window, `RB005` too late to cancel, `RB006`
+no active subscription, `RB007` conflicts with a class, `RB008` invalid or
+not allowed.
+
+Screens: `/admin/fasilitas` (admin), `/admin/booking` (admin, receptionist;
+day and week calendar, click a slot), `/member/booking`. A new club lands on
+`/admin/onboarding` (location, facilities, first package), every step can be
+skipped, and a banner stays on the dashboard until it is finished
+(`tenants.onboarding_completed_at`, `complete_onboarding()`).
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -295,12 +334,18 @@ status from `/superadmin`.
 - Not built: payment gateway, invoices or receipts for Swimma itself,
   proration, automatic renewal or suspension at period end, coupons,
   per-module pricing, a coach in several clubs, moving a club between
-  organizations, self-registration or self-booking for members,
+  organizations, self-registration, member self-booking of classes,
   invitations or password reset by email, one person as both coach and
   member, check-out, geofence, staff scanning the member's QR, door
   hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-05
+
+- Per-club module toggles (`/admin/settings/modul`), terms stored per club type, and a skippable onboarding wizard with a dashboard banner.
+- Generic facilities and booking engine: `resources`, `resource_hours`, `resource_bookings`, capacity by locked max-overlap, class sync, RPCs and error codes `RB001` to `RB008` (migrations `20250101000020_modules_onboarding.sql` and `20250101000021_resource_booking.sql`).
+- Admin `/admin/fasilitas` and `/admin/booking` (day and week calendar), member `/member/booking`, optional facility on classes.
 
 ### 2026-10-04
 
