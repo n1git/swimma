@@ -48,3 +48,16 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 | Claim on the page | Proof |
 |---|---|
 | (filled in Phase 2 and 3) | |
+
+## Phase 1 done
+
+- `ui-ux-pro-max` run again (skip link guidance: provide a skip-to-content link; mobile-first breakpoints). Header: sticky, translucent with backdrop blur (the one glass element), skip link "Langsung ke konten" to `#konten`, section links from `md`, theme toggle, Masuk and Daftarkan klub; below `md` a menu button (`aria-expanded`, `aria-controls`, 44 px) opens a panel with 48 px rows that closes on Escape (focus back to the button) and on link click. Footer: product links, account and legal links, contact only when an env var is set, WIB note.
+- `Section` wrapper (id, `aria-labelledby`, eyebrow, balanced H2, intro, 64/96 px vertical rhythm, `max-w-6xl`, 16/24 px gutters, `scroll-mt-20` for the sticky header). Type scale: body 16-18 px, H2 30-36 px, H1 set in Phase 2.
+- `lib/site.ts`: `SITE_URL` (`NEXT_PUBLIC_SITE_URL`, then the Vercel production URL, then localhost) and `getContact()` (`NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_WHATSAPP`), both documented in `.env.example`.
+- Root metadata: `metadataBase`, title template, new description (all sports, not swimming only), Open Graph and Twitter tags; `app/opengraph-image.tsx` (1200x630, brand colors, no claims beyond the H1); `app/robots.ts` (app areas disallowed, sitemap link); `app/sitemap.ts` (`/`, `/daftar`, `/login`; legal drafts left out because they are `noindex`).
+- `/privasi` and `/syarat` drafts with `noindex`, a visible "Draf" notice and no compliance claim.
+
+### What the legal drafts assume
+
+- `/privasi`: the stored data list matches the schema (org owners, staff profiles incl. optional phone, members incl. date of birth, address, notes, contact name and phone, member accounts, classes, bookings, attendance notes, subscriptions, invoices, orders, manual payments, cash ledger, payroll, check-ins without IP or device data, guest name and phone on bookings, customer name on orders, promo images in Supabase Storage, IP addresses kept briefly as rate-limit keys in `auth_rate_limits`); cookies: `app_session` (httpOnly, 7 days) and the theme in browser storage; services: Supabase (database, storage) and Vercel (hosting); no analytics or tracking; fonts are self-hosted by `next/font` (no request to Google at runtime); data is not deleted when access ends. It assumes the operator is the data processor and the club the controller, and does not name a legal entity, retention period or jurisdiction; these need your review.
+- `/syarat`: describes the account model, roles, one email per identity, pricing per internal user, manual activation after payment, the effect of pending/expired/suspended/cancelled subscriptions (`SW003`, `tenants.is_active`), and that member payments are recorded manually. It does not set liability limits, governing law, refund rules or an operator name.
