@@ -8,7 +8,7 @@ Members sign in on the same `/login`, one account per person, memberships in man
 - [x] Phase 1: database (`20250101000017_member_login.sql`)
 - [x] Phase 2: auth and server
 - [x] Phase 3: UI
-- [ ] Phase 4: cleanup and final checks
+- [x] Phase 4: cleanup and final checks
 
 ## Dependency note
 
@@ -80,3 +80,11 @@ Members sign in on the same `/login`, one account per person, memberships in man
 - `/member`: greeting, subscriptions with remaining sessions for session packs, invoices with text status, upcoming booked classes, active promo. `/member/klub`: chooser (also reachable later as "Klub Saya"); the shell hides the club name and nav until a club is chosen, and shows a club switcher when the account has several clubs. `app/member/layout.tsx` gates with `requireRole('member')` and `requireModule('member_portal')`.
 - `MemberPortalAccess` ("Aktifkan akun" with an email field, "Atur ulang kata sandi", temporary password shown once, the "Akun sudah ada, anggota login dengan kata sandinya" message): on the admin member detail page and modal (admin only, active members, module ready) and in the coach's "Anggota Saya" table through a dialog.
 - Wording is plain Bahasa Indonesia (no `terms` helper exists).
+
+## Phase 4 done
+
+- README (auth model, identity rule, member activation in onboarding, limits, out of scope, changelog) and `CLAUDE.md` notes updated.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`; migration 017 applies on an empty DB and on 001-016 plus sample rows; no `parent` / `child` / `club code` wording in app code.
+- Verified in SQL (local Postgres with stubbed Supabase roles): a member account in two clubs of different organizations sees only the club named in the JWT, a forged tenant claim sees nothing; a member reads only its own `members`, `subscriptions`, `invoices`, `bookings`, sees tenant classes, cannot read the cash ledger, `member_names`, or any write (update, delete, insert and self-profile update all denied or no-op); the same email cannot exist as owner, coach and member in any order; deactivating the member row cuts only that club, deactivating the account cuts both; `activate_member_account` is rejected (MP003) while `member_portal` is not `ready`, no account is left behind; remaining sessions 8/1/7.
+- Verified with the real `canAccessPath`: a member reaches only `/member*` and `/change-password`, never `/admin` or `/coach`; staff roles cannot reach `/member`.
+- Not executed: the login route, lockout for member accounts, `switchClub`, activation and reset actions and the `club_pending` redirect run against a real Supabase/PostgREST (no PostgREST or Docker daemon here). Lockout and the generic error share the code path used for owners (same account abstraction), checked by reading only.

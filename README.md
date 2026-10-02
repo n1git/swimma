@@ -39,7 +39,7 @@ variables.
 Authentication is **custom** (bcrypt password hashes in `auth_credentials` for coaches
 and in `org_owners` for owners), not Supabase Auth. There is one `/login`
 (email + password, no club code). The server looks the email up in
-`org_owners` first, then in coach/staff profiles, with the same generic error
+`org_owners` first, then in `member_accounts`, then in coach/staff profiles, with the same generic error
 for unknown email and wrong password, plus per-IP rate limit and a 15-minute
 lockout after 5 failures. It then mints its own JWT signed with the Supabase
 project's JWT secret, carrying `sub` (profile id), `tenant_id`, `org_id` and
@@ -54,7 +54,26 @@ no second password prompt. The owner is not an RLS role: RLS still sees a
 tenant `admin`. Deactivating an owner (`org_owners.is_active`) removes access
 to all their clubs at once; changing the owner password revokes every
 owner session (`sessions_valid_after`). Coaches go to `/coach`.
-`/superadmin/login` stays a separate URL with its own isolated session. That JWT is stored in an
+`/superadmin/login` stays a separate URL with its own isolated session.
+
+**Members** (swimmers) can sign in too, read-only, once a club has activated
+their account (module `member_portal`). One person has one account in
+`member_accounts`; each club membership is a `profiles` row with role
+`member` (`profiles.member_account_id`) linked from `members.profile_id`.
+After login, one club goes to `/member`; several go to `/member/klub` to
+choose (the session carries `club_pending` until they do, so no club data is
+shown first), and `switchClub` re-mints the JWT after checking
+`member_account_id` in the database. RLS for role `member` only selects the
+member's own `members`, `subscriptions`, `invoices` and `bookings` rows plus
+the tenant-wide classes and active promo; there is no write policy, and
+deactivating the member account cuts every club while deactivating the
+`members` row cuts only that club.
+
+**Identity rule:** one email is one kind of identity (owner, coach/staff
+admin, or member account), enforced by triggers on all three stores. A coach
+or owner therefore cannot also be a member with the same email. One account
+has at most one member profile per club (a parent using one email for two
+children in the same club cannot activate both). That JWT is stored in an
 httpOnly cookie and attached as the `Authorization` header on every Supabase
 request, so Postgres RLS (`auth.uid()`, `auth.jwt()`) enforces both role and
 tenant scoping exactly as it would with Supabase Auth.
@@ -134,6 +153,16 @@ no new Supabase project or Vercel deployment needed. Two ways in:
   `create_tenant_for_owner`), within the plan's club limit.
 - **Manual** (`npm run seed:admin` with `SEED_TENANT_NAME` and optionally
   `SEED_ORGANIZATION_NAME`) uses the same function.
+- **Member accounts**: an admin (or a coach for their own members) opens a
+  member and uses "Aktifkan akun" with the member's email
+  (`activate_member_account`). A new email creates the account with a
+  temporary password shown once (`must_change_password`); an email that
+  already has an account is linked to the new club without touching its
+  password ("Akun sudah ada, anggota login dengan kata sandinya"). Known
+  limits: this reveals that the email already has an account; a temporary
+  password known to one club's staff stays valid until the person's first
+  login; "Atur ulang kata sandi" is refused when the account also belongs to
+  another club. There is no invitation or reset by email.
 
 Organizations that existed before the billing migration were backfilled
 (see migration `20250101000014_org_billing.sql`): Advanced if any old plan was
@@ -222,13 +251,22 @@ status from `/superadmin`.
 - WhatsApp and payment-gateway integrations are left as TODOs — invoices are
   marked paid manually by an admin for now.
 - Admin creates coach accounts (temporary password, changed on first
-  login). Members have no login and there is no parent-facing area.
+  login). Members sign in read-only after an admin or their coach activates
+  the account; there is no self-registration and no parent role.
 - Not built: payment gateway, invoices or receipts for Swimma itself,
   proration, automatic renewal or suspension at period end, coupons,
   per-module pricing, a coach in several clubs, moving a club between
-  organizations, member login.
+  organizations, self-registration or self-booking for members,
+  invitations or password reset by email, one person as both coach and
+  member.
 
 ## Changelog
+
+### 2026-10-03
+
+- Members can sign in on `/login` (read-only `/member`: subscription and remaining sessions, invoices, upcoming classes, promo); one account can belong to many clubs, with `/member/klub` and `switchClub`.
+- Admins and coaches activate accounts from the member ("Aktifkan akun") and reset temporary passwords; gated by the `member_portal` module (now `ready`).
+- One email is one kind of identity across owners, coaches/staff and members (migration `20250101000017_member_login.sql`).
 
 ### 2026-10-02
 
