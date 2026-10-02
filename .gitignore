@@ -46,3 +46,6 @@ mvp/node_modules
 mvp/dist
 mvp/*.tsbuildinfo
 __pycache__/
+
+# audit output (private, never commit)
+/audit/
