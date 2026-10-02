@@ -33,6 +33,7 @@ const CASH_CATEGORY_LABEL: Record<string, string> = {
   payment_received: "Pembayaran Diterima",
   payroll: "Gaji Pelatih",
   manual_adjustment: "Penyesuaian Manual",
+  order_payment: "Penjualan Kasir",
 };
 
 const QUICK_LINKS = [

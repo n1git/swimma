@@ -5,7 +5,7 @@ Products, orders, point of sale, manual payments, then sport club types (tennis,
 ## Status
 
 - [x] Phase 0: preparation and plan. OK given in the same message as the task ("ok, you decide"): defaults accepted.
-- [ ] Phase 1: commerce, database and server (`022_commerce.sql`)
+- [x] Phase 1: commerce, database and server (`022_commerce.sql`)
 - [ ] Phase 2: products and POS UI
 - [ ] Phase 3: sport club types and dashboard (`023_sport_club_types.sql`)
 - [ ] Phase 4: cleanup and final checks
@@ -55,3 +55,9 @@ Products, orders, point of sale, manual payments, then sport club types (tennis,
 ## Decisions I need from you (defaults applied)
 
 Assumptions 2, 5, 8, 9 (void reverses cash with manual adjustments) and 15.
+
+## Phase 1 done
+
+- Migration `20250101000022_commerce.sql`: module `pos` (mapped to swimming and gym, `ready` at the end), `products`, `orders`, `order_items`, `order_payments`, `order_counters`, `next_order_number`, `resource_bookings.paid_at`, ledger category `order_payment` with `order_id` (traceability check extended, old rows untouched, client insert narrowed to `manual_adjustment`), RPCs `create_order` (optional payments in the same transaction), `add_order_payment`, `void_order`, internal `order_record_payment` and `order_settle`; RLS: products read by admin, receptionist, finance and written by admin; orders, items and payments read-only for clients, a member reads only their own paid orders. Error codes `PS001`-`PS006`.
+- Verified in SQL: split payment writes one ledger entry per payment (5 payments, 5 linked ledger rows), booking line sets `paid_at`, the same booking cannot join a second order, overpayment rejected, partial order can be completed and not voided, insufficient stock rolls back the order, ledger and order number, void restores stock once and writes manual `out` reversals, second void rejected, finance reads but cannot sell, coach sees nothing, receptionist cannot insert into `orders`, `products` or forge `order_payment` ledger rows, member sees only own paid order and items, another club sees nothing, module off gives PS001 with data kept, anon denied. Parallel: stock 12 with orders of 10 and 5 gave one success and one failure (whichever won; stock 7 or 2), 20 orders of 1 gave exactly 12 successes, stock 0, distinct order numbers. Migration applies on an empty database and on 001-021 with rows including old ledger rows.
+- Server: `lib/commerce.ts`, `lib/validations/commerce.ts`, actions `products.ts` (create, update, active) and `orders.ts` (create order from a JSON cart with payments, add payment, void), readers `lib/data/commerce.ts`, cash ledger label "Penjualan Kasir".

@@ -17,6 +17,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   payment_received: "Pembayaran Diterima",
   payroll: "Gaji Pelatih",
   manual_adjustment: "Penyesuaian Manual",
+  order_payment: "Penjualan Kasir",
 };
 
 export default async function CashLedgerPage() {
