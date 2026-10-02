@@ -7,7 +7,7 @@ Status and counts only. Findings, evidence and exploit details stay in the untra
 - [x] Phase 0: preparation. OK received.
 - [~] Phase 1: environment. Local part done (migrations on PG17, seed tooling, full local seed, `docs/DEPLOY.md`). Hosted part blocked after migration 011, see below.
 - [x] Phase 2: audit, database and authorization
-- [ ] Phase 3: audit, application security
+- [x] Phase 3: audit, application security
 - [ ] Phase 4: audit, logic, data integrity, UX, performance
 - [ ] Phase 5: report
 
@@ -39,6 +39,7 @@ Blocker found in Phase 0: the plan cannot run unchanged. One migration fails on 
 | Phase | Critical | High | Medium | Low | Info |
 |---|---|---|---|---|---|
 | 2 database and authorization | 0 | 2 | 4 | 5 | 1 |
+| 3 application security | 0 | 2 | 7 | 9 | 3 |
 
 ## Phase 1 local result
 
