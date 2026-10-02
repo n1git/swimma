@@ -4,8 +4,8 @@ Members sign in on the same `/login`, one account per person, memberships in man
 
 ## Status
 
-- [ ] Phase 0: preparation and plan. Waiting for OK.
-- [ ] Phase 1: database (`20250101000017_member_login.sql`)
+- [x] Phase 0: preparation and plan. OK received (defaults accepted).
+- [x] Phase 1: database (`20250101000017_member_login.sql`)
 - [ ] Phase 2: auth and server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
@@ -63,3 +63,8 @@ Members sign in on the same `/login`, one account per person, memberships in man
 7. **`subscription_usage` is unusable by members** (it joins `member_names`), hence the separate `my_subscription_usage` view.
 8. **No UI for deactivating a whole member account** (only via the database); deactivating the `members` row cuts that club from the existing member screens.
 9. **Known limits, will go in the README:** activation reveals that an email already has an account; a temporary password known to one club's staff stays valid until the person's first login (they are forced to change it then); a coach or owner email cannot also be a member.
+
+## Phase 1 done
+
+- `supabase/migrations/20250101000017_member_login.sql`: `member_accounts`, `profiles.member_account_id`, `members.profile_id`, role `member`, identity triggers across owners / staff / member accounts, deferred link check, `is_active_user()` with account check, `current_member_id()` / `is_member()`, select-only member policies on `members`, `subscriptions`, `invoices`, `bookings`, `profiles_update_self` closed for members, `my_subscription_usage`, module `member_portal` set to `ready`, `activate_member_account` (service role only; error codes MP001 same-club duplicate, MP002 already activated, MP003 module not ready, MP004 inactive member).
+- Applied on an empty DB and on 001-016 plus sample rows. Smoke checked in SQL: new account then second club linked to the same account; same-club duplicate and re-activation rejected; coach, owner and member emails reject each other in every direction; a member reads only its own member, subscription, invoice and booking rows, sees tenant classes, no cash ledger, no `member_names`, and every write is denied; a forged tenant claim sees nothing; deactivating the member row cuts only that club, deactivating the account cuts both; remaining sessions 8/1/7 from `my_subscription_usage`; anon denied.
