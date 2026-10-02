@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { computeQuote, formatRupiah, PERIOD_LABEL, type BillingPeriod, type PlanCode, type PricingPlan } from "@/lib/pricing";
@@ -15,11 +16,13 @@ export function RegisterClubForm({
   initialPlan,
   initialPeriod,
   initialUsers,
+  clubTypes,
 }: {
   plans: PricingPlan[];
   initialPlan: PlanCode;
   initialPeriod: BillingPeriod;
   initialUsers: number;
+  clubTypes: { code: string; name: string }[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -52,6 +55,7 @@ export function RegisterClubForm({
         planCode: plan.code,
         billingPeriod: period,
         estimatedUsers: users,
+        clubType: formData.get("clubType") || undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -128,6 +132,18 @@ export function RegisterClubForm({
             <Label htmlFor="tenantName">Nama klub</Label>
             <Input id="tenantName" name="tenantName" required maxLength={100} autoComplete="organization" />
           </div>
+          {clubTypes.length > 1 ? (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="clubType">Jenis klub</Label>
+              <Select id="clubType" name="clubType" defaultValue={clubTypes[0].code}>
+                {clubTypes.map((type) => (
+                  <option key={type.code} value={type.code}>
+                    {type.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ownerFullName">Nama Anda</Label>
             <Input id="ownerFullName" name="ownerFullName" required maxLength={100} autoComplete="name" />

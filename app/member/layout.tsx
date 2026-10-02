@@ -1,5 +1,5 @@
 import { requireRole } from "@/lib/auth/guard";
-import { requireModule } from "@/lib/modules";
+import { isModuleReady, requireModule } from "@/lib/modules";
 import { getCurrentTenant } from "@/lib/data/tenant";
 import { listClubsForProfile } from "@/lib/data/member-clubs";
 import { AppShell, type NavItem } from "@/components/shared/app-shell";
@@ -9,11 +9,19 @@ import { APP_NAME } from "@/lib/config";
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRole("member");
   await requireModule("member_portal");
-  const [tenant, clubs] = await Promise.all([getCurrentTenant(), listClubsForProfile(user.id)]);
+  const [tenant, clubs, checkinOn] = await Promise.all([
+    getCurrentTenant(),
+    listClubsForProfile(user.id),
+    isModuleReady("checkin"),
+  ]);
 
   const navItems: NavItem[] = user.clubPending
     ? [{ href: "/member/klub", label: "Pilih Klub" }]
-    : [{ href: "/member", label: "Beranda", exact: true }, ...(clubs.length > 1 ? [{ href: "/member/klub", label: "Klub Saya" }] : [])];
+    : [
+        { href: "/member", label: "Beranda", exact: true },
+        ...(checkinOn ? [{ href: "/member/kunjungan", label: "Kunjungan" }] : []),
+        ...(clubs.length > 1 ? [{ href: "/member/klub", label: "Klub Saya" }] : []),
+      ];
 
   return (
     <AppShell

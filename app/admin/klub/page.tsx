@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireOwner } from "@/lib/auth/owner";
 import { getOrganizationOverview } from "@/lib/data/organization";
+import { getReadyClubTypes } from "@/lib/club-type";
 import { CreateTenantButton } from "@/components/organization/create-tenant-form";
 import { SwitchTenantButton } from "@/components/organization/switch-tenant-button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,10 @@ import {
 
 export default async function OrganizationPage() {
   const owner = await requireOwner();
-  const overview = await getOrganizationOverview(owner.organizationId, owner.ownerId);
+  const [overview, clubTypes] = await Promise.all([
+    getOrganizationOverview(owner.organizationId, owner.ownerId),
+    getReadyClubTypes(),
+  ]);
   if (!overview) return null;
 
   const full = overview.clubLimit !== null && overview.tenants.length >= overview.clubLimit;
@@ -35,7 +39,7 @@ export default async function OrganizationPage() {
           <Link href="/admin/klub/langganan" className={buttonVariants({ variant: "outline" })}>
             Langganan
           </Link>
-          <CreateTenantButton disabled={full} />
+          <CreateTenantButton disabled={full} clubTypes={clubTypes} />
         </div>
       </div>
       <Table>

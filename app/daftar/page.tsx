@@ -4,6 +4,7 @@ import { AuthPageShell } from "@/components/shared/auth-page-shell";
 import { RegisterClubForm } from "@/components/shared/register-club-form";
 import { APP_NAME } from "@/lib/config";
 import { getActivePlans } from "@/lib/data/platform-pricing";
+import { getReadyClubTypes } from "@/lib/club-type";
 import { BILLING_PERIODS, PLAN_CODES, type BillingPeriod, type PlanCode } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default async function RegisterClubPage({
 }: {
   searchParams: Promise<{ plan?: string; period?: string; users?: string }>;
 }) {
-  const [params, plans] = await Promise.all([searchParams, getActivePlans()]);
+  const [params, plans, clubTypes] = await Promise.all([searchParams, getActivePlans(), getReadyClubTypes()]);
   const plan = PLAN_CODES.find((code) => code === params.plan) ?? plans[0]?.code ?? "standard";
   const period: BillingPeriod = BILLING_PERIODS.find((value) => value === params.period) ?? "monthly";
   const users = Math.min(Math.max(Math.floor(Number(params.users)) || 3, 1), 1000);
@@ -40,7 +41,7 @@ export default async function RegisterClubPage({
         </>
       }
     >
-      <RegisterClubForm plans={plans} initialPlan={plan as PlanCode} initialPeriod={period} initialUsers={users} />
+      <RegisterClubForm plans={plans} initialPlan={plan as PlanCode} initialPeriod={period} initialUsers={users} clubTypes={clubTypes} />
     </AuthPageShell>
   );
 }

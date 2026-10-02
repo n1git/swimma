@@ -7,7 +7,7 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 - [x] Phase 0: preparation and plan. OK received (defaults accepted).
 - [x] Phase 1: database (`018_club_types.sql`, `019_gym_checkin.sql`)
 - [x] Phase 2: server
-- [ ] Phase 3: UI
+- [x] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
 ## Dependency note
@@ -80,3 +80,10 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 - `lib/actions/checkin.ts`: `createCheckinPoint`, `renameCheckinPoint`, `setCheckinPointActive`, `fetchCheckinToken` (admin), `manualCheckin` (admin or coach); all gated by the club's `checkin` module where it matters.
 - Scan route `app/checkin/route.ts` (`GET /checkin?p=&t=`): validates input; no session redirects to `/login?next=<scan URL>`; staff get a message; looks up the point's club, switches to it through the account's memberships (or "Anda bukan anggota klub ini"); 10 scans per minute per profile; calls `record_checkin` with the member's own JWT; redirects to `/checkin/hasil` with a result code.
 - Login accepts only a safe internal `next` path (`lib/auth/next-path.ts`), used by the login page and form. Club type accepted by registration and `createTenant`; the UI selector comes in Phase 3.
+
+## Phase 3 done
+
+- `ui-ux-pro-max` consulted (clear success/failure feedback; icon plus text, not colour alone). Existing components only; the new dependency is `qrcode-generator`.
+- `/admin/checkin` (module and admin gated): visits today / this week, points management (create, rename, activate, "Tampilkan QR"), manual check-in dialog, today's table (member, WIB time, point, plan, method), 24-hour histogram of the last 30 days (recharts), members with an active plan and no visit in 14 days. `/admin/checkin/layar/[pointId]`: full-screen QR redrawn client-side every 20 seconds. Nav item "Check-in" only for clubs with the module.
+- `/checkin/hasil`: success or failure screen with icon and message; `/member/kunjungan` plus nav item for the member; "Kunjungan" section on the admin member detail and modal; manual check-in button on the coach's member list.
+- Club type select in the `/daftar` wizard step 2 and in the "Tambah klub" dialog (shown only when more than one type is ready). New screens use `terms` from the club type; existing screens keep their wording.

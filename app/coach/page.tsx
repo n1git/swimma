@@ -16,6 +16,7 @@ import { isModuleReady } from "@/lib/modules";
 import { TriggerDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MemberPortalAccess } from "@/components/members/member-portal-access";
+import { ManualCheckinForm } from "@/components/checkin/manual-checkin-form";
 
 interface ClassRow {
   id: string;
@@ -47,6 +48,8 @@ export default async function CoachSchedulePage() {
     .order("full_name");
   const members = memberRows ?? [];
   const portalReady = await isModuleReady("member_portal");
+  const checkinOn = await isModuleReady("checkin");
+  const extraColumns = (portalReady ? 1 : 0) + (checkinOn ? 1 : 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -109,6 +112,7 @@ export default async function CoachSchedulePage() {
             <TableHead>Kontak</TableHead>
             <TableHead>Telepon</TableHead>
             {portalReady ? <TableHead>Portal</TableHead> : null}
+            {checkinOn ? <TableHead>Check-in</TableHead> : null}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -131,11 +135,25 @@ export default async function CoachSchedulePage() {
                   </TriggerDialog>
                 </TableCell>
               ) : null}
+              {checkinOn ? (
+                <TableCell>
+                  <TriggerDialog
+                    trigger={
+                      <Button type="button" size="sm" variant="outline">
+                        Check-in manual
+                      </Button>
+                    }
+                  >
+                    <h2 className="mb-4 text-xl font-semibold">Check-in manual: {m.full_name}</h2>
+                    <ManualCheckinForm memberId={m.id} />
+                  </TriggerDialog>
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
           {members.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={portalReady ? 4 : 3} className="text-center text-muted-foreground">
+              <TableCell colSpan={3 + extraColumns} className="text-center text-muted-foreground">
                 Belum ada anggota.
               </TableCell>
             </TableRow>

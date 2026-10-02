@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { MemberEditForm } from "@/components/members/member-edit-form";
 import { MemberPortalAccess } from "@/components/members/member-portal-access";
 import { isModuleReady } from "@/lib/modules";
+import { MemberVisits } from "@/components/checkin/member-visits";
 
 export default async function MemberDetailModal({
   params,
@@ -27,6 +28,7 @@ export default async function MemberDetailModal({
     getSession(),
   ]);
   const portalReady = session?.app_role === "admin" && (await isModuleReady("member_portal"));
+  const checkinOn = await isModuleReady("checkin");
 
   if (!member) notFound();
 
@@ -42,6 +44,11 @@ export default async function MemberDetailModal({
       {portalReady && member.is_active ? (
         <div className="mt-6">
           <MemberPortalAccess memberId={member.id} hasAccount={Boolean(member.profile_id)} />
+        </div>
+      ) : null}
+      {checkinOn ? (
+        <div className="mt-6">
+          <MemberVisits memberId={member.id} />
         </div>
       ) : null}
     </Dialog>

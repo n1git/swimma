@@ -6,6 +6,7 @@ import { BackLink } from "@/components/shared/back-link";
 import { MemberEditForm } from "@/components/members/member-edit-form";
 import { MemberPortalAccess } from "@/components/members/member-portal-access";
 import { isModuleReady } from "@/lib/modules";
+import { MemberVisits } from "@/components/checkin/member-visits";
 
 export default async function MemberDetailPage({
   params,
@@ -27,6 +28,7 @@ export default async function MemberDetailPage({
     getSession(),
   ]);
   const portalReady = session?.app_role === "admin" && (await isModuleReady("member_portal"));
+  const checkinOn = await isModuleReady("checkin");
 
   if (!member) notFound();
 
@@ -41,6 +43,7 @@ export default async function MemberDetailPage({
         canChangeStatus={session?.app_role === "admin"}
       />
       {portalReady && member.is_active ? <MemberPortalAccess memberId={member.id} hasAccount={Boolean(member.profile_id)} /> : null}
+      {checkinOn ? <MemberVisits memberId={member.id} /> : null}
     </div>
   );
 }
