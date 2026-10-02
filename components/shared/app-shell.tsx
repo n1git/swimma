@@ -25,7 +25,7 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
+      <header className="flex items-center print:hidden justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2">
           <span className="font-heading text-base font-semibold tracking-tight text-primary">{clubName}</span>
           <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
@@ -40,14 +40,14 @@ export function AppShell({
         </div>
       </header>
       <div className="flex flex-1 flex-col sm:flex-row">
-        <nav className="flex shrink-0 gap-1 overflow-x-auto bg-sidebar p-2 sm:w-56 sm:flex-col sm:gap-0.5 sm:border-r sm:border-sidebar-border sm:p-4">
+        <nav className="flex shrink-0 print:hidden gap-1 overflow-x-auto bg-sidebar p-2 sm:w-56 sm:flex-col sm:gap-0.5 sm:border-r sm:border-sidebar-border sm:p-4">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} exact={item.exact ?? item.href.split("/").length <= 2}>
               {item.label}
             </NavLink>
           ))}
         </nav>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 print:p-0">{children}</main>
       </div>
     </div>
   );

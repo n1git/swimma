@@ -1,0 +1,99 @@
+import Link from "next/link";
+import { requireRole } from "@/lib/auth/guard";
+import { getOrders } from "@/lib/data/commerce";
+import { ORDER_STATUS_LABEL } from "@/lib/commerce";
+import { formatJakartaDateTime, formatRupiahFull } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const FILTERS = [
+  { value: "", label: "Semua" },
+  { value: "open", label: "Belum lunas" },
+  { value: "paid", label: "Lunas" },
+  { value: "void", label: "Dibatalkan" },
+];
+
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const session = await requireRole(["admin", "receptionist", "finance"]);
+  const { status } = await searchParams;
+  const active = FILTERS.some((f) => f.value === status) ? (status ?? "") : "";
+  const orders = await getOrders({ status: active || undefined });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Pesanan</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Riwayat penjualan dan pembayarannya.</p>
+        </div>
+        {session.role !== "finance" ? (
+          <Link href="/admin/kasir" className={buttonVariants()}>
+            Buka kasir
+          </Link>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter status">
+        {FILTERS.map((f) => (
+          <Link
+            key={f.value}
+            href={f.value ? `/admin/pesanan?status=${f.value}` : "/admin/pesanan"}
+            aria-current={active === f.value ? "page" : undefined}
+            className={cn(
+              "inline-flex h-10 items-center rounded-md border px-3 text-sm font-medium",
+              active === f.value ? "border-primary bg-primary text-primary-foreground" : "border-input hover:bg-accent"
+            )}
+          >
+            {f.label}
+          </Link>
+        ))}
+      </div>
+      {orders.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+          Belum ada pesanan{active ? " dengan status ini" : ""}.
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nomor</TableHead>
+                  <TableHead>Waktu</TableHead>
+                  <TableHead>Pelanggan</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Dibayar</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((o) => (
+                  <TableRow key={o.id}>
+                    <TableCell className="font-medium">{o.number}</TableCell>
+                    <TableCell>{formatJakartaDateTime(o.createdAt)}</TableCell>
+                    <TableCell>{o.memberName ?? o.customerName ?? "-"}</TableCell>
+                    <TableCell className="tabular-nums">{formatRupiahFull(o.total)}</TableCell>
+                    <TableCell className="tabular-nums">{formatRupiahFull(o.paid)}</TableCell>
+                    <TableCell>
+                      <Badge variant={o.status === "paid" ? "success" : o.status === "void" ? "destructive" : "warning"}>
+                        {ORDER_STATUS_LABEL[o.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link href={`/admin/pesanan/${o.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                        Lihat
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

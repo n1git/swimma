@@ -9,11 +9,12 @@ import { APP_NAME } from "@/lib/config";
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const user = await requireRole("member");
   await requireModule("member_portal");
-  const [tenant, clubs, checkinOn, bookingOn] = await Promise.all([
+  const [tenant, clubs, checkinOn, bookingOn, posOn] = await Promise.all([
     getCurrentTenant(),
     listClubsForProfile(user.id),
     isModuleReady("checkin"),
     isModuleReady("resource_booking"),
+    isModuleReady("pos"),
   ]);
 
   const navItems: NavItem[] = user.clubPending
@@ -21,6 +22,7 @@ export default async function MemberLayout({ children }: { children: React.React
     : [
         { href: "/member", label: "Beranda", exact: true },
         ...(bookingOn ? [{ href: "/member/booking", label: "Booking" }] : []),
+        ...(posOn ? [{ href: "/member/pesanan", label: "Pesanan" }] : []),
         ...(checkinOn ? [{ href: "/member/kunjungan", label: "Kunjungan" }] : []),
         ...(clubs.length > 1 ? [{ href: "/member/klub", label: "Klub Saya" }] : []),
       ];
