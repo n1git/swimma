@@ -354,7 +354,7 @@ export function PosTerminal({
       {count > 0 ? (
         <a
           href="#keranjang"
-          className="fixed inset-x-4 bottom-4 z-10 flex h-12 items-center justify-between rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-lg lg:hidden"
+          className="fixed inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+0.5rem)] z-10 sm:bottom-4 flex h-12 items-center justify-between rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-lg lg:hidden"
         >
           <span>{count} item</span>
           <span className="tabular-nums">{formatRupiahFull(total)} · Lihat keranjang</span>

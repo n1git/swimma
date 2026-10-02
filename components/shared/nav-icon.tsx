@@ -1,0 +1,60 @@
+import {
+  Banknote,
+  Building2,
+  CalendarCheck,
+  CalendarDays,
+  ChartColumn,
+  CreditCard,
+  FileText,
+  GraduationCap,
+  History,
+  House,
+  LayoutDashboard,
+  LandPlot,
+  type LucideIcon,
+  Package,
+  Percent,
+  Receipt,
+  Repeat,
+  ScanLine,
+  Settings,
+  ShoppingCart,
+  Tags,
+  UserCog,
+  Users,
+  Wallet,
+  ArrowLeftRight,
+} from "lucide-react";
+import type { NavIconKey } from "./nav-types";
+
+const ICONS: Record<NavIconKey, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  members: Users,
+  coaches: GraduationCap,
+  staff: UserCog,
+  schedule: CalendarDays,
+  booking: CalendarCheck,
+  facility: LandPlot,
+  checkin: ScanLine,
+  cashier: ShoppingCart,
+  orders: Receipt,
+  products: Package,
+  packages: Tags,
+  subscriptions: Repeat,
+  invoices: FileText,
+  ledger: Wallet,
+  payroll: Banknote,
+  promo: Percent,
+  reports: ChartColumn,
+  settings: Settings,
+  club: Building2,
+  orgBilling: CreditCard,
+  home: House,
+  visits: History,
+  switchClub: ArrowLeftRight,
+};
+
+export function NavIcon({ name, className }: { name: NavIconKey; className?: string }) {
+  const Icon = ICONS[name];
+  return <Icon className={className} size={20} strokeWidth={1.75} aria-hidden="true" />;
+}

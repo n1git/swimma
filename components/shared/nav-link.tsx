@@ -3,28 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { NavIcon } from "./nav-icon";
+import { isNavActive, type NavItem } from "./nav-types";
 
-export function NavLink({
-  href,
-  exact,
-  children,
-}: {
-  href: string;
-  exact?: boolean;
-  children: React.ReactNode;
-}) {
+export function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
-  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const active = isNavActive(pathname, item);
 
   return (
     <Link
-      href={href}
+      href={item.href}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "shrink-0 rounded-md px-3 py-2 text-sm font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+        "flex min-h-10 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-foreground",
+        active && "bg-sidebar-accent text-sidebar-accent-foreground"
       )}
     >
-      {children}
+      <NavIcon name={item.icon} className="shrink-0" />
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 }

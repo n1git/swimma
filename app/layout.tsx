@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Lexend, Source_Sans_3 } from "next/font/google";
 import { Toaster } from "sonner";
 import { APP_NAME } from "@/lib/config";
@@ -20,6 +20,10 @@ const sans = Source_Sans_3({
 export const metadata: Metadata = {
   title: APP_NAME,
   description: "Manajemen klub renang anak",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

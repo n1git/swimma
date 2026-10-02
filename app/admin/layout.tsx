@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/guard";
 import { getCurrentTenant } from "@/lib/data/tenant";
-import { AppShell, type NavItem } from "@/components/shared/app-shell";
+import { AppShell } from "@/components/shared/app-shell";
+import type { NavGroup, NavItem } from "@/components/shared/nav-types";
 import { APP_NAME } from "@/lib/config";
 import { loadOwner } from "@/lib/auth/owner";
 import { getSwitchableTenants } from "@/lib/data/organization";
@@ -10,46 +11,101 @@ import { getEnabledModules } from "@/lib/modules";
 import { getClubTerms } from "@/lib/club-type";
 
 type AdminNavItem = NavItem & { module?: string };
+type AdminNavGroup = { label?: string; items: AdminNavItem[] };
 
-const navItems = (resourceLabel: string): AdminNavItem[] => [
-  { href: "/admin", label: "Dasbor" },
-  { href: "/admin/members", label: "Anggota" },
-  { href: "/admin/coaches", label: "Pelatih" },
-  { href: "/admin/staff", label: "Staf" },
-  { href: "/admin/schedule", label: "Jadwal", module: "classes" },
-  { href: "/admin/booking", label: "Booking", module: "resource_booking" },
-  { href: "/admin/fasilitas", label: resourceLabel, module: "resource_booking" },
-  { href: "/admin/kasir", label: "Kasir", module: "pos" },
-  { href: "/admin/pesanan", label: "Pesanan", module: "pos" },
-  { href: "/admin/produk", label: "Produk", module: "pos" },
-  { href: "/admin/checkin", label: "Check-in", module: "checkin" },
-  { href: "/admin/billing/packages", label: "Paket", module: "plans" },
-  { href: "/admin/billing/subscriptions", label: "Langganan", module: "billing" },
-  { href: "/admin/billing/invoices", label: "Tagihan", module: "billing" },
-  { href: "/admin/cash-ledger", label: "Buku Kas", module: "cash_ledger" },
-  { href: "/admin/payroll", label: "Gaji Pelatih", module: "payroll" },
-  { href: "/admin/promo", label: "Promo", module: "promo" },
-  { href: "/admin/reports", label: "Laporan" },
-  { href: "/admin/settings", label: "Pengaturan" },
+const PRIMARY_OPERATIONS = ["/admin/schedule", "/admin/booking", "/admin/kasir", "/admin/checkin"];
+
+const adminGroups = (resourceLabel: string): AdminNavGroup[] => [
+  { label: "Utama", items: [{ href: "/admin", label: "Dasbor", icon: "dashboard", primary: true }] },
+  {
+    label: "Orang",
+    items: [
+      { href: "/admin/members", label: "Anggota", icon: "members", primary: true },
+      { href: "/admin/coaches", label: "Pelatih", icon: "coaches" },
+      { href: "/admin/staff", label: "Staf", icon: "staff" },
+    ],
+  },
+  {
+    label: "Operasional",
+    items: [
+      { href: "/admin/schedule", label: "Jadwal", icon: "schedule", module: "classes" },
+      { href: "/admin/booking", label: "Booking", icon: "booking", module: "resource_booking" },
+      { href: "/admin/fasilitas", label: resourceLabel, icon: "facility", module: "resource_booking" },
+      { href: "/admin/checkin", label: "Check-in", icon: "checkin", module: "checkin" },
+    ],
+  },
+  {
+    label: "Penjualan",
+    items: [
+      { href: "/admin/kasir", label: "Kasir", icon: "cashier", module: "pos" },
+      { href: "/admin/pesanan", label: "Pesanan", icon: "orders", module: "pos" },
+      { href: "/admin/produk", label: "Produk", icon: "products", module: "pos" },
+    ],
+  },
+  {
+    label: "Keuangan",
+    items: [
+      { href: "/admin/billing/packages", label: "Paket", icon: "packages", module: "plans" },
+      { href: "/admin/billing/subscriptions", label: "Langganan", icon: "subscriptions", module: "billing" },
+      { href: "/admin/billing/invoices", label: "Tagihan", icon: "invoices", module: "billing" },
+      { href: "/admin/cash-ledger", label: "Buku Kas", icon: "ledger", module: "cash_ledger" },
+      { href: "/admin/payroll", label: "Gaji Pelatih", icon: "payroll", module: "payroll" },
+    ],
+  },
+  {
+    label: "Lainnya",
+    items: [
+      { href: "/admin/promo", label: "Promo", icon: "promo", module: "promo" },
+      { href: "/admin/reports", label: "Laporan", icon: "reports" },
+      { href: "/admin/settings", label: "Pengaturan", icon: "settings" },
+    ],
+  },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(STAFF_ROLES);
   const tenant = await getCurrentTenant();
   const [enabled, terms] = await Promise.all([getEnabledModules(), getClubTerms()]);
-  const navBase: NavItem[] = navItems(terms.resource).filter((item) => !item.module || enabled.has(item.module)).map(
-    ({ href, label, exact }) => ({ href, label, exact })
-  );
   const owner = session.role === "admin" ? await loadOwner(session.id, session.tenantId) : null;
   const tenants = owner ? await getSwitchableTenants(owner.ownerId) : [];
+  const visible = adminGroups(terms.resource)
+    .map((group) => ({
+      label: group.label,
+      items: group.items.filter(
+        (item) => (!item.module || enabled.has(item.module)) && (owner || canAccessPath(session.role, item.href))
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+  const operationsPrimary = new Set(
+    PRIMARY_OPERATIONS.filter((href) => visible.some((g) => g.items.some((i) => i.href === href))).slice(0, 2)
+  );
+  const navGroups: NavGroup[] = [
+    ...(owner
+      ? [
+          {
+            label: "Organisasi",
+            items: [
+              { href: "/admin/klub", label: "Klub", icon: "club", exact: true },
+              { href: "/admin/klub/langganan", label: "Langganan", icon: "orgBilling" },
+            ] satisfies NavItem[],
+          },
+        ]
+      : []),
+    ...visible.map((group) => ({
+      label: group.label,
+      items: group.items.map(({ href, label, icon, exact, primary }) => ({
+        href,
+        label,
+        icon,
+        exact,
+        primary: primary || operationsPrimary.has(href),
+      })),
+    })),
+  ];
   const switcher = tenants.length > 1 ? <TenantSwitcher tenants={tenants} currentId={session.tenantId} /> : null;
   return (
     <AppShell
-      navItems={
-        owner
-          ? [{ href: "/admin/klub", label: "Klub", exact: true }, { href: "/admin/klub/langganan", label: "Langganan" }, ...navBase]
-          : navBase.filter((item) => canAccessPath(session.role, item.href))
-      }
+      navGroups={navGroups}
       fullName={session.fullName}
       roleLabel={ROLE_LABEL[session.role]}
       clubName={tenant?.name ?? APP_NAME}

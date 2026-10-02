@@ -1,22 +1,18 @@
 import { LogoutButton } from "./logout-button";
-import { NavLink } from "./nav-link";
+import { MobileNav } from "./mobile-nav";
+import type { NavGroup } from "./nav-types";
+import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
 
-export interface NavItem {
-  href: string;
-  label: string;
-  exact?: boolean;
-}
-
 export function AppShell({
-  navItems,
+  navGroups,
   fullName,
   roleLabel,
   clubName,
   tenantSwitcher,
   children,
 }: {
-  navItems: NavItem[];
+  navGroups: NavGroup[];
   fullName: string;
   roleLabel: string;
   clubName: string;
@@ -40,15 +36,10 @@ export function AppShell({
         </div>
       </header>
       <div className="flex flex-1 flex-col sm:flex-row">
-        <nav className="flex shrink-0 print:hidden gap-1 overflow-x-auto bg-sidebar p-2 sm:w-56 sm:flex-col sm:gap-0.5 sm:border-r sm:border-sidebar-border sm:p-4">
-          {navItems.map((item) => (
-            <NavLink key={item.href} href={item.href} exact={item.exact ?? item.href.split("/").length <= 2}>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <main className="flex-1 p-4 sm:p-6 print:p-0">{children}</main>
+        <SidebarNav groups={navGroups} />
+        <main className="min-w-0 flex-1 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-6 print:p-0">{children}</main>
       </div>
+      <MobileNav groups={navGroups} />
     </div>
   );
 }

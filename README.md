@@ -299,6 +299,23 @@ There is no per-sport code. Verified with a throwaway `futsal`: after those
 inserts a futsal club gets onboarding suggestions, bookings and the cashier
 with no code change.
 
+## Navigation
+
+`AppShell` takes `navGroups: NavGroup[]` (`components/shared/nav-types.ts`):
+a group is `{ label?, items }` and an item is `{ href, label, icon, exact?,
+primary? }`. `icon` is a string key mapped to a `lucide-react` icon in
+`components/shared/nav-icon.tsx`. Desktop shows the dark sidebar with the
+labelled groups; below `sm` it is a bottom tab bar (the `primary` items, at
+most four, padded to three, plus "Menu") and the "Menu" button opens a
+full-screen sheet with every group. When a role has five items or fewer
+(coach, member) all of them are tabs and there is no "Menu".
+
+To add a page to the admin menu: add `{ href, label, icon, module? }` to the
+right group in `app/admin/layout.tsx` (module and role filtering are applied
+there with `getEnabledModules` and `canAccessPath`), add a new icon key in
+`nav-types.ts` and `nav-icon.tsx` if needed, and mark `primary` only for items
+that belong in the phone tab bar. A group with no visible item is not shown.
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -392,6 +409,11 @@ status from `/superadmin`.
   hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-07
+
+- Navigation grouped into labelled sections (Organisasi, Utama, Orang, Operasional, Penjualan, Keuangan, Lainnya) with line icons; same routes, roles and module filters.
+- Phones get a bottom tab bar with a full-screen "Menu" sheet instead of a horizontal scroll strip; the bar respects the iOS safe area.
 
 ### 2026-10-06
 
