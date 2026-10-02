@@ -33,6 +33,7 @@ export function roleHome(role: AppRole): string {
 
 const ADMIN_SECTION_ACCESS: { prefix: string; roles: AppRole[] }[] = [
   { prefix: "/admin/members", roles: ["admin", "receptionist"] },
+  { prefix: "/admin/booking", roles: ["admin", "receptionist"] },
   { prefix: "/admin/schedule/new", roles: ["admin"] },
   { prefix: "/admin/schedule", roles: ["admin", "receptionist"] },
   { prefix: "/admin/billing/invoices", roles: ["admin", "finance", "receptionist"] },

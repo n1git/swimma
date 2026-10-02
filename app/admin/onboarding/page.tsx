@@ -3,10 +3,12 @@ import { requireRole } from "@/lib/auth/guard";
 import { getEnabledModules } from "@/lib/modules";
 import { getClubTerms } from "@/lib/club-type";
 import { getLocations } from "@/lib/data/lookups";
+import { getResourcePreset, getResources } from "@/lib/data/booking";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Stepper, type OnboardingStep } from "@/components/onboarding/stepper";
 import { FinishForm } from "@/components/onboarding/finish-form";
 import { LocationForm } from "@/components/settings/location-form";
+import { FacilityForm } from "@/components/onboarding/facility-form";
 import { PackageForm } from "@/components/billing/package-form";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -18,6 +20,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   const steps: OnboardingStep[] = [
     { key: "lokasi", label: terms.location },
+    ...(enabled.has("resource_booking") ? [{ key: "fasilitas", label: terms.resource }] : []),
     ...(enabled.has("plans") ? [{ key: "paket", label: "Paket pertama" }] : []),
     { key: "selesai", label: "Selesai" },
   ];
@@ -27,9 +30,11 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const previous = steps[index - 1];
 
   const supabase = await createServerSupabaseClient();
-  const [locations, { data: packages }] = await Promise.all([
+  const [locations, { data: packages }, resources, preset] = await Promise.all([
     getLocations(),
     supabase.from("membership_packages").select("id, name").order("created_at"),
+    enabled.has("resource_booking") ? getResources() : Promise.resolve([]),
+    enabled.has("resource_booking") ? getResourcePreset() : Promise.resolve(null),
   ]);
 
   return (
@@ -60,6 +65,28 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
         </Card>
       ) : null}
 
+      {current === "fasilitas" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{terms.resource}</CardTitle>
+            <CardDescription>
+              Yang bisa dibooking di klub Anda. Isian di bawah sudah disarankan sesuai jenis klub dan bisa diubah.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-2">
+              {resources.map((r) => (
+                <Badge key={r.id} variant="secondary">
+                  {r.name}
+                </Badge>
+              ))}
+              {resources.length === 0 ? <p className="text-sm text-muted-foreground">Belum ada {terms.resource.toLowerCase()}.</p> : null}
+            </div>
+            <FacilityForm locations={locations} preset={preset} resourceLabel={terms.resource} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       {current === "paket" ? (
         <Card>
           <CardHeader>
@@ -85,7 +112,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           <CardHeader>
             <CardTitle>Klub siap dipakai</CardTitle>
             <CardDescription>
-              {locations.length} {terms.location.toLowerCase()} dan {(packages ?? []).length} paket tersimpan. Anda bisa
+              {locations.length} {terms.location.toLowerCase()}
+              {enabled.has("resource_booking") ? `, ${resources.length} ${terms.resource.toLowerCase()}` : ""} dan {(packages ?? []).length} paket tersimpan. Anda bisa
               melengkapinya kapan saja dari menu Pengaturan.
             </CardDescription>
           </CardHeader>

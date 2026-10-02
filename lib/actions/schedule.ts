@@ -21,6 +21,7 @@ export async function createClass(
     classTypeId: formData.get("classTypeId"),
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
+    resourceId: formData.get("resourceId") || undefined,
     capacity: formData.get("capacity"),
   });
   if (!parsed.success) {
@@ -51,9 +52,11 @@ export async function createClass(
     start_time: startIso,
     end_time: endIso,
     capacity: input.capacity,
+    resource_id: input.resourceId ?? null,
   });
 
   if (error) {
+    if (error.code.startsWith("RB")) return { ok: false, error: error.message };
     if (error.code === "23P01") {
       return { ok: false, error: "Pelatih sudah memiliki kelas lain pada waktu tersebut" };
     }

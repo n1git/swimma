@@ -7,6 +7,7 @@ export const classSchema = z
     classTypeId: z.string().uuid("Pilih jenis kelas"),
     startTime: z.string().min(1, "Waktu mulai wajib diisi"),
     endTime: z.string().min(1, "Waktu selesai wajib diisi"),
+    resourceId: z.string().uuid().optional(),
     capacity: z.coerce.number().int().positive("Kapasitas harus lebih dari 0"),
   })
   .refine((v) => new Date(v.endTime) > new Date(v.startTime), {
