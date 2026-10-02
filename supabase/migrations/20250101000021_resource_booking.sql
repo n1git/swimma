@@ -369,6 +369,13 @@ begin
   if p_start <= now() or p_start > now() + make_interval(days => v_advance) then
     raise exception using errcode = 'RB004', message = format('Booking hanya bisa untuk waktu yang akan datang, maksimal %s hari ke depan', v_advance);
   end if;
+  if exists (
+    select 1 from resource_bookings
+    where resource_id = p_resource_id and member_id = v_member and status = 'confirmed'
+      and start_time < p_end and end_time > p_start
+  ) then
+    raise exception using errcode = 'RB008', message = 'Anda sudah punya booking pada slot ini';
+  end if;
   return resource_booking_insert(p_resource_id, p_start, p_end, v_member, null, null, 'member');
 end;
 $$ language plpgsql security definer set search_path = public;
@@ -467,6 +474,11 @@ begin
     greatest(r.capacity - resource_max_overlap(r.id, sl.s, sl.e, null), 0) > 0
       and case
         when v_is_member then sl.s > now() and sl.s <= now() + make_interval(days => r.advance_days)
+          and not exists (
+            select 1 from resource_bookings b
+            where b.resource_id = r.id and b.member_id = v_member and b.status = 'confirmed'
+              and b.start_time < sl.e and b.end_time > sl.s
+          )
         else sl.e > now()
       end,
     v_member is not null and exists (

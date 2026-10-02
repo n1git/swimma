@@ -7,15 +7,18 @@ import { getSwitchableTenants } from "@/lib/data/organization";
 import { TenantSwitcher } from "@/components/organization/tenant-switcher";
 import { canAccessPath, ROLE_LABEL, STAFF_ROLES } from "@/lib/auth/roles";
 import { getEnabledModules } from "@/lib/modules";
+import { getClubTerms } from "@/lib/club-type";
 
 type AdminNavItem = NavItem & { module?: string };
 
-const NAV_ITEMS: AdminNavItem[] = [
+const navItems = (resourceLabel: string): AdminNavItem[] => [
   { href: "/admin", label: "Dasbor" },
   { href: "/admin/members", label: "Anggota" },
   { href: "/admin/coaches", label: "Pelatih" },
   { href: "/admin/staff", label: "Staf" },
   { href: "/admin/schedule", label: "Jadwal", module: "classes" },
+  { href: "/admin/booking", label: "Booking", module: "resource_booking" },
+  { href: "/admin/fasilitas", label: resourceLabel, module: "resource_booking" },
   { href: "/admin/checkin", label: "Check-in", module: "checkin" },
   { href: "/admin/billing/packages", label: "Paket", module: "plans" },
   { href: "/admin/billing/subscriptions", label: "Langganan", module: "billing" },
@@ -30,8 +33,8 @@ const NAV_ITEMS: AdminNavItem[] = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireRole(STAFF_ROLES);
   const tenant = await getCurrentTenant();
-  const enabled = await getEnabledModules();
-  const navBase: NavItem[] = NAV_ITEMS.filter((item) => !item.module || enabled.has(item.module)).map(
+  const [enabled, terms] = await Promise.all([getEnabledModules(), getClubTerms()]);
+  const navBase: NavItem[] = navItems(terms.resource).filter((item) => !item.module || enabled.has(item.module)).map(
     ({ href, label, exact }) => ({ href, label, exact })
   );
   const owner = session.role === "admin" ? await loadOwner(session.id, session.tenantId) : null;
