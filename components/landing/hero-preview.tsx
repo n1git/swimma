@@ -27,7 +27,7 @@ export function HeroPreview() {
           {STATS.map((s) => (
             <div key={s.label} className="rounded-lg border border-border bg-background p-3">
               <dt className="text-xs text-muted-foreground">{s.label}</dt>
-              <dd className="mt-1 font-heading text-base font-semibold tabular-nums sm:text-lg">{s.value}</dd>
+              <dd className="mt-1 font-heading text-sm font-semibold tabular-nums sm:text-lg">{s.value}</dd>
             </div>
           ))}
         </dl>

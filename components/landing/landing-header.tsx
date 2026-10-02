@@ -36,12 +36,14 @@ export function LandingHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link href="/login" className={buttonVariants({ variant: "ghost", className: "hidden sm:inline-flex" })}>
-            Masuk
-          </Link>
-          <Link href="/daftar" className={buttonVariants({ className: "hidden sm:inline-flex" })}>
-            Daftarkan klub
-          </Link>
+          <div className="hidden items-center gap-2 sm:flex">
+            <Link href="/login" className={buttonVariants({ variant: "ghost" })}>
+              Masuk
+            </Link>
+            <Link href="/daftar" className={buttonVariants()}>
+              Daftarkan klub
+            </Link>
+          </div>
           <MobileMenu />
         </div>
       </div>

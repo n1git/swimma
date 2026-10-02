@@ -120,6 +120,10 @@ functions, not just in individual policies.
      as a bearer token once set as an env var on the project.
    - `NEXT_PUBLIC_APP_NAME` — optional; the platform name shown before a
      club is selected (login screen, browser tab). Defaults to "Swimma".
+   - `NEXT_PUBLIC_SITE_URL` — optional; public URL for canonical links,
+     Open Graph, sitemap and robots (falls back to the Vercel production URL).
+   - `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_WHATSAPP` — optional;
+     contact shown on the landing page. Leave empty to show no contact.
 5. Onboard the first organization, its owner and first club:
    ```bash
    SEED_TENANT_NAME="My Club" \
@@ -316,6 +320,35 @@ there with `getEnabledModules` and `canAccessPath`), add a new icon key in
 `nav-types.ts` and `nav-icon.tsx` if needed, and mark `primary` only for items
 that belong in the phone tab bar. A group with no visible item is not shown.
 
+## Landing page
+
+`/` is built from `components/landing/` in this order: header (skip link,
+section links, theme toggle, mobile menu), hero with a product preview,
+supported sports, features by job, how it works, multi club, pricing, FAQ,
+final call to action, footer. A signed-in session is redirected to its home.
+
+- Live data only: sports come from `club_types` and `club_type_modules`
+  (`getPublicClubTypes`), so a status change in the table changes the page;
+  prices, club limits, trial and yearly discount come from
+  `subscription_plans` (`getActivePlans`) and the module list from
+  `platform_modules`. The pricing picker hands plan, period and users to
+  `/daftar?plan=&period=&users=`.
+- Product visuals are the app's own components with sample data and carry a
+  "Contoh data" label. No testimonials, client names, logos or invented
+  figures.
+- Keeping claims true: every statement on the page has a row in the claims
+  table in `progress/landing-rework-progress.md` that points to the code or
+  migration proving it. When a feature changes, update the sentence and its
+  row together; a `soon` module or club type is shown as "Segera hadir".
+- SEO: `app/sitemap.ts`, `app/robots.ts`, `app/opengraph-image.tsx`, root
+  metadata (canonical, Open Graph, Twitter) and `SoftwareApplication` JSON-LD
+  with offers from live plans. `/privasi` and `/syarat` are drafts with
+  `noindex` and a visible "Draf" notice; they need legal review.
+- Env vars: `NEXT_PUBLIC_SITE_URL` (canonical URL; falls back to the Vercel
+  production URL), `NEXT_PUBLIC_CONTACT_EMAIL` and
+  `NEXT_PUBLIC_CONTACT_WHATSAPP` (digits only). Contact links render only
+  when set; with neither set no contact element exists.
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -409,6 +442,13 @@ status from `/superadmin`.
   hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-08
+
+- Landing page reworked for all sports: sports list from `club_types`, features by job, how it works, multi club, pricing copy from live plans, FAQ and final call to action; all fake figures and demo club names removed.
+- Every landing claim is listed with its proof in `progress/landing-rework-progress.md`; product visuals use sample data labelled "Contoh data".
+- Sitemap, robots, Open Graph image, canonical URL and JSON-LD; draft `/privasi` and `/syarat` pages (`noindex`); optional contact via `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_CONTACT_WHATSAPP`.
+- Pricing hint now lists all internal user roles (owner, admin, coach, receptionist, finance).
 
 ### 2026-10-07
 

@@ -85,7 +85,7 @@ export function FeaturesSection({ modules }: { modules: PlatformModule[] }) {
       title="Semua pekerjaan klub dalam satu sumber data."
       intro="Dikelompokkan menurut pekerjaan yang biasa dilakukan pemilik, admin, pelatih, resepsionis, dan bagian keuangan."
     >
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:[&>li:last-child]:col-span-3">
         {FEATURES.map((f) => {
           const soon = status.get(f.module) === "soon";
           return (

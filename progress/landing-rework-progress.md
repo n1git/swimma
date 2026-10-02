@@ -8,7 +8,7 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 - [x] Phase 1: foundations
 - [x] Phase 2: content sections
 - [x] Phase 3: pricing, FAQ and finish
-- [ ] Phase 4: final checks
+- [x] Phase 4: final checks
 
 ## Repository assessment
 
@@ -28,7 +28,7 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 - Typography: the skill proposed Plus Jakarta Sans (mood: friendly, modern, SaaS, B2B). Kept the app's Lexend (headings) and Source Sans 3 (body), which match that mood and are already loaded by the app; adding a third family would cost page weight and split the brand between landing and app. Base 16 px body, 1.5 line height, headings 36-60 px with tight tracking.
 - Effects: subtle, 150-300 ms hover transitions; the existing `fade-up` only under `motion-safe`. No animation library.
 - Avoid (from the skill): excessive animation, dark mode by default (light stays the default; dark via the existing toggle).
-- Pre-delivery checklist result: to be filled in Phase 4.
+- Pre-delivery checklist result (skill checklist, checked on the production build at 375, 768 and 1440 px in light and dark): no emoji icons, all icons are Lucide SVG with `aria-hidden` - pass; pointer cursor on buttons, links and FAQ summaries - pass; hover transitions 150-300 ms - pass; text contrast at least 4.5:1 - pass (axe found no contrast issue in either theme); visible focus for keyboard - pass; `prefers-reduced-motion` respected (hero preview animation is `none`, FAQ chevron has no transition) - pass; responsive 375/768/1024/1440 without horizontal scroll - pass after fixing the header (see Phase 4).
 
 ## Page outline and components (`components/landing/`)
 
@@ -123,3 +123,20 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 - FAQ: eight native `<details>` items with 56 px summaries, visible focus, chevron rotation disabled under reduced motion; answers use live plan data; "Hubungi kami" with links only when a contact env var is set.
 - Final CTA on the primary color, JSON-LD `SoftwareApplication` with one `Offer` per live plan (`UnitPriceSpecification` per internal user per month), canonical `/`.
 - Dead code: the old landing's fake sections, demo arrays and unused imports are gone with the rewrite; the `fade-up` animation is kept and now used only on the hero preview under `motion-safe` (not on the H1, so it cannot delay LCP).
+
+## Phase 4 done
+
+- README: landing section (structure, live data, how claims stay true, SEO, env vars), the two new env vars in local setup, changelog 2026-10-08. `CLAUDE.md`: removed the fictional-numbers note, replaced the "no FAQ / privacy / terms" note with the draft status, removed the stale "member portal and check-in not built" remark and the stale `swimming, gym` type list, added a landing note.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`.
+- Checked on the production build against a local database (PostgREST, Chromium):
+  - axe: no violations of any impact at 375 and 1440 px in light and dark.
+  - No horizontal scroll at 375, 768 and 1440 px in both themes. Fixed during the check: at 375 px the header's Masuk and Daftarkan klub buttons were not hidden (the `hidden` class lost to the button's own `inline-flex`), causing 25 px overflow; they now sit in a wrapper that is hidden below `sm`. Also: hero preview figures use a smaller size on phones, and the tenth feature card spans the full row at `lg`.
+  - Keyboard: first Tab is the visible skip link and Enter moves to `#konten`; tab order follows the visual order (skip link, brand, section links, theme, Masuk, Daftarkan klub, hero CTAs, ...); focus ring visible; mobile menu opens with Enter, focus moves into it, Escape closes it and returns focus to the button; FAQ items open and close with Enter and Space. Reduced motion: hero preview animation is `none`.
+  - Links: all 15 distinct hrefs on `/` resolve (anchors exist, routes return 200); no external link and no contact element when the contact env vars are unset.
+  - `grep` for "1.240", "Kolam Renang Melati", "Aquatic Center Nusantara", "Sekolah Renang Ombak" finds them only in this progress file (where they are recorded as removed), not in code.
+  - A signed-in owner visiting `/` is redirected (to `/admin`, as before). Picking Advanced, yearly and 5 users on the landing leads to `/daftar?plan=advanced&period=yearly&users=5`, and the form shows Advanced selected, yearly pressed and 5 users. Setting `club_types.futsal` to `ready` adds a futsal card on the next request; setting it back removes it.
+  - `/robots.txt`, `/sitemap.xml`, `/opengraph-image` (PNG), `/privasi`, `/syarat` return 200; legal pages carry `noindex, follow` and the "Draf" notice; `/` has a canonical link, `og:image` and JSON-LD with one offer per live plan.
+- Lighthouse on `/` (production build, local server):
+  - Desktop: performance 100, accessibility 100, best practices 100, SEO 100; LCP 0.6 s, CLS 0.
+  - Mobile with devtools throttling (real network and CPU throttling): performance 97-99, accessibility 100, best practices 100, SEO 100; LCP 1.0-1.8 s, CLS 0.02-0.04 (web font swap in the hero).
+  - Mobile with the default simulated throttling: performance 95-97, LCP 2.6-3.0 s, CLS 0. This misses the LCP target. The observed LCP in the same runs was 0.11-0.21 s (the H1, first paint); the simulated value is inflated because on localhost the framework scripts (about 137 KB of the 169 KB JS) arrive and run before the first paint, so the simulator counts them in the LCP path. Tried and reverted: lazy-loading the toast library (gain 0.1 s), `display: optional` for the heading font (no gain), `experimental.inlineCss` (bimodal 2.2 or 2.9 s; global experimental flag, not kept). The landing's own client code is about 22 KB; the rest is the Next.js runtime. Needs a run against the deployed site to confirm; see the decision line in the final summary.
