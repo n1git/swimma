@@ -7,7 +7,7 @@ Products, orders, point of sale, manual payments, then sport club types (tennis,
 - [x] Phase 0: preparation and plan. OK given in the same message as the task ("ok, you decide"): defaults accepted.
 - [x] Phase 1: commerce, database and server (`022_commerce.sql`)
 - [x] Phase 2: products and POS UI
-- [ ] Phase 3: sport club types and dashboard (`023_sport_club_types.sql`)
+- [x] Phase 3: sport club types and dashboard (`023_sport_club_types.sql`)
 - [ ] Phase 4: cleanup and final checks
 
 ## Repository assessment
@@ -67,3 +67,10 @@ Assumptions 2, 5, 8, 9 (void reverses cash with manual adjustments) and 15.
 - `ui-ux-pro-max` consulted again (no match for print styles; fell back to Tailwind `print:` variants; inline error with `role="alert"`, 44 px targets, status as text, visible labels). Existing components and tokens reused.
 - `/admin/produk` (admin): table with stock ("Habis" in text, not colour only), add/edit dialog, activate toggle. `/admin/kasir` (admin, receptionist): product tiles with search and category chips, unpaid priced bookings (adds the booking as a line and selects its member), member or customer name, cart with quantity buttons capped by stock, split payments with "Pas" for the remainder, over-payment blocked with a message, button label follows the state (pay, save unpaid), mobile floating cart bar. `/admin/pesanan` (admin, receptionist, finance): status filters, list; `/admin/pesanan/[id]`: receipt, print (app shell hidden in print), add payment for open orders, void with confirmation (finance sees no actions). `/member/pesanan`: own paid orders, read-only. Navigation items gated by `pos`.
 - Checked in a real browser (PostgREST + built app + Chromium): product created, sale with a booking line and a cash + transfer split ends on the receipt, receipt PDF generated, void restores stock (12) and writes two reversal ledger entries, ledger shows "Penjualan Kasir", no horizontal scroll at 375 px on kasir, pesanan and produk, member sees only own order and cannot open `/admin`.
+
+## Phase 3 done
+
+- Migration `20250101000023_sport_club_types.sql`: `club_type_presets.default_capacity` (swimming lane 4, gym floor 20), club types `tennis`, `padel`, `pilates`, `yoga` (`ready`, with Indonesian terms) and `crossfit`, `martial_arts`, `dance`, `badminton`, `futsal`, `basketball`, `other` (`soon`), module mappings (common set + `resource_booking` + `pos`; pilates and yoga also `classes`), presets (tennis and padel courts x2, pilates studio capacity 12, yoga studio capacity 20), and `resource_utilization(from, to)` (security invoker). Applies on an empty DB and on 001-022 with rows.
+- `getClubTerms` already read terms from the database (since 020), so no `termsFor` was added; registration and "Tambah klub" already list `ready` types from the table. The onboarding facilities step now uses the preset capacity.
+- Dashboard: cards for bookings today, facility occupancy this week and sales today, each shown only when the club has the module.
+- Checked in a real browser: registering a tennis, padel, pilates and yoga club from `/daftar` lists exactly the six ready types, lands on onboarding with the right preset (name pattern, count, capacity, kind), shows the right navigation (Jadwal only for pilates and yoga; Booking, Kasir, Pesanan, Produk for all), dashboard cards appear, and every navigation link of each club returns a page.

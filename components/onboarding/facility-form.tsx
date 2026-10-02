@@ -71,7 +71,7 @@ export function FacilityForm({
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="fac-capacity">Kapasitas per slot</Label>
-          <Input id="fac-capacity" name="capacity" type="number" min={1} max={1000} defaultValue={1} required />
+          <Input id="fac-capacity" name="capacity" type="number" min={1} max={1000} defaultValue={preset?.capacity ?? 1} required />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="fac-slot">Durasi slot (menit)</Label>

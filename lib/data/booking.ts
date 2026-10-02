@@ -1,5 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isModuleReady } from "@/lib/modules";
+import { getJakartaDateString, getJakartaDayRangeIso } from "@/lib/format";
+import { addDays, mondayOf } from "@/lib/booking-grid";
 import type { AvailabilitySlot, BookingRow, Resource, ResourceHour, ResourceKind } from "@/lib/booking";
 
 type ResourceRecord = {
@@ -157,6 +159,7 @@ export interface ResourcePreset {
   namePattern: string;
   count: number;
   slotMinutes: number;
+  capacity: number;
 }
 
 export async function getResourcePreset(): Promise<ResourcePreset | null> {
@@ -165,7 +168,7 @@ export async function getResourcePreset(): Promise<ResourcePreset | null> {
   if (!tenant?.club_type) return null;
   const { data } = await supabase
     .from("club_type_presets")
-    .select("kind, name_pattern, default_count, slot_minutes")
+    .select("kind, name_pattern, default_count, slot_minutes, default_capacity")
     .eq("club_type", tenant.club_type)
     .order("sort")
     .limit(1)
@@ -176,6 +179,7 @@ export async function getResourcePreset(): Promise<ResourcePreset | null> {
     namePattern: data.name_pattern,
     count: data.default_count,
     slotMinutes: data.slot_minutes,
+    capacity: data.default_capacity,
   };
 }
 
@@ -188,4 +192,26 @@ export interface ClassResourceOption {
 export async function getClassResourceOptions(): Promise<ClassResourceOption[]> {
   if (!(await isModuleReady("resource_booking"))) return [];
   return (await getResources({ activeOnly: true })).map((r) => ({ id: r.id, name: r.name, locationId: r.locationId }));
+}
+
+export interface BookingKpis {
+  bookingsToday: number;
+  utilizationWeek: number | null;
+}
+
+export async function getBookingKpis(): Promise<BookingKpis> {
+  const supabase = await createServerSupabaseClient();
+  const { start, end } = getJakartaDayRangeIso();
+  const today = getJakartaDateString();
+  const monday = mondayOf(today);
+  const [{ count }, { data: util }] = await Promise.all([
+    supabase
+      .from("resource_bookings")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["confirmed", "completed"])
+      .gte("start_time", start)
+      .lt("start_time", end),
+    supabase.rpc("resource_utilization", { p_from: monday, p_to: addDays(monday, 6) }),
+  ]);
+  return { bookingsToday: count ?? 0, utilizationWeek: util === null || util === undefined ? null : Number(util) };
 }

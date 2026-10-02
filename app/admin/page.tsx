@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { getBookingKpis } from "@/lib/data/booking";
+import { getSalesToday } from "@/lib/data/commerce";
 import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
 import { SubscriptionBanner } from "@/components/subscription/subscription-banner";
 import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
@@ -45,6 +47,10 @@ const QUICK_LINKS = [
 
 export default async function AdminDashboardPage() {
   const [data, enabled] = await Promise.all([getDashboardData(), getEnabledModules()]);
+  const [booking, sales] = await Promise.all([
+    enabled.has("resource_booking") ? getBookingKpis() : null,
+    enabled.has("pos") ? getSalesToday() : null,
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,6 +71,19 @@ export default async function AdminDashboardPage() {
           value={`${data.activeMembers} / ${data.inactiveMembers}`}
         />
       </div>
+
+      {booking || sales ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {booking ? <StatCard title="Booking Hari Ini" value={String(booking.bookingsToday)} /> : null}
+          {booking ? (
+            <StatCard
+              title="Okupansi Fasilitas Minggu Ini"
+              value={booking.utilizationWeek === null ? "Belum ada jam buka" : `${booking.utilizationWeek.toLocaleString("id-ID")}%`}
+            />
+          ) : null}
+          {sales ? <StatCard title="Penjualan Hari Ini" value={`${formatRupiah(sales.total)} (${sales.count} pesanan)`} /> : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
