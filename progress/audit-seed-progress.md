@@ -9,7 +9,7 @@ Status and counts only. Findings, evidence and exploit details stay in the untra
 - [x] Phase 2: audit, database and authorization
 - [x] Phase 3: audit, application security
 - [x] Phase 4: audit, logic, data integrity, UX, performance
-- [ ] Phase 5: report
+- [x] Phase 5: report
 
 ## Phase 0 result
 
@@ -41,6 +41,7 @@ Blocker found in Phase 0: the plan cannot run unchanged. One migration fails on 
 | 2 database and authorization | 0 | 2 | 4 | 5 | 1 |
 | 3 application security | 0 | 2 | 7 | 8 | 3 |
 | 4 logic, integrity, UX, performance | 0 | 1 | 5 | 4 | 3 |
+| **Total** | 0 | 5 | 16 | 17 | 7 |
 
 ## Phase 1 local result
 
