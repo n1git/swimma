@@ -4,8 +4,8 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 
 ## Status
 
-- [ ] Phase 0: preparation and plan. Waiting for OK.
-- [ ] Phase 1: database (`018_club_types.sql`, `019_gym_checkin.sql`)
+- [x] Phase 0: preparation and plan. OK received (defaults accepted).
+- [x] Phase 1: database (`018_club_types.sql`, `019_gym_checkin.sql`)
 - [ ] Phase 2: server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
@@ -67,3 +67,9 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 8. **Admin screen access:** `/admin/checkin` is admin-only by default; receptionist could run the front desk, tell me if you want it.
 9. **The "visits tab"** on member detail is a "Kunjungan" section below the form, not a tab, to avoid a tab system inside the intercepting modal.
 10. **Token is 12 hex characters** (48 bits); with 60 seconds of validity and 10 scans per minute per profile, guessing is not practical.
+
+## Phase 1 done
+
+- `20250101000018_club_types.sql`: `club_types`, `club_type_modules`, `tenants.club_type`, `club_has_module` (server only) and `current_club_has_module`, `activate_member_account` now per-club, `register_organization(..., p_club_type)`, `create_tenant_for_owner(owner, name, p_club_type)`, `create_tenant_row` (a type that is not `ready` is rejected).
+- `20250101000019_gym_checkin.sql`: `checkin_points` (column privileges hide `secret`), `checkins` (select policies only), token helpers, `checkin_token` (admin), `checkin_core`, `record_checkin`, `manual_checkin`, `subscription_usage` / `my_subscription_usage` count check-ins for clubs with the module, views `checkin_daily_counts`, `checkin_hourly_30d`, `dormant_members`, `checkin` and `gym` set to `ready`. Error codes CK001 to CK005 carry the Indonesian messages.
+- Applied on an empty DB and on 001-017 plus sample rows. Smoke checked in SQL: gym club has `checkin`, swimming does not, unknown club type rejected; admin token works, coach is forbidden; one scan makes one row and a repeat returns the existing one; tokens of window -2, of another point, forged, and of another club are rejected (CK005); no plan CK003, used-up pack CK004, inactive member CK002, club without the module CK001; clients cannot insert into `checkins` nor read `checkin_points.secret`; staff calling `record_checkin` is forbidden; coach sees only own members' check-ins, member only own; pack usage 1/1/0 from check-ins; 20 parallel scans of one member gave exactly one new row.
