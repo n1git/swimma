@@ -6,7 +6,7 @@ Status and counts only. Findings, evidence and exploit details stay in the untra
 
 - [x] Phase 0: preparation. OK received.
 - [~] Phase 1: environment. Local part done (migrations on PG17, seed tooling, full local seed, `docs/DEPLOY.md`). Hosted part blocked after migration 011, see below.
-- [ ] Phase 2: audit, database and authorization
+- [x] Phase 2: audit, database and authorization
 - [ ] Phase 3: audit, application security
 - [ ] Phase 4: audit, logic, data integrity, UX, performance
 - [ ] Phase 5: report
@@ -34,9 +34,11 @@ Blocker found in Phase 0: the plan cannot run unchanged. One migration fails on 
 - Hosted is therefore at 001-011 (empty, old schema, no data). To finish it I need one of: interactive confirmation of each prompt, a personal access token (`SUPABASE_ACCESS_TOKEN`) so the Management API can be used over HTTPS, or a direct database connection string.
 - Everything else (local PG17 build, seed tooling, all audit phases) proceeds locally.
 
-## Findings by severity
+## Findings by severity (running count)
 
-Not counted yet.
+| Phase | Critical | High | Medium | Low | Info |
+|---|---|---|---|---|---|
+| 2 database and authorization | 0 | 2 | 4 | 5 | 1 |
 
 ## Phase 1 local result
 
