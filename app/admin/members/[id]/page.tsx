@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth/session";
 import { getActiveCoaches, getLocations } from "@/lib/data/lookups";
 import { BackLink } from "@/components/shared/back-link";
 import { MemberEditForm } from "@/components/members/member-edit-form";
+import { MemberPortalAccess } from "@/components/members/member-portal-access";
+import { isModuleReady } from "@/lib/modules";
 
 export default async function MemberDetailPage({
   params,
@@ -16,7 +18,7 @@ export default async function MemberDetailPage({
     supabase
       .from("members")
       .select(
-        "id, full_name, date_of_birth, notes, address, preferred_location_id, is_active, coach_id, contact_name, contact_phone"
+        "id, full_name, date_of_birth, notes, address, preferred_location_id, is_active, coach_id, contact_name, contact_phone, profile_id"
       )
       .eq("id", id)
       .maybeSingle(),
@@ -24,6 +26,7 @@ export default async function MemberDetailPage({
     getActiveCoaches(),
     getSession(),
   ]);
+  const portalReady = session?.app_role === "admin" && (await isModuleReady("member_portal"));
 
   if (!member) notFound();
 
@@ -37,6 +40,7 @@ export default async function MemberDetailPage({
         coaches={coaches}
         canChangeStatus={session?.app_role === "admin"}
       />
+      {portalReady && member.is_active ? <MemberPortalAccess memberId={member.id} hasAccount={Boolean(member.profile_id)} /> : null}
     </div>
   );
 }

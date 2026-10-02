@@ -40,3 +40,12 @@ export async function listMemberClubs(accountId: string): Promise<MemberClub[]> 
       fullName: p.full_name as string,
     }));
 }
+
+export async function listClubsForProfile(profileId: string): Promise<MemberClub[]> {
+  const { data } = await createAdminSupabaseClient()
+    .from("profiles")
+    .select("member_account_id")
+    .eq("id", profileId)
+    .maybeSingle();
+  return data?.member_account_id ? listMemberClubs(data.member_account_id) : [];
+}

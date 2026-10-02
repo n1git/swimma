@@ -12,6 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
+import { isModuleReady } from "@/lib/modules";
+import { TriggerDialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { MemberPortalAccess } from "@/components/members/member-portal-access";
 
 interface ClassRow {
   id: string;
@@ -37,11 +41,12 @@ export default async function CoachSchedulePage() {
   const classes = (data ?? []) as unknown as ClassRow[];
   const { data: memberRows } = await supabase
     .from("members")
-    .select("id, full_name, contact_name, contact_phone")
+    .select("id, full_name, contact_name, contact_phone, profile_id")
     .eq("coach_id", session?.sub)
     .eq("is_active", true)
     .order("full_name");
   const members = memberRows ?? [];
+  const portalReady = await isModuleReady("member_portal");
 
   return (
     <div className="flex flex-col gap-4">
@@ -103,6 +108,7 @@ export default async function CoachSchedulePage() {
             <TableHead>Nama</TableHead>
             <TableHead>Kontak</TableHead>
             <TableHead>Telepon</TableHead>
+            {portalReady ? <TableHead>Portal</TableHead> : null}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -111,11 +117,25 @@ export default async function CoachSchedulePage() {
               <TableCell>{m.full_name}</TableCell>
               <TableCell>{m.contact_name ?? "-"}</TableCell>
               <TableCell>{m.contact_phone ?? "-"}</TableCell>
+              {portalReady ? (
+                <TableCell>
+                  <TriggerDialog
+                    trigger={
+                      <Button type="button" size="sm" variant="outline">
+                        {m.profile_id ? "Kelola akun" : "Aktifkan akun"}
+                      </Button>
+                    }
+                  >
+                    <h2 className="mb-4 text-xl font-semibold">{m.full_name}</h2>
+                    <MemberPortalAccess memberId={m.id} hasAccount={Boolean(m.profile_id)} />
+                  </TriggerDialog>
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
           {members.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground">
+              <TableCell colSpan={portalReady ? 4 : 3} className="text-center text-muted-foreground">
                 Belum ada anggota.
               </TableCell>
             </TableRow>

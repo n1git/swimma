@@ -7,7 +7,7 @@ Members sign in on the same `/login`, one account per person, memberships in man
 - [x] Phase 0: preparation and plan. OK received (defaults accepted).
 - [x] Phase 1: database (`20250101000017_member_login.sql`)
 - [x] Phase 2: auth and server
-- [ ] Phase 3: UI
+- [x] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
 ## Dependency note
@@ -73,3 +73,10 @@ Members sign in on the same `/login`, one account per person, memberships in man
 
 - Auth: `roles.ts` (`member`, label "Anggota", home `/member`, `/member` only for members, members blocked from `/admin` and `/coach`), `proxy.ts` protects `/member`, JWT/session carry optional `club_pending`, login route looks up owners, then member accounts, then staff profiles (same rate limit, lockout, generic error; several usable clubs mint the oldest with `club_pending` and go to `/member/klub`), `requireRole` checks the member account active, the member row active and `must_change_password` (account level), new `requireMemberClub` redirects a pending session to the chooser, `changePassword` member branch updates the account and revokes the account's sessions.
 - Server: `lib/modules.ts` (`isModuleReady`, `requireModule` against the global `platform_modules.status`, since `club-types` is absent), `lib/data/member-clubs.ts` (usable clubs of an account), `switchClub`, `activateMemberAccount` (admin; coach only for own members, module gate), `resetMemberPassword` (refused when the account has a membership in another club), `lib/data/member-portal.ts` readers over the member's own RLS client. `resetUserPassword` no longer touches member profiles.
+
+## Phase 3 done
+
+- `ui-ux-pro-max` consulted (status shown with text labels, not colour alone). Existing components only (`AppShell`, `Table`, `Card`, `Badge`, `Select`, `TriggerDialog`); no new visual style.
+- `/member`: greeting, subscriptions with remaining sessions for session packs, invoices with text status, upcoming booked classes, active promo. `/member/klub`: chooser (also reachable later as "Klub Saya"); the shell hides the club name and nav until a club is chosen, and shows a club switcher when the account has several clubs. `app/member/layout.tsx` gates with `requireRole('member')` and `requireModule('member_portal')`.
+- `MemberPortalAccess` ("Aktifkan akun" with an email field, "Atur ulang kata sandi", temporary password shown once, the "Akun sudah ada, anggota login dengan kata sandinya" message): on the admin member detail page and modal (admin only, active members, module ready) and in the coach's "Anggota Saya" table through a dialog.
+- Wording is plain Bahasa Indonesia (no `terms` helper exists).
