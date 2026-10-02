@@ -6,7 +6,7 @@ Members sign in on the same `/login`, one account per person, memberships in man
 
 - [x] Phase 0: preparation and plan. OK received (defaults accepted).
 - [x] Phase 1: database (`20250101000017_member_login.sql`)
-- [ ] Phase 2: auth and server
+- [x] Phase 2: auth and server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
@@ -68,3 +68,8 @@ Members sign in on the same `/login`, one account per person, memberships in man
 
 - `supabase/migrations/20250101000017_member_login.sql`: `member_accounts`, `profiles.member_account_id`, `members.profile_id`, role `member`, identity triggers across owners / staff / member accounts, deferred link check, `is_active_user()` with account check, `current_member_id()` / `is_member()`, select-only member policies on `members`, `subscriptions`, `invoices`, `bookings`, `profiles_update_self` closed for members, `my_subscription_usage`, module `member_portal` set to `ready`, `activate_member_account` (service role only; error codes MP001 same-club duplicate, MP002 already activated, MP003 module not ready, MP004 inactive member).
 - Applied on an empty DB and on 001-016 plus sample rows. Smoke checked in SQL: new account then second club linked to the same account; same-club duplicate and re-activation rejected; coach, owner and member emails reject each other in every direction; a member reads only its own member, subscription, invoice and booking rows, sees tenant classes, no cash ledger, no `member_names`, and every write is denied; a forged tenant claim sees nothing; deactivating the member row cuts only that club, deactivating the account cuts both; remaining sessions 8/1/7 from `my_subscription_usage`; anon denied.
+
+## Phase 2 done
+
+- Auth: `roles.ts` (`member`, label "Anggota", home `/member`, `/member` only for members, members blocked from `/admin` and `/coach`), `proxy.ts` protects `/member`, JWT/session carry optional `club_pending`, login route looks up owners, then member accounts, then staff profiles (same rate limit, lockout, generic error; several usable clubs mint the oldest with `club_pending` and go to `/member/klub`), `requireRole` checks the member account active, the member row active and `must_change_password` (account level), new `requireMemberClub` redirects a pending session to the chooser, `changePassword` member branch updates the account and revokes the account's sessions.
+- Server: `lib/modules.ts` (`isModuleReady`, `requireModule` against the global `platform_modules.status`, since `club-types` is absent), `lib/data/member-clubs.ts` (usable clubs of an account), `switchClub`, `activateMemberAccount` (admin; coach only for own members, module gate), `resetMemberPassword` (refused when the account has a membership in another club), `lib/data/member-portal.ts` readers over the member's own RLS client. `resetUserPassword` no longer touches member profiles.

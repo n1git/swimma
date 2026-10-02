@@ -33,11 +33,17 @@ export async function changePassword(
 
   const { data: own } = await supabase
     .from("profiles")
-    .select("owner_id")
+    .select("owner_id, member_account_id")
     .eq("id", session.sub)
     .maybeSingle();
 
-  if (own?.owner_id) {
+  if (own?.member_account_id) {
+    await supabase
+      .from("member_accounts")
+      .update({ password_hash: passwordHash, must_change_password: false })
+      .eq("id", own.member_account_id);
+    await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("member_account_id", own.member_account_id);
+  } else if (own?.owner_id) {
     await supabase.from("org_owners").update({ password_hash: passwordHash }).eq("id", own.owner_id);
     await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("owner_id", own.owner_id);
   } else {
@@ -55,6 +61,7 @@ export async function changePassword(
     role: session.app_role,
     tenantId: session.tenant_id,
     orgId: session.org_id,
+    clubPending: session.club_pending,
   });
 
   redirect(roleHome(session.app_role));

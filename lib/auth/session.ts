@@ -12,12 +12,14 @@ export async function createSession(user: {
   role: AppRole;
   tenantId: string;
   orgId: string;
+  clubPending?: boolean;
 }) {
   const token = await signSession({
     sub: user.id,
     app_role: user.role,
     tenant_id: user.tenantId,
     org_id: user.orgId,
+    ...(user.clubPending ? { club_pending: true } : {}),
     email: user.email,
     full_name: user.fullName,
   });

@@ -15,7 +15,7 @@ export async function requireRole(role: AppRole | readonly AppRole[]) {
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active, must_change_password, full_name, sessions_valid_after, owner_id, is_head_coach, tenants(is_active)")
+    .select("id, is_active, must_change_password, full_name, sessions_valid_after, owner_id, member_account_id, is_head_coach, tenants(is_active)")
     .eq("id", session.sub)
     .maybeSingle();
 
@@ -40,6 +40,15 @@ export async function requireRole(role: AppRole | readonly AppRole[]) {
       .maybeSingle();
     if (!owner?.is_active) redirect("/api/auth/session-ended?reason=deactivated");
   }
+  if (profile.member_account_id) {
+    const admin = createAdminSupabaseClient();
+    const [{ data: account }, { data: member }] = await Promise.all([
+      admin.from("member_accounts").select("is_active, must_change_password").eq("id", profile.member_account_id).maybeSingle(),
+      admin.from("members").select("is_active").eq("profile_id", session.sub).maybeSingle(),
+    ]);
+    if (!account?.is_active || !member?.is_active) redirect("/api/auth/session-ended?reason=deactivated");
+    if (account.must_change_password) redirect("/change-password");
+  }
   if (profile.must_change_password) {
     redirect("/change-password");
   }
@@ -52,7 +61,14 @@ export async function requireRole(role: AppRole | readonly AppRole[]) {
     orgId: session.org_id,
     fullName: profile.full_name as string,
     isHeadCoach: Boolean(profile.is_head_coach),
+    clubPending: Boolean(session.club_pending),
   };
+}
+
+export async function requireMemberClub() {
+  const user = await requireRole("member");
+  if (user.clubPending) redirect("/member/klub");
+  return user;
 }
 
 export async function requireActionRole(role: AppRole | readonly AppRole[]) {

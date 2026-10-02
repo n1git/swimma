@@ -1,6 +1,6 @@
-export type AppRole = "admin" | "coach" | "receptionist" | "finance";
+export type AppRole = "admin" | "coach" | "receptionist" | "finance" | "member";
 
-export const APP_ROLES: AppRole[] = ["admin", "coach", "receptionist", "finance"];
+export const APP_ROLES: AppRole[] = ["admin", "coach", "receptionist", "finance", "member"];
 
 export const STAFF_ROLES = ["admin", "receptionist", "finance"] as const satisfies readonly AppRole[];
 
@@ -11,6 +11,7 @@ export const ROLE_LABEL: Record<AppRole, string> = {
   coach: "Pelatih",
   receptionist: "Resepsionis",
   finance: "Keuangan",
+  member: "Anggota",
 };
 
 export const OWNER_HOME = "/admin/klub";
@@ -25,6 +26,8 @@ export function roleHome(role: AppRole): string {
       return "/admin/schedule";
     case "finance":
       return "/admin/billing/invoices";
+    case "member":
+      return "/member";
   }
 }
 
@@ -44,6 +47,7 @@ function underPath(pathname: string, prefix: string) {
 }
 
 export function canAccessPath(role: AppRole, pathname: string): boolean {
+  if (underPath(pathname, "/member")) return role === "member";
   if (underPath(pathname, "/coach")) return role === "coach";
   if (!underPath(pathname, "/admin")) return true;
   if (role === "admin") return true;

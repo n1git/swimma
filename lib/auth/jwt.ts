@@ -7,6 +7,7 @@ export interface SessionClaims {
   app_role: AppRole;
   tenant_id: string;
   org_id: string;
+  club_pending?: boolean;
   email: string;
   full_name: string;
   iat?: number;

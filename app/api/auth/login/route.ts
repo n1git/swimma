@@ -6,6 +6,7 @@ import { roleHome, OWNER_HOME, type AppRole } from "@/lib/auth/roles";
 import { loginSchema } from "@/lib/validations/auth";
 import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 import { APP_NAME } from "@/lib/config";
+import { listMemberClubs } from "@/lib/data/member-clubs";
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
@@ -13,7 +14,7 @@ const GENERIC_ERROR = "Email atau kata sandi salah";
 const DEACTIVATED_ERROR = `Akses klub Anda sedang dinonaktifkan. Data klub tetap tersimpan. Hubungi admin platform ${APP_NAME} untuk mengaktifkannya kembali.`;
 
 interface LoginAccount {
-  table: "org_owners" | "auth_credentials";
+  table: "org_owners" | "member_accounts" | "auth_credentials";
   key: "id" | "profile_id";
   id: string;
   passwordHash: string;
@@ -29,6 +30,7 @@ interface SessionTarget {
   tenantId: string;
   orgId: string;
   redirectTo: string;
+  clubPending?: boolean;
 }
 
 type TenantJoin = { is_active: boolean; organization_id: string; created_at: string } | null;
@@ -55,6 +57,14 @@ export async function POST(request: Request) {
     .select("id, organization_id, is_active, password_hash, failed_login_count, locked_until")
     .eq("email", email)
     .maybeSingle();
+
+  const { data: memberAccount } = owner
+    ? { data: null }
+    : await supabase
+        .from("member_accounts")
+        .select("id, is_active, password_hash, failed_login_count, locked_until")
+        .eq("email", email)
+        .maybeSingle();
 
   if (owner) {
     if (!owner.is_active) return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
@@ -86,6 +96,31 @@ export async function POST(request: Request) {
         tenantId: profile.tenant_id,
         orgId: owner.organization_id,
         redirectTo: OWNER_HOME,
+      };
+    };
+  } else if (memberAccount) {
+    if (!memberAccount.is_active) return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+    account = {
+      table: "member_accounts",
+      key: "id",
+      id: memberAccount.id,
+      passwordHash: memberAccount.password_hash,
+      failedCount: memberAccount.failed_login_count,
+      lockedUntil: memberAccount.locked_until,
+    };
+    resolveTarget = async () => {
+      const clubs = await listMemberClubs(memberAccount.id);
+      const club = clubs[0];
+      if (!club) return "deactivated";
+      return {
+        profileId: club.profileId,
+        email: club.email,
+        fullName: club.fullName,
+        role: "member",
+        tenantId: club.tenantId,
+        orgId: club.orgId,
+        redirectTo: clubs.length > 1 ? "/member/klub" : roleHome("member"),
+        clubPending: clubs.length > 1,
       };
     };
   } else {
@@ -176,6 +211,7 @@ export async function POST(request: Request) {
     role: target.role,
     tenantId: target.tenantId,
     orgId: target.orgId,
+    clubPending: target.clubPending,
   });
 
   return NextResponse.json({ redirectTo: target.redirectTo });

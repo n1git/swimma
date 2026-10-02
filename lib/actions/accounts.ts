@@ -23,6 +23,7 @@ export async function resetUserPassword(
     .eq("id", parsed.data.profileId)
     .eq("tenant_id", session.tenant_id)
     .is("owner_id", null)
+    .is("member_account_id", null)
     .neq("id", session.sub)
     .maybeSingle();
   if (!profile) return { ok: false, error: "Akun tidak ditemukan" };
