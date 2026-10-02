@@ -53,7 +53,7 @@ export function UsersInput({ id, users, onChange }: { id: string; users: number;
         aria-describedby={`${id}-hint`}
       />
       <p id={`${id}-hint`} className="text-xs text-muted-foreground">
-        Pemilik, admin, dan pelatih. Anggota tidak dihitung.
+        Pemilik, admin, pelatih, resepsionis, dan keuangan. Anggota tidak dihitung.
       </p>
     </div>
   );

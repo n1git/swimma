@@ -7,7 +7,7 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 - [x] Phase 0: preparation
 - [x] Phase 1: foundations
 - [x] Phase 2: content sections
-- [ ] Phase 3: pricing, FAQ and finish
+- [x] Phase 3: pricing, FAQ and finish
 - [ ] Phase 4: final checks
 
 ## Repository assessment
@@ -82,6 +82,16 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 | Owner switches club from the top menu without signing in again | `TenantSwitcher`, `switchTenant` (012) |
 | One subscription per organization, counted from internal users of all clubs | `organization_subscriptions`, `organization_internal_users(p_org)` (014, 016) |
 | Club limit per plan | `subscription_plans.club_limit` read live (014), enforced by `SW004` |
+| Internal users are owner, admin, coach, receptionist and finance (active) | `organization_internal_users` (016); hint fixed in `components/pricing/pricing-picker.tsx` (it said owner, admin, coach only) |
+| All available modules are included in every plan | no plan-to-module mapping exists; `platform_modules` only (014); `PlanCard` "Semua modul" |
+| Club limit per plan, yearly free months, trial per plan | live `subscription_plans.club_limit`, `yearly_free_months`, `trial_days` (014) |
+| Total recalculated on the server from current internal users | `platform_quote`, `serverQuote` in `lib/data/platform-pricing.ts` |
+| Plan activated by the Swimma team after payment; no online payment | `organization_subscriptions.status 'pending'`, superadmin activation (`app/superadmin`); no gateway in code |
+| Members and locations are not limited | no limit columns or triggers for `members`/`locations` (014, CLAUDE.md) |
+| Member payments recorded manually by admin, receptionist or finance; cashier payments per method; every payment enters the cash book | `mark_invoice_paid` allows admin, finance, receptionist (016); `add_order_payment` (022); ledger rows as above |
+| After an unpaid trial ends: data kept, login works, adding members, clubs and internal users is held | `SW003` gate (014, 016), CLAUDE.md "Terbuka" note |
+| A "Segera hadir" type cannot be chosen at registration and appears automatically once ready | `register_organization` / `create_tenant_for_owner` require `status = 'ready'` (018); `getReadyClubTypes` in the form; this page reads `club_types` live |
+| After registering you go straight to club setup | `app/api/onboarding/register/route.ts` redirects to `/admin/onboarding` (020 work) |
 | Product visuals are sample data | `hero-preview.tsx`, `multi-club.tsx` labelled "Contoh data" |
 
 ## Phase 1 done
@@ -105,3 +115,11 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 - Features by job: ten cards (members, schedule, facilities, QR check-in, cashier, cash book and payroll, member portal, roles, reports, modules per club) plus a WIB and data-isolation note; a card shows "Segera hadir" if its module is `soon`.
 - How it works: four steps. Multi club: organization, club switcher, one subscription, club limit per plan from live data; sample list labelled "Contoh data" with neutral names.
 - Fake figures and demo clubs removed (`grep` finds none of "1.240", "Kolam Renang Melati", "Aquatic Center Nusantara", "Sekolah Renang Ombak"). Pricing section temporarily keeps only the live picker; its copy, FAQ and final CTA come in Phase 3.
+
+## Phase 3 done
+
+- `ui-ux-pro-max` run again (pricing pattern: show actual totals and savings transparently and answer objections in the FAQ; keyboard guidance for disclosure widgets).
+- Pricing: intro defines an internal user and states members are unlimited; three facts from live plan data (club limit per plan, yearly free months, trial per plan); the live picker and the `/daftar?plan=&period=&users=` handoff are unchanged; note on server-side recalculation and manual activation. Empty state links to `/daftar` when no plan loads. The pricing hint in `UsersInput` now lists all five internal roles (also visible on `/daftar`).
+- FAQ: eight native `<details>` items with 56 px summaries, visible focus, chevron rotation disabled under reduced motion; answers use live plan data; "Hubungi kami" with links only when a contact env var is set.
+- Final CTA on the primary color, JSON-LD `SoftwareApplication` with one `Offer` per live plan (`UnitPriceSpecification` per internal user per month), canonical `/`.
+- Dead code: the old landing's fake sections, demo arrays and unused imports are gone with the rewrite; the `fade-up` animation is kept and now used only on the hero preview under `motion-safe` (not on the H1, so it cannot delay LCP).

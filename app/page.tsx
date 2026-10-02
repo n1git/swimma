@@ -1,9 +1,9 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { roleHome } from "@/lib/auth/roles";
 import { getPublicClubTypes } from "@/lib/club-type";
 import { getActivePlans, getModules } from "@/lib/data/platform-pricing";
-import { LandingPricing } from "@/components/pricing/landing-pricing";
 import { LandingHeader, SkipLink } from "@/components/landing/landing-header";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { Hero } from "@/components/landing/hero";
@@ -11,7 +11,14 @@ import { SportsSection } from "@/components/landing/sports-section";
 import { FeaturesSection } from "@/components/landing/features-section";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { MultiClub } from "@/components/landing/multi-club";
-import { Section } from "@/components/landing/section";
+import { PricingSection } from "@/components/landing/pricing-section";
+import { Faq } from "@/components/landing/faq";
+import { FinalCta } from "@/components/landing/final-cta";
+import { JsonLd } from "@/components/landing/json-ld";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   const session = await getSession();
@@ -30,11 +37,12 @@ export default async function Home() {
         <FeaturesSection modules={modules} />
         <HowItWorks />
         <MultiClub plans={plans} />
-        <Section id="harga" eyebrow="Harga" title="Satu langganan per organisasi, sesuai jumlah pengguna internal.">
-          <LandingPricing plans={plans} modules={modules} />
-        </Section>
+        <PricingSection plans={plans} modules={modules} />
+        <Faq plans={plans} />
+        <FinalCta trialDays={trialDays} />
       </main>
       <LandingFooter />
+      <JsonLd plans={plans} />
     </div>
   );
 }
