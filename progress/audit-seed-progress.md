@@ -4,8 +4,8 @@ Status and counts only. Findings, evidence and exploit details stay in the untra
 
 ## Status
 
-- [~] Phase 0: preparation. Done except the OK gate below.
-- [ ] Phase 1: environment (migrations, hosted project, fake data)
+- [x] Phase 0: preparation. OK received.
+- [~] Phase 1: environment (migrations, hosted project, fake data). Local part in progress. Hosted part blocked after migration 011, see below.
 - [ ] Phase 2: audit, database and authorization
 - [ ] Phase 3: audit, application security
 - [ ] Phase 4: audit, logic, data integrity, UX, performance
@@ -27,9 +27,12 @@ Migration plan for the hosted project: apply `20250101000001` to `20250101000023
 
 Blocker found in Phase 0: the plan cannot run unchanged. One migration fails on the hosted project's layout (verified on a local PG17 mirror). A workaround that does not edit any migration exists and needs your OK because it changes the hosted project outside the migrations. Details are in `audit/10-static-notes.md`.
 
-## Waiting for OK
+## Phase 1 hosted status
 
-Phase 1 does not start until you approve the hosted write plan.
+- OK received for the pgcrypto workaround and SQL-based seeding. Both done as agreed (pgcrypto moved to `public`; migrations 001-011 applied in order through the Supabase MCP, one call per file).
+- Blocked at 012: the Supabase MCP never executes SQL containing top-level destructive statements (DROP, DELETE); the call hangs until the 60 s tool timeout and nothing is applied. Migrations 012-014, 016-018 and 022 contain them. Not worked around by obfuscating the statements.
+- Hosted is therefore at 001-011 (empty, old schema, no data). To finish it I need one of: interactive confirmation of each prompt, a personal access token (`SUPABASE_ACCESS_TOKEN`) so the Management API can be used over HTTPS, or a direct database connection string.
+- Everything else (local PG17 build, seed tooling, all audit phases) proceeds locally.
 
 ## Findings by severity
 
