@@ -1,5 +1,7 @@
 import { getLocations, getClassTypes } from "@/lib/data/lookups";
 import { getCurrentTenant } from "@/lib/data/tenant";
+import { getClubTerms } from "@/lib/club-type";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,10 +11,11 @@ import { ClassTypeForm } from "@/components/settings/class-type-form";
 import { TenantBrandingForm } from "@/components/settings/tenant-branding-form";
 
 export default async function SettingsPage() {
-  const [locations, classTypes, tenant] = await Promise.all([
+  const [locations, classTypes, tenant, terms] = await Promise.all([
     getLocations(),
     getClassTypes(),
     getCurrentTenant(),
+    getClubTerms(),
   ]);
 
   return (
@@ -33,7 +36,7 @@ export default async function SettingsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Lokasi Kolam</CardTitle>
+            <CardTitle>{terms.location}</CardTitle>
             <TriggerDialog trigger={<span className={buttonVariants({ variant: "outline", size: "sm" })}>Tambah</span>}>
               <h2 className="mb-4 text-xl font-semibold">Tambah Lokasi</h2>
               <LocationForm />
@@ -50,6 +53,17 @@ export default async function SettingsPage() {
                 <p className="text-sm text-muted-foreground">Belum ada lokasi.</p>
               ) : null}
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Modul</CardTitle>
+            <Link href="/admin/settings/modul" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Kelola
+            </Link>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Aktifkan atau nonaktifkan fitur sesuai kebutuhan klub.
           </CardContent>
         </Card>
         <Card>

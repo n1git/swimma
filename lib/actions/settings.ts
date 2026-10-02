@@ -55,6 +55,7 @@ export async function createLocation(
   }
 
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/onboarding");
   return { ok: true };
 }
 

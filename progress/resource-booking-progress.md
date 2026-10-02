@@ -4,8 +4,8 @@ Generic facilities and a booking engine, per-club module toggles, and a post-sig
 
 ## Status
 
-- [ ] Phase 0: preparation and plan. Waiting for OK.
-- [ ] Phase 1: modules and onboarding (`020_modules_onboarding.sql`)
+- [x] Phase 0: preparation and plan. OK received ("you decide"): all defaults accepted.
+- [x] Phase 1: modules and onboarding (`020_modules_onboarding.sql`)
 - [ ] Phase 2: resources and booking, database and server (`021_resource_booking.sql`)
 - [ ] Phase 3: booking UI
 - [ ] Phase 4: cleanup and final checks
@@ -71,3 +71,11 @@ Generic facilities and a booking engine, per-club module toggles, and a post-sig
 5. Assumption 12 (week view is per facility).
 6. Assumption 14: also rename "Lokasi Kolam" to a neutral word through `terms`? Default: yes, one label only.
 7. Navigation grouping is left alone; say so if you want it done as part of this work.
+
+## Phase 1 done
+
+- Migration `20250101000020_modules_onboarding.sql`: module `resource_booking` (status `soon` until Phase 2) and its `club_type_modules` rows, `tenant_module_overrides` (admin select only, `members` rejected), `club_has_module` now effective modules, `current_club_modules()`, `set_club_module()` and `complete_onboarding()` (security definer, admin, execute revoked from public/anon), `tenants.onboarding_completed_at` (existing clubs backfilled as completed), `club_types.terms` (swimming and gym, with `resource`, `session`, `location`), `club_type_presets` with the two seed rows. Applied on an empty DB and on 001-019 plus sample rows. Smoke checked in SQL: a swimming club can enable `checkin` and disable `member_portal`, `members` and unknown modules are rejected, a coach cannot toggle and sees the effective answer, the gym club is unaffected, only the club's admin reads overrides.
+- Code: `lib/club-type.ts` reads terms from the database (neutral defaults), `lib/modules.ts` (`getClubModules`, `getEnabledModules`), `setClubModule` and `completeOnboarding` actions, `Switch` component, `/admin/settings/modul` (list with switches, "Segera hadir" and "Selalu aktif" badges, settings card linking to it), module route guards (`layout.tsx` for packages, subscriptions, invoices, cash ledger, payroll, promo; schedule layout), navigation and dashboard quick links filtered by module, settings card title uses `terms.location`.
+- Onboarding: `/admin/onboarding` (steps: location, first package when `plans` is on, done; each step has Lanjut, Kembali, Lewati semua; step indicator with "Langkah n dari m"), dashboard banner until completed, registration lands on `/admin/onboarding`, "Tambah klub" switches the owner into the new club and lands there. Step 2 (facilities) is added in Phase 2 when the module exists; until then it is hidden, so there is no dead end.
+- `ui-ux-pro-max` consulted: switch exposed as a button with `role="switch"` and `aria-checked`, status not by colour alone, onboarding with a step indicator plus skip and back, helpful empty states. Its generated landing-page design system (glassmorphism, hero) did not fit an internal admin app and was not used; existing tokens were kept.
+- Not gated by module (unchanged on purpose): coach screens for classes and attendance, reports.

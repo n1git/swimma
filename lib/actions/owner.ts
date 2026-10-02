@@ -17,7 +17,8 @@ export async function createTenant(_prevState: ActionState, formData: FormData):
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
 
-  const { error } = await createAdminSupabaseClient().rpc("create_tenant_for_owner", {
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc("create_tenant_for_owner", {
     p_owner_id: owner.ownerId,
     p_tenant_name: parsed.data.tenantName,
     p_club_type: parsed.data.clubType,
@@ -27,8 +28,24 @@ export async function createTenant(_prevState: ActionState, formData: FormData):
     return { ok: false, error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menambah klub" };
   }
 
-  revalidatePath("/admin/klub");
-  return { ok: true, message: "Klub berhasil ditambahkan" };
+  const created = (data as { tenant_id: string; profile_id: string }[] | null)?.[0];
+  const { data: profile } = created
+    ? await supabase.from("profiles").select("id, email, full_name").eq("id", created.profile_id).maybeSingle()
+    : { data: null };
+  if (!created || !profile) {
+    revalidatePath("/admin/klub");
+    return { ok: true, message: "Klub berhasil ditambahkan" };
+  }
+
+  await createSession({
+    id: profile.id,
+    email: profile.email,
+    fullName: profile.full_name,
+    role: "admin",
+    tenantId: created.tenant_id,
+    orgId: owner.organizationId,
+  });
+  redirect("/admin/onboarding");
 }
 
 export async function switchTenant(_prevState: ActionState, formData: FormData): Promise<ActionState> {

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
-import { OWNER_HOME } from "@/lib/auth/roles";
 import { serverQuote } from "@/lib/data/platform-pricing";
 import { registerClubSchema } from "@/lib/validations/onboarding";
 import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
@@ -61,5 +60,5 @@ export async function POST(request: Request) {
     orgId: created.organization_id,
   });
 
-  return NextResponse.json({ redirectTo: OWNER_HOME, quote });
+  return NextResponse.json({ redirectTo: "/admin/onboarding", quote });
 }

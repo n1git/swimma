@@ -58,6 +58,7 @@ export async function createPackage(
   if (error) return { ok: false, error: "Gagal menyimpan paket" };
 
   revalidatePath("/admin/billing/packages");
+  revalidatePath("/admin/onboarding");
   return { ok: true };
 }
 

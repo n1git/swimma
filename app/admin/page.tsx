@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
 import { SubscriptionBanner } from "@/components/subscription/subscription-banner";
+import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
+import { getEnabledModules } from "@/lib/modules";
 import { StatCard } from "@/components/reports/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,19 +37,20 @@ const CASH_CATEGORY_LABEL: Record<string, string> = {
 
 const QUICK_LINKS = [
   { href: "/admin/members/new", label: "Tambah Anggota" },
-  { href: "/admin/schedule/new", label: "Tambah Kelas" },
-  { href: "/admin/billing/invoices", label: "Kelola Tagihan" },
-  { href: "/admin/promo", label: "Kelola Promo" },
+  { href: "/admin/schedule/new", label: "Tambah Kelas", module: "classes" },
+  { href: "/admin/billing/invoices", label: "Kelola Tagihan", module: "billing" },
+  { href: "/admin/promo", label: "Kelola Promo", module: "promo" },
 ];
 
 export default async function AdminDashboardPage() {
-  const data = await getDashboardData();
+  const [data, enabled] = await Promise.all([getDashboardData(), getEnabledModules()]);
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Dasbor Admin</h1>
 
       <SubscriptionBanner />
+      <OnboardingBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Pendapatan" value={formatRupiah(data.totalRevenue)} />
@@ -220,7 +223,7 @@ export default async function AdminDashboardPage() {
           <CardTitle>Aksi Cepat</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          {QUICK_LINKS.map((link) => (
+          {QUICK_LINKS.filter((link) => !link.module || enabled.has(link.module)).map((link) => (
             <Link key={link.href} href={link.href} className={buttonVariants({ variant: "outline" })}>
               {link.label}
             </Link>
