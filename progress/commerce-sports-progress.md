@@ -8,7 +8,7 @@ Products, orders, point of sale, manual payments, then sport club types (tennis,
 - [x] Phase 1: commerce, database and server (`022_commerce.sql`)
 - [x] Phase 2: products and POS UI
 - [x] Phase 3: sport club types and dashboard (`023_sport_club_types.sql`)
-- [ ] Phase 4: cleanup and final checks
+- [x] Phase 4: cleanup and final checks
 
 ## Repository assessment
 
@@ -74,3 +74,13 @@ Assumptions 2, 5, 8, 9 (void reverses cash with manual adjustments) and 15.
 - `getClubTerms` already read terms from the database (since 020), so no `termsFor` was added; registration and "Tambah klub" already list `ready` types from the table. The onboarding facilities step now uses the preset capacity.
 - Dashboard: cards for bookings today, facility occupancy this week and sales today, each shown only when the club has the module.
 - Checked in a real browser: registering a tennis, padel, pilates and yoga club from `/daftar` lists exactly the six ready types, lands on onboarding with the right preset (name pattern, count, capacity, kind), shows the right navigation (Jadwal only for pilates and yoga; Booking, Kasir, Pesanan, Produk for all), dashboard cards appear, and every navigation link of each club returns a page.
+
+## Phase 4 done
+
+- README (commerce, sports as data and how to add one, changelog 2026-10-06, out of scope wording) and `CLAUDE.md` updated.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`; migrations 001-023 apply on an empty database and on one with sample rows; an old `payment_received` and `manual_adjustment` ledger row stays valid after 022.
+- Stock: 20 parallel orders of 1 at stock 12 gave exactly 12 successes, stock 0, distinct order numbers. Orders of 10 and 5 at stock 12: exactly one succeeded (whichever won; stock 2 if the 10 won, 7 if the 5 won; the other failed with `PS003` and left no order, ledger row or number gap). Void restores stock once and a second void is rejected.
+- Money: each payment wrote exactly one linked ledger row, split payments summed to the total, booking line set `paid_at`, voiding wrote matching `out` entries.
+- Roles: receptionist sells, finance reads only, coach sees nothing, a member sees only own paid orders, no client insert into `orders`, `products` (non-admin) or forged `order_payment` ledger rows, other club sees nothing.
+- Sport as data: in a throwaway database `futsal` was made ready with one UPDATE, five `club_type_modules` rows and one preset only; a futsal club registered from `/daftar`, got the Lapangan Futsal preset, created three facilities, saw booking and cashier, and every navigation link worked; the database was dropped afterwards. Navigation links of swimming, gym, tennis, padel, pilates, yoga and futsal clubs all returned pages.
+- Disabling `pos` hides Kasir, Pesanan, Produk and the dashboard card, returns 404 on their pages and PS001 on the RPCs; data stays and returns when enabled again.

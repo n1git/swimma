@@ -247,6 +247,58 @@ day and week calendar, click a slot), `/member/booking`. A new club lands on
 skipped, and a banner stays on the dashboard until it is finished
 (`tenants.onboarding_completed_at`, `complete_onboarding()`).
 
+## Products, orders and point of sale
+
+Module `pos` ("Produk & Kasir"). Products (`products`: price, optional SKU and
+category, optional stock tracking) are managed by the admin in
+`/admin/produk`. Admin and receptionist sell in `/admin/kasir` (optional
+member or customer name, product lines, a member's unpaid priced bookings,
+split payment, printable receipt); finance reads orders in `/admin/pesanan`;
+a coach has no access; a member sees their own paid orders in
+`/member/pesanan` (read-only, needs `member_portal`).
+
+All writes go through security definer functions: `create_order` (can take
+the payments in the same transaction), `add_order_payment`, `void_order`.
+Totals and unit prices are computed in SQL from `products.price` and
+`resource_bookings.price`; the client never sends a price. An order number is
+`POS-<year>-<000001>` per club from `order_counters` (concurrency-safe).
+An order is `open` until payments (`order_payments`, methods cash, transfer,
+QRIS, other; manual records, no gateway) reach the total, then `paid`:
+tracked products are locked in id order and decremented in that same
+transaction, so parallel orders cannot oversell; insufficient stock fails the
+whole order (`PS003`). A booking line sets `resource_bookings.paid_at` once
+the order is paid. Every payment writes exactly one `cash_ledger` entry
+(category `order_payment`, `order_id`, linked from `order_payments`).
+Voiding a paid order restores stock once, clears `paid_at` and writes one
+`manual_adjustment` `out` entry per payment ("Pembatalan pesanan ...") so the
+ledger stays append-only and balanced; an open order with partial payments
+cannot be voided; voiding never cancels the booking. Clients can no longer
+insert ledger rows other than `manual_adjustment`. Error codes `PS001` module
+off, `PS002` invalid, `PS003` stock, `PS004` payment amount, `PS005` booking
+cannot be billed, `PS006` void not allowed. POS sales are not part of the
+invoice-based revenue reports; they show in the cash ledger, cash flow, the
+orders page and the dashboard.
+
+## Sport club types are data
+
+`club_types` (code, name, `ready` or `soon`, `terms`), `club_type_modules`
+and `club_type_presets` define a sport; registration and "Tambah klub" list
+the `ready` rows. Ready: swimming, gym, tennis, padel, pilates, yoga. Soon:
+crossfit, martial_arts, dance, badminton, futsal, basketball, other.
+
+To add a sport, with SQL only (a migration):
+1. `club_types`: code, name, status `ready`, `terms` (`member`, `coach`,
+   `visit`, `resource`, `session`, `location`; missing keys fall back to
+   neutral words).
+2. `club_type_modules`: the modules it uses (for example `members`, `plans`,
+   `billing`, `cash_ledger`, `payroll`, `promo`, `member_portal`, `classes`,
+   `resource_booking`, `pos`, `checkin`).
+3. `club_type_presets`: facility suggestions for onboarding (kind, name
+   pattern with `{n}`, count, slot minutes, default capacity).
+There is no per-sport code. Verified with a throwaway `futsal`: after those
+inserts a futsal club gets onboarding suggestions, bookings and the cashier
+with no code change.
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -331,7 +383,7 @@ status from `/superadmin`.
 - Admin creates coach accounts (temporary password, changed on first
   login). Members sign in read-only after an admin or their coach activates
   the account; there is no self-registration and no parent role.
-- Not built: payment gateway, invoices or receipts for Swimma itself,
+- Not built: taxes and discounts on orders, barcode scanners, receipt printers (the browser prints), returns and partial refunds, supplier purchasing, payment gateway, invoices or receipts for Swimma itself,
   proration, automatic renewal or suspension at period end, coupons,
   per-module pricing, a coach in several clubs, moving a club between
   organizations, self-registration, member self-booking of classes,
@@ -340,6 +392,12 @@ status from `/superadmin`.
   hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-06
+
+- Products, orders and a cashier with split manual payments, printable receipt, stock handling that cannot oversell, and cash ledger entries per payment (migration `20250101000022_commerce.sql`, module `pos`, codes `PS001` to `PS006`).
+- Sport club types as data: tennis, padel, pilates and yoga are ready, seven more are listed as coming soon, with terms, modules and facility presets in tables (migration `20250101000023_sport_club_types.sql`).
+- Dashboard cards for bookings today, facility occupancy this week and sales today; onboarding suggests facility capacity from the preset.
 
 ### 2026-10-05
 
