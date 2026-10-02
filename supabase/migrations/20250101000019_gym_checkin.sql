@@ -3,7 +3,7 @@ create table checkin_points (
   tenant_id uuid not null default current_tenant_id() references tenants(id),
   location_id uuid references locations(id),
   name text not null,
-  secret text not null default encode(gen_random_bytes(32), 'hex'),
+  secret text not null default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   unique (tenant_id, name)
@@ -72,7 +72,7 @@ $$ language sql stable;
 create function checkin_token_for(p_point uuid, p_window bigint) returns text as $$
   select substr(encode(hmac(p_point::text || ':' || p_window::text, cp.secret, 'sha256'), 'hex'), 1, 12)
   from checkin_points cp where cp.id = p_point;
-$$ language sql stable security definer set search_path = public;
+$$ language sql stable security definer set search_path = public, extensions;
 
 revoke execute on function checkin_window(int) from public, anon, authenticated;
 revoke execute on function checkin_token_for(uuid, bigint) from public, anon, authenticated;
