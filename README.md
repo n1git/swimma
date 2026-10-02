@@ -169,6 +169,45 @@ Organizations that existed before the billing migration were backfilled
 unlimited, otherwise Standard, with the highest old status; organizations
 without any old subscription became Advanced + active. The owner then sets club name/logo/color from Admin -> Pengaturan.
 
+## Club types, modules and gym check-in
+
+Every club has a type (`tenants.club_type`, chosen when the club is created
+in `/daftar` or "Tambah klub"; `swimming` and `gym` are ready). A type lists
+its modules in `club_type_modules`; a club has a module when its type lists
+it and `platform_modules.status` is `ready` (`current_club_has_module`).
+`requireModule` and the module checks in actions and in SQL use that
+per-club answer. The `terms` helper (`lib/club-type.ts`) gives the wording
+per type for the check-in screens only; older screens keep their wording.
+
+**Gym check-in** (module `checkin`, gym clubs): staff create check-in points
+under `/admin/checkin` and open `/admin/checkin/layar/<id>` full screen at the
+entrance. The screen redraws a QR every 20 seconds pointing at
+`/checkin?p=<point>&t=<token>`. Token scheme: `window = floor(epoch / 30)`,
+`token` = first 12 hex characters of HMAC-SHA256(point secret, point id +
+`:` + window); a scan accepts the current and the previous window, so a token
+lives 30 to 60 seconds and a photo of the QR is useless afterwards. The
+secret never leaves the database (column privileges hide it from clients;
+only the admin-only `checkin_token()` returns a token).
+
+A member scans with the phone camera. Not signed in: `/login` with a safe
+internal `next` path, then back to the scan. If the point belongs to another
+club of the same account the session is switched to it; if the account is not
+a member there the result says "Anda bukan anggota klub ini". `record_checkin`
+runs with the member's own JWT and rejects: invalid or old token or another
+club's point (`CK005`), module off (`CK001`), inactive member (`CK002`), no
+active plan (`CK003`), session pack used up (`CK004`). A second scan within
+120 minutes returns the existing check-in (a per-member lock makes parallel
+scans create one row). For clubs with the module, each check-in counts as one
+session of a session pack (`subscription_usage` and `my_subscription_usage`
+count check-ins instead of attended bookings). Staff can also record a manual
+check-in (admin, or a coach for their own members) with the same rules.
+
+Privacy: a check-in stores only member, point, time, plan and method
+(`qr` or `manual`, plus who for manual). No IP and no device data. Scans are
+limited to 10 per minute per profile. Clients cannot insert into `checkins`;
+admin, receptionist and head coach read all of the club's check-ins, coaches
+only their own members', members only their own.
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -258,9 +297,16 @@ status from `/superadmin`.
   per-module pricing, a coach in several clubs, moving a club between
   organizations, self-registration or self-booking for members,
   invitations or password reset by email, one person as both coach and
-  member.
+  member, check-out, geofence, staff scanning the member's QR, door
+  hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-04
+
+- Gym check-in: rotating QR (30-second windows, 60 seconds of validity), `/checkin` scan route, `record_checkin` with codes `CK001` to `CK005`, 120-minute duplicate rule, manual check-in, session packs counted from check-ins.
+- Admin `/admin/checkin` (today, points, full-screen QR, hour histogram, members with no visit in 14 days); member `/member/kunjungan` and a result screen.
+- Minimal club types (`swimming`, `gym`) with per-club modules (migrations `20250101000018_club_types.sql` and `20250101000019_gym_checkin.sql`).
 
 ### 2026-10-03
 

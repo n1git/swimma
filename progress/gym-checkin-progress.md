@@ -8,7 +8,7 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 - [x] Phase 1: database (`018_club_types.sql`, `019_gym_checkin.sql`)
 - [x] Phase 2: server
 - [x] Phase 3: UI
-- [ ] Phase 4: cleanup and final checks
+- [x] Phase 4: cleanup and final checks
 
 ## Dependency note
 
@@ -87,3 +87,11 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 - `/admin/checkin` (module and admin gated): visits today / this week, points management (create, rename, activate, "Tampilkan QR"), manual check-in dialog, today's table (member, WIB time, point, plan, method), 24-hour histogram of the last 30 days (recharts), members with an active plan and no visit in 14 days. `/admin/checkin/layar/[pointId]`: full-screen QR redrawn client-side every 20 seconds. Nav item "Check-in" only for clubs with the module.
 - `/checkin/hasil`: success or failure screen with icon and message; `/member/kunjungan` plus nav item for the member; "Kunjungan" section on the admin member detail and modal; manual check-in button on the coach's member list.
 - Club type select in the `/daftar` wizard step 2 and in the "Tambah klub" dialog (shown only when more than one type is ready). New screens use `terms` from the club type; existing screens keep their wording.
+
+## Phase 4 done
+
+- README (club types and modules, token scheme, privacy, limits, changelog) and `CLAUDE.md` notes updated.
+- Passed: `npm run build`, `npx tsc --noEmit`, `npm run lint`; migrations 018 and 019 apply on an empty DB and on 001-017 plus sample rows.
+- Verified in SQL (local Postgres with stubbed Supabase roles and JWT claims): a valid scan creates one row (member, point, time, subscription); the same scan again returns the existing row; tokens of window -2, of another point, forged, and of another club are rejected (CK005); no plan CK003, used-up pack CK004, inactive member CK002, club without the module CK001; a member of club A cannot check in at club B's point; a coach reads only own members' check-ins, a member only its own; a client cannot insert into `checkins` nor read `checkin_points.secret`; staff cannot call `record_checkin`; 20 parallel scans of one member produced exactly one new row (19 returned the existing one); pack usage counted from check-ins (1/1/0); gym club has `checkin`, swimming does not; unknown club type rejected.
+- Verified against the built app (`next start`, dummy env): an unsigned `GET /checkin?p=&t=` redirects to `/login?next=/checkin?p=...&t=...`; malformed input goes to the failure screen; the result page and `/admin/checkin` redirect to `/login`; `safeNextPath` accepts internal paths and rejects `//host`, `https://`, backslash, `javascript:` and control characters.
+- Not executed: the signed-in half of the flow (login then return to the scan, the club switch inside the scan, the rate limit, `record_checkin` through PostgREST, the QR screen refresh in a browser) because there is no PostgREST or browser against a database here.
