@@ -6,7 +6,7 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 
 - [x] Phase 0: preparation and plan. OK received (defaults accepted).
 - [x] Phase 1: database (`018_club_types.sql`, `019_gym_checkin.sql`)
-- [ ] Phase 2: server
+- [x] Phase 2: server
 - [ ] Phase 3: UI
 - [ ] Phase 4: cleanup and final checks
 
@@ -73,3 +73,10 @@ Gym check-in by rotating QR; adds the `checkin` module and a selectable `gym` cl
 - `20250101000018_club_types.sql`: `club_types`, `club_type_modules`, `tenants.club_type`, `club_has_module` (server only) and `current_club_has_module`, `activate_member_account` now per-club, `register_organization(..., p_club_type)`, `create_tenant_for_owner(owner, name, p_club_type)`, `create_tenant_row` (a type that is not `ready` is rejected).
 - `20250101000019_gym_checkin.sql`: `checkin_points` (column privileges hide `secret`), `checkins` (select policies only), token helpers, `checkin_token` (admin), `checkin_core`, `record_checkin`, `manual_checkin`, `subscription_usage` / `my_subscription_usage` count check-ins for clubs with the module, views `checkin_daily_counts`, `checkin_hourly_30d`, `dormant_members`, `checkin` and `gym` set to `ready`. Error codes CK001 to CK005 carry the Indonesian messages.
 - Applied on an empty DB and on 001-017 plus sample rows. Smoke checked in SQL: gym club has `checkin`, swimming does not, unknown club type rejected; admin token works, coach is forbidden; one scan makes one row and a repeat returns the existing one; tokens of window -2, of another point, forged, and of another club are rejected (CK005); no plan CK003, used-up pack CK004, inactive member CK002, club without the module CK001; clients cannot insert into `checkins` nor read `checkin_points.secret`; staff calling `record_checkin` is forbidden; coach sees only own members' check-ins, member only own; pack usage 1/1/0 from check-ins; 20 parallel scans of one member gave exactly one new row.
+
+## Phase 2 done
+
+- `lib/modules.ts` now checks the module per club (`current_club_has_module`); `lib/club-type.ts` (`termsFor`, `getClubTerms`, `getReadyClubTypes`); `lib/checkin.ts` (error codes and result messages); `isKeyRateLimited` (the IP helper reuses it); `createSession` returns the signed token; `createSupabaseClientWithToken`.
+- `lib/actions/checkin.ts`: `createCheckinPoint`, `renameCheckinPoint`, `setCheckinPointActive`, `fetchCheckinToken` (admin), `manualCheckin` (admin or coach); all gated by the club's `checkin` module where it matters.
+- Scan route `app/checkin/route.ts` (`GET /checkin?p=&t=`): validates input; no session redirects to `/login?next=<scan URL>`; staff get a message; looks up the point's club, switches to it through the account's memberships (or "Anda bukan anggota klub ini"); 10 scans per minute per profile; calls `record_checkin` with the member's own JWT; redirects to `/checkin/hasil` with a result code.
+- Login accepts only a safe internal `next` path (`lib/auth/next-path.ts`), used by the login page and form. Club type accepted by registration and `createTenant`; the UI selector comes in Phase 3.

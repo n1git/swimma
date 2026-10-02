@@ -10,16 +10,20 @@ function clientIp(request: Request): string {
   );
 }
 
-export async function isRateLimited(
+export async function isKeyRateLimited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  const { data, error } = await createAdminSupabaseClient().rpc("hit_rate_limit", {
+    p_key: key,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  });
+  return !error && data === false;
+}
+
+export function isRateLimited(
   request: Request,
   scope: string,
   limit: number,
   windowSeconds: number
 ): Promise<boolean> {
-  const { data, error } = await createAdminSupabaseClient().rpc("hit_rate_limit", {
-    p_key: `${scope}:${clientIp(request)}`,
-    p_limit: limit,
-    p_window_seconds: windowSeconds,
-  });
-  return !error && data === false;
+  return isKeyRateLimited(`${scope}:${clientIp(request)}`, limit, windowSeconds);
 }

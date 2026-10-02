@@ -13,7 +13,7 @@ export async function createSession(user: {
   tenantId: string;
   orgId: string;
   clubPending?: boolean;
-}) {
+}): Promise<string> {
   const token = await signSession({
     sub: user.id,
     app_role: user.role,
@@ -31,6 +31,7 @@ export async function createSession(user: {
     path: "/",
     maxAge: MAX_AGE_SECONDS,
   });
+  return token;
 }
 
 export async function clearSession() {

@@ -11,14 +11,19 @@ import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 export async function createTenant(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const owner = await requireOwnerAction();
-  const parsed = createTenantSchema.safeParse({ tenantName: formData.get("tenantName") });
+  const parsed = createTenantSchema.safeParse({
+    tenantName: formData.get("tenantName"),
+    clubType: formData.get("clubType") || undefined,
+  });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
 
   const { error } = await createAdminSupabaseClient().rpc("create_tenant_for_owner", {
     p_owner_id: owner.ownerId,
     p_tenant_name: parsed.data.tenantName,
+    p_club_type: parsed.data.clubType,
   });
   if (error) {
+    if (error.message.includes("club type not available")) return { ok: false, error: "Jenis klub belum tersedia" };
     return { ok: false, error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menambah klub" };
   }
 

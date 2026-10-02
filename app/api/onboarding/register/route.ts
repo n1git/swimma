@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const { tenantName, ownerFullName, ownerEmail, password, planCode, billingPeriod, estimatedUsers } = parsed.data;
+  const { tenantName, ownerFullName, ownerEmail, password, planCode, billingPeriod, estimatedUsers, clubType } = parsed.data;
 
   const quote = await serverQuote(planCode, billingPeriod, estimatedUsers);
   if (!quote) {
@@ -35,12 +35,16 @@ export async function POST(request: Request) {
     p_password_hash: await hashPassword(password),
     p_plan: planCode,
     p_period: billingPeriod,
+    p_club_type: clubType,
   });
 
   const created = (data as { organization_id: string; tenant_id: string; profile_id: string }[] | null)?.[0];
   if (error || !created) {
     if (error?.code === "23505") {
       return NextResponse.json({ error: "Email sudah terdaftar. Masuk dengan email tersebut." }, { status: 409 });
+    }
+    if (error?.message.includes("club type not available")) {
+      return NextResponse.json({ error: "Jenis klub belum tersedia" }, { status: 400 });
     }
     if (error?.message.includes("plan not available")) {
       return NextResponse.json({ error: "Paket tidak tersedia" }, { status: 400 });

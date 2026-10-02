@@ -1,8 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getSessionToken } from "@/lib/auth/session";
 
-export async function createServerSupabaseClient(): Promise<SupabaseClient> {
-  const token = await getSessionToken();
+export function createSupabaseClientWithToken(token: string | null): SupabaseClient {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -13,4 +12,8 @@ export async function createServerSupabaseClient(): Promise<SupabaseClient> {
       },
     }
   );
+}
+
+export async function createServerSupabaseClient(): Promise<SupabaseClient> {
+  return createSupabaseClientWithToken(await getSessionToken());
 }

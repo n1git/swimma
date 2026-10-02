@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthPageShell } from "@/components/shared/auth-page-shell";
 import { LoginForm } from "@/components/shared/login-form";
 import { APP_NAME } from "@/lib/config";
+import { safeNextPath } from "@/lib/auth/next-path";
 
 const NOTICES: Record<string, string> = {
   suspended: `Akses klub Anda sedang dinonaktifkan. Data klub tetap tersimpan. Hubungi admin platform ${APP_NAME} untuk mengaktifkannya kembali.`,
@@ -13,7 +14,7 @@ const NOTICES: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ suspended?: string; deactivated?: string; revoked?: string }>;
+  searchParams: Promise<{ suspended?: string; deactivated?: string; revoked?: string; next?: string }>;
 }) {
   const params = await searchParams;
   const key = (["suspended", "deactivated", "revoked"] as const).find((k) => params[k]);
@@ -37,7 +38,7 @@ export default async function LoginPage({
           <AlertDescription>{notice}</AlertDescription>
         </Alert>
       ) : null}
-      <LoginForm />
+      <LoginForm next={safeNextPath(params.next)} />
     </AuthPageShell>
   );
 }
