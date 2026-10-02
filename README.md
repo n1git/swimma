@@ -443,6 +443,13 @@ status from `/superadmin`.
 
 ## Changelog
 
+### 2026-10-09
+
+- Migration 019 no longer depends on where `pgcrypto` is installed, so the migrations apply on the hosted layout (`pgcrypto` in `extensions`) and on a plain local one.
+- Migration 024 aligns database privileges: no `TRUNCATE`, `REFERENCES` or `TRIGGER` for client roles, function execute limited to signed-in users and the service role, a fixed `search_path` on every function, and the retired plan tables closed to client roles.
+- The invoice cron route now requires `CRON_SECRET` to be set and compares it in constant time.
+- `docs/DEPLOY.md` updated with the apply steps, mandatory env vars and a smoke test.
+
 ### 2026-10-08
 
 - Landing page reworked for all sports: sports list from `club_types`, features by job, how it works, multi club, pricing copy from live plans, FAQ and final call to action; all fake figures and demo club names removed.

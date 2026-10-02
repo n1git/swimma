@@ -4,8 +4,8 @@
 
 - [x] Phase 0: preparation
 - [x] Phase 1: migrations and cron
-- [ ] Phase 2: hosted setup (hosted pending, see below)
-- [ ] Phase 3: docs and final checks
+- [ ] Phase 2: hosted setup: hosted pending (blocked, see below)
+- [x] Phase 3: docs and final checks (local part)
 
 ## Phase 0 result
 
@@ -19,3 +19,15 @@
 - New migration `20250101000024_privilege_hardening.sql`: table privileges, function execute grants, fixed `search_path` on every function without one, legacy plan tables closed to client roles (kept, because later migrations reference them). Default privileges adjusted for new tables and functions.
 - Cron route: rejects when the secret is unset or empty, constant-time comparison.
 - Local proofs on a layout with hosted-like default privileges: catalog counts before and after the migration, function and policy behavior tests unchanged (diff empty against the run without 024), cron cases (unset, empty, wrong, right secret).
+
+## Phase 2: hosted pending
+
+- Not run: no `swimma` project is visible to the session's Supabase account (it lists only `bugarswim`, which is not touched) and the environment holds no `SUPABASE_ACCESS_TOKEN`, database URL or Supabase CLI.
+- To finish: set `SUPABASE_ACCESS_TOKEN` (and install the CLI) or `DATABASE_URL` for the `swimma` project in the environment, and make `swimma` visible to the Supabase MCP if advisors are to be run through it. Then follow `docs/DEPLOY.md` (move pgcrypto back to `extensions`, apply 012-024, parity and RLS checks, advisors saved in `audit/`, superadmin, `npm run seed:demo -- --hosted`).
+- Done locally for that step: the hosted-format demo seed (`--hosted`) runs cleanly on a database migrated through 024.
+
+## Phase 3 done (local part)
+
+- `docs/DEPLOY.md` rewritten for the new layout, apply methods, status, mandatory `CRON_SECRET`, smoke test and rollback row for 024; README changelog added.
+- Local checks: migrations 001-024 apply on an empty database with pgcrypto in `extensions` and with it in `public`; schema dumps of the two layouts differ only in the extension location; 39 tables, all with RLS; catalog queries show no `TRUNCATE`, `REFERENCES` or `TRIGGER` for client roles, no function executable by `anon` or `public` outside extensions, no function without a fixed `search_path`; client roles cannot read the retired plan tables while landing data tables stay readable; behavior tests for booking and cashier produce output identical to the run without 024 (including the anon section); cron route: unset or empty secret, wrong secret and missing header give 401, the right secret gives 200; `npm run build`, `npx tsc --noEmit` and `npm run lint` pass.
+- Not verifiable locally: hosted migration list, hosted schema diff, hosted advisor comparison.
