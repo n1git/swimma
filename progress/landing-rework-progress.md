@@ -5,8 +5,8 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 ## Status
 
 - [x] Phase 0: preparation
-- [ ] Phase 1: foundations
-- [ ] Phase 2: content sections
+- [x] Phase 1: foundations
+- [x] Phase 2: content sections
 - [ ] Phase 3: pricing, FAQ and finish
 - [ ] Phase 4: final checks
 
@@ -47,7 +47,42 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 
 | Claim on the page | Proof |
 |---|---|
-| (filled in Phase 2 and 3) | |
+| Members, schedules, facility bookings, billing, cashier and cash book in one app (H1, supporting line, OG image) | modules `members`, `classes`, `resource_booking`, `billing`, `pos`, `cash_ledger` in `platform_modules` (migrations 014, 020, 022) |
+| One club or several clubs under one organization | `organizations`, `org_owners`, `create_tenant_for_owner` (012, 018), `switchTenant` in `lib/actions/owner.ts` |
+| Members are not limited | no member limit in `subscription_plans` or triggers (014); `organization_internal_users` excludes members (016) |
+| Price is per internal user | `platform_quote`, `organization_internal_users` (014, 016) |
+| "Coba gratis N hari" | `subscription_plans.trial_days` read live (`getActivePlans`) |
+| Sports list, ready vs "Segera hadir", per-type terms and module summary | `club_types` (`status`, `terms`) and `club_type_modules` read live (018, 020, 023); module readiness from `platform_modules` |
+| Club type chosen at registration; terms, modules and facility suggestions follow it | `register_organization(..., p_club_type)` (018), `club_types.terms` (020), `club_type_presets` (020, 023) |
+| Packages monthly, quarterly, yearly or session packs | `membership_packages.billing_cycle` (002), `pricing_mode 'session_pack'` (009) |
+| Recurring subscription invoices generated at the start of each month; session packs billed on purchase | `vercel.json` cron `0 0 1 * *` -> `app/api/cron/generate-invoices/route.ts` -> `generate_invoices_for_period` (003, 013); `create_invoice_for_session_pack_subscription` trigger (013) |
+| Classes per location with capacity | `classes.location_id`, `capacity` (002) |
+| Database rejects a coach scheduled in two classes at once | `exclude using gist (instructor_id ...)` (002) and `enforce_class_substitute` (016) |
+| Coaches record attendance; substitute coach per class | `lib/actions/attendance.ts`, `classes.substitute_id` (016) |
+| Facilities with opening hours, slots and capacity; overbooking rejected in the database, also under concurrent requests | `resources`, `resource_hours`, `enforce_resource_booking` with row lock and max overlap (021); 20-parallel test in `progress/resource-booking-progress.md` |
+| Members can book by themselves from the portal | `book_resource_as_member` (021), `app/member/booking` |
+| QR code keeps changing; each code valid 30 to 60 seconds; scanned with the member's phone | `checkin_token`, `checkin_window` 30 s, current and previous window accepted (019); README check-in section |
+| Check-in stores no IP address or device data | `checkins` columns (019); CLAUDE.md check-in note |
+| Sell products and bill bookings in one order | `order_items.kind in ('product','booking')` (022) |
+| Stock cannot be sold beyond what is available | `order_settle` locks product rows, `PS003` (022); parallel test in `progress/commerce-sports-progress.md` |
+| Cash, transfer or QRIS recorded manually, split payments, printable receipt | `order_payments.method` (022), split in `components/pos/pos-terminal.tsx`, `components/pos/receipt.tsx` + `PrintButton` |
+| Invoice and cashier payments enter the cash book automatically | `mark_invoice_paid` (016) and `order_record_payment` (022) insert `cash_ledger` rows |
+| Ledger entries cannot be changed or deleted from the app; corrections are new entries | no update/delete policy on `cash_ledger` (004, 016); client insert limited to `manual_adjustment` (022) |
+| Coach payroll posted to the cash book | `create_payroll_run` inserts `payroll` ledger row (003, 016) |
+| One member account for all clubs; members see their packages, invoices, schedule, bookings and orders | `member_accounts`, `profiles.member_account_id` (017); `app/member/page.tsx`, `app/member/booking`, `app/member/pesanan` |
+| Roles: owner, admin, coach, head coach, receptionist, finance, member; each sees only its menus and data | `lib/auth/roles.ts` (`canAccessPath`), `profiles.is_head_coach` (016), RLS policies (013, 016, 017) |
+| Reports: invoice revenue, outstanding, monthly cash flow, payroll cost; dashboard: bookings today, facility occupancy this week, sales today | `app/admin/reports/page.tsx`, `report_*` views (005); `app/admin/page.tsx` KPI cards, `resource_utilization` (023) |
+| Each club can switch modules on or off, member module always on; menus follow; data kept | `set_club_module`, `tenant_module_overrides` (020), `getEnabledModules` in `app/admin/layout.tsx`; `members` rejected by check |
+| All times shown in WIB | `lib/format.ts` (`Asia/Jakarta`), CLAUDE.md rule |
+| Club data separated at database level; users read only the active club's data for their role | RLS by `current_tenant_id()` on all tenant tables (004, 013, 016) |
+| Steps: register (club name, owner, plan, period) creates organization, owner and first club | `components/shared/register-club-form.tsx`, `register_organization` (014, 018) |
+| Onboarding guides location, facilities with suggestions, first package; every step skippable | `app/admin/onboarding/page.tsx` (020) |
+| Add staff with roles, register members, activate portal accounts | `app/admin/staff`, `app/admin/members`, `activateMemberAccount` (017) |
+| Each club has its own sport type, members, staff, schedule and cash book | `tenants.club_type` (018); `tenant_id` on those tables |
+| Owner switches club from the top menu without signing in again | `TenantSwitcher`, `switchTenant` (012) |
+| One subscription per organization, counted from internal users of all clubs | `organization_subscriptions`, `organization_internal_users(p_org)` (014, 016) |
+| Club limit per plan | `subscription_plans.club_limit` read live (014), enforced by `SW004` |
+| Product visuals are sample data | `hero-preview.tsx`, `multi-club.tsx` labelled "Contoh data" |
 
 ## Phase 1 done
 
@@ -61,3 +96,12 @@ Public landing page (`/`) for Swimma as one app for all sports clubs; every clai
 
 - `/privasi`: the stored data list matches the schema (org owners, staff profiles incl. optional phone, members incl. date of birth, address, notes, contact name and phone, member accounts, classes, bookings, attendance notes, subscriptions, invoices, orders, manual payments, cash ledger, payroll, check-ins without IP or device data, guest name and phone on bookings, customer name on orders, promo images in Supabase Storage, IP addresses kept briefly as rate-limit keys in `auth_rate_limits`); cookies: `app_session` (httpOnly, 7 days) and the theme in browser storage; services: Supabase (database, storage) and Vercel (hosting); no analytics or tracking; fonts are self-hosted by `next/font` (no request to Google at runtime); data is not deleted when access ends. It assumes the operator is the data processor and the club the controller, and does not name a legal entity, retention period or jurisdiction; these need your review.
 - `/syarat`: describes the account model, roles, one email per identity, pricing per internal user, manual activation after payment, the effect of pending/expired/suspended/cancelled subscriptions (`SW003`, `tenants.is_active`), and that member payments are recorded manually. It does not set liability limits, governing law, refund rules or an operator name.
+
+## Phase 2 done
+
+- `ui-ux-pro-max` run again (landing domain: "Feature-Rich Showcase", one key message per card, CTA repeated after features and at the bottom; social proof left out because testimonials and logos are out of scope).
+- Hero: H1 from decision 1, supporting line, primary CTA (trial days from live plans, else "Daftarkan klub"), secondary "Lihat fitur", note on unlimited members; product preview built from the app's `Card` and `Badge` with a dashboard KPI row, a booking slot grid and a paid order, labelled "Contoh data" (no image, so the H1 stays the LCP element).
+- Sports: `getPublicClubTypes()` reads `club_types` and `club_type_modules`; ready types become cards whose description is built from their terms and ready modules, soon types are chips marked "Segera hadir". Empty state when the query returns nothing. Nothing per sport in code.
+- Features by job: ten cards (members, schedule, facilities, QR check-in, cashier, cash book and payroll, member portal, roles, reports, modules per club) plus a WIB and data-isolation note; a card shows "Segera hadir" if its module is `soon`.
+- How it works: four steps. Multi club: organization, club switcher, one subscription, club limit per plan from live data; sample list labelled "Contoh data" with neutral names.
+- Fake figures and demo clubs removed (`grep` finds none of "1.240", "Kolam Renang Melati", "Aquatic Center Nusantara", "Sekolah Renang Ombak"). Pricing section temporarily keeps only the live picker; its copy, FAQ and final CTA come in Phase 3.

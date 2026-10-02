@@ -50,3 +50,34 @@ export async function getReadyClubTypes(): Promise<ClubType[]> {
     return [];
   }
 }
+
+export interface PublicClubType {
+  code: string;
+  name: string;
+  status: "ready" | "soon";
+  terms: ClubTerms;
+  modules: string[];
+}
+
+export async function getPublicClubTypes(): Promise<PublicClubType[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const [{ data }, { data: links }] = await Promise.all([
+      supabase.from("club_types").select("code, name, status, terms").order("sort"),
+      supabase.from("club_type_modules").select("club_type, module_code"),
+    ]);
+    const modules = new Map<string, string[]>();
+    for (const l of (links ?? []) as { club_type: string; module_code: string }[]) {
+      modules.set(l.club_type, [...(modules.get(l.club_type) ?? []), l.module_code]);
+    }
+    return ((data ?? []) as { code: string; name: string; status: "ready" | "soon"; terms: unknown }[]).map((t) => ({
+      code: t.code,
+      name: t.name,
+      status: t.status,
+      terms: mergeTerms(t.terms),
+      modules: modules.get(t.code) ?? [],
+    }));
+  } catch {
+    return [];
+  }
+}
