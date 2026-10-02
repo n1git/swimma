@@ -33,7 +33,7 @@ export default async function SubscriptionsPage({
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("subscriptions")
-    .select("id, status, start_date, end_date, members(full_name), membership_packages(name)")
+    .select("id, status, start_date, end_date, member_names(full_name), membership_packages(name)")
     .order("start_date", { ascending: false });
   if (status) query = query.eq("status", status);
   if (packageId) query = query.eq("package_id", packageId);
@@ -95,13 +95,13 @@ export default async function SubscriptionsPage({
               id: string;
               status: string;
               start_date: string;
-              members: { full_name: string } | null;
+              member_names: { full_name: string } | null;
               membership_packages: { name: string } | null;
             };
             const usage = usageBySubscription.get(row.id);
             return (
               <TableRow key={row.id}>
-                <TableCell>{row.members?.full_name ?? "-"}</TableCell>
+                <TableCell>{row.member_names?.full_name ?? "-"}</TableCell>
                 <TableCell>{row.membership_packages?.name ?? "-"}</TableCell>
                 <TableCell>{row.start_date}</TableCell>
                 <TableCell>

@@ -18,10 +18,12 @@ export function MemberEditForm({
   member,
   locations,
   coaches,
+  canChangeStatus,
 }: {
   member: MemberDetail;
   locations: Lookup[];
   coaches: Lookup[];
+  canChangeStatus: boolean;
 }) {
   const [state, formAction, pending] = useActionState(updateMember.bind(null, member.id), {});
   useActionToast(state, "Perubahan disimpan");
@@ -42,6 +44,7 @@ export function MemberEditForm({
         </Button>
       </form>
 
+      {canChangeStatus ? (
       <form action={toggleAction} className="flex flex-col gap-3">
         {toggleState.error ? (
           <Alert variant="destructive">
@@ -57,6 +60,7 @@ export function MemberEditForm({
           {member.is_active ? "Nonaktifkan Anggota" : "Aktifkan Kembali"}
         </ActionSubmitButton>
       </form>
+      ) : null}
     </div>
   );
 }

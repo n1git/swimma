@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import type { BillingPeriod, PlanCode, PricingPlan, Quote } from "@/lib/pricing";
 import type { PlatformSubscriptionStatus } from "@/lib/validations/superadmin";
+import { ROLE_LABEL, type AppRole } from "@/lib/auth/roles";
 
 export interface PlatformModule {
   code: string;
@@ -211,7 +212,7 @@ export async function listInternalUsers(organizationId: string): Promise<Interna
       .select("id, full_name, email, role, tenants!inner(name, organization_id)")
       .eq("tenants.organization_id", organizationId)
       .is("owner_id", null)
-      .in("role", ["admin", "coach"])
+      .in("role", ["admin", "coach", "receptionist", "finance"])
       .eq("is_active", true)
       .order("full_name"),
   ]);
@@ -227,7 +228,7 @@ export async function listInternalUsers(organizationId: string): Promise<Interna
       key: `profile-${p.id}`,
       name: p.full_name as string,
       email: p.email as string,
-      roleLabel: p.role === "coach" ? "Pelatih" : "Admin",
+      roleLabel: ROLE_LABEL[p.role as AppRole],
       clubName: (p.tenants as unknown as { name: string }).name,
     })),
   ];

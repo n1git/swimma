@@ -10,7 +10,7 @@ export async function addManualAdjustment(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const session = await requireActionRole("admin");
+  const session = await requireActionRole(["admin", "finance"]);
 
   const parsed = manualAdjustmentSchema.safeParse({
     direction: formData.get("direction"),

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { BackLink } from "@/components/shared/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { AttendanceRoster } from "@/components/attendance/attendance-roster";
@@ -20,12 +21,12 @@ export default async function AttendancePage({
   params: Promise<{ classId: string }>;
 }) {
   const { classId } = await params;
-  const supabase = await createServerSupabaseClient();
+  const [supabase, session] = await Promise.all([createServerSupabaseClient(), getSession()]);
 
   const [{ data: cls }, { data: bookings }] = await Promise.all([
     supabase
       .from("classes")
-      .select("id, start_time, end_time, locations(name), class_types(name)")
+      .select("id, start_time, end_time, instructor_id, substitute_id, locations(name), class_types(name)")
       .eq("id", classId)
       .maybeSingle(),
     supabase
@@ -37,6 +38,8 @@ export default async function AttendancePage({
   if (!cls) notFound();
 
   const info = cls as unknown as {
+    instructor_id: string;
+    substitute_id: string | null;
     start_time: string;
     end_time: string;
     locations: { name: string } | null;
@@ -75,7 +78,11 @@ export default async function AttendancePage({
         </CardContent>
       </Card>
 
-      <AttendanceRoster classId={classId} bookings={roster} />
+      <AttendanceRoster
+        classId={classId}
+        bookings={roster}
+        readOnly={(info.substitute_id ?? info.instructor_id) !== session?.sub}
+      />
     </div>
   );
 }

@@ -18,7 +18,7 @@ export async function searchDuplicateMembers(
   fullName: string,
   dateOfBirth: string
 ): Promise<DuplicateMemberMatch[]> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "receptionist"]);
   if (!fullName.trim()) return [];
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("search_similar_members", {
@@ -56,7 +56,7 @@ function memberColumns(input: NonNullable<ReturnType<typeof parseMember>["data"]
 }
 
 export async function createMember(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "receptionist"]);
 
   const parsed = parseMember(formData);
   if (!parsed.success) {
@@ -82,7 +82,7 @@ export async function updateMember(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "receptionist"]);
 
   const parsed = parseMember(formData);
   if (!parsed.success) {
@@ -118,4 +118,18 @@ export async function toggleMemberActive(_prevState: ActionState, formData: Form
   revalidatePath("/admin/members");
   revalidatePath(`/admin/members/${memberId}`);
   return { ok: true, message: isActive ? "Anggota diaktifkan kembali" : "Anggota dinonaktifkan" };
+}
+
+export async function reassignMemberCoach(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  await requireActionRole("coach");
+  const memberId = String(formData.get("memberId"));
+  const coachId = String(formData.get("coachId"));
+  if (!coachId) return { ok: false, error: "Pilih pelatih" };
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.from("members").update({ coach_id: coachId }).eq("id", memberId).select("id");
+  if (error || !data?.length) return { ok: false, error: "Gagal memindahkan anggota" };
+
+  revalidatePath("/coach", "layout");
+  return { ok: true, message: "Pelatih anggota diperbarui" };
 }

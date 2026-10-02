@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { getActiveCoaches, getLocations } from "@/lib/data/lookups";
 import { Dialog } from "@/components/ui/dialog";
 import { MemberEditForm } from "@/components/members/member-edit-form";
@@ -11,7 +12,7 @@ export default async function MemberDetailModal({
 }) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
-  const [{ data: member }, locations, coaches] = await Promise.all([
+  const [{ data: member }, locations, coaches, session] = await Promise.all([
     supabase
       .from("members")
       .select(
@@ -21,6 +22,7 @@ export default async function MemberDetailModal({
       .maybeSingle(),
     getLocations(),
     getActiveCoaches(),
+    getSession(),
   ]);
 
   if (!member) notFound();
@@ -28,7 +30,12 @@ export default async function MemberDetailModal({
   return (
     <Dialog>
       <h2 className="mb-4 text-xl font-semibold">{member.full_name}</h2>
-      <MemberEditForm member={member} locations={locations} coaches={coaches} />
+      <MemberEditForm
+        member={member}
+        locations={locations}
+        coaches={coaches}
+        canChangeStatus={session?.app_role === "admin"}
+      />
     </Dialog>
   );
 }

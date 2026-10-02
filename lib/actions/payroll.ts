@@ -3,14 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { payrollRunSchema } from "@/lib/validations/payroll";
+import { payrollRunSchema, payrollPreviewSchema } from "@/lib/validations/payroll";
+import { parseJakartaLocalInput } from "@/lib/format";
 import { type ActionState } from "./types";
 
 export async function createPayrollRun(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "finance"]);
 
   const parsed = payrollRunSchema.safeParse({
     coachId: formData.get("coachId"),
@@ -45,4 +46,36 @@ export async function createPayrollRun(
   revalidatePath("/admin/payroll");
   revalidatePath("/admin/cash-ledger");
   return { ok: true };
+}
+
+export interface PayrollSessionPreview {
+  sessions: number;
+  rate: number | null;
+}
+
+export async function previewPayrollSessions(
+  coachId: string,
+  periodStart: string,
+  periodEnd: string
+): Promise<PayrollSessionPreview | null> {
+  await requireActionRole(["admin", "finance"]);
+  const parsed = payrollPreviewSchema.safeParse({ coachId, periodStart, periodEnd });
+  if (!parsed.success) return null;
+
+  const from = parseJakartaLocalInput(`${parsed.data.periodStart}T00:00`);
+  const until = new Date(Date.parse(parseJakartaLocalInput(`${parsed.data.periodEnd}T00:00`)) + 24 * 60 * 60 * 1000).toISOString();
+  const id = parsed.data.coachId;
+
+  const supabase = await createServerSupabaseClient();
+  const [{ data: coach }, { count }] = await Promise.all([
+    supabase.from("profiles").select("session_rate").eq("id", id).eq("role", "coach").maybeSingle(),
+    supabase
+      .from("classes")
+      .select("id", { count: "exact", head: true })
+      .or(`substitute_id.eq.${id},and(instructor_id.eq.${id},substitute_id.is.null)`)
+      .gte("start_time", from)
+      .lt("start_time", until),
+  ]);
+  if (!coach) return null;
+  return { sessions: count ?? 0, rate: coach.session_rate === null ? null : Number(coach.session_rate) };
 }

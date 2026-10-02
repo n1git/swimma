@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { Dialog } from "@/components/ui/dialog";
 import { CoachEditForm } from "@/components/coaches/coach-edit-form";
 import { CoachMembers } from "@/components/coaches/coach-members";
+import { CoachCertifications } from "@/components/coaches/coach-certifications";
 
 export default async function CoachDetailModal({
   params,
@@ -13,7 +14,7 @@ export default async function CoachDetailModal({
   const supabase = await createServerSupabaseClient();
   const { data: coach } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, is_active")
+    .select("id, full_name, email, phone, is_active, specialization, session_rate, is_head_coach")
     .eq("id", id)
     .eq("role", "coach")
     .maybeSingle();
@@ -27,7 +28,8 @@ export default async function CoachDetailModal({
         <p className="text-sm text-muted-foreground">{coach.email}</p>
       </div>
       <CoachEditForm coach={coach} />
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col gap-6">
+        <CoachCertifications coachId={coach.id} />
         <CoachMembers coachId={coach.id} />
       </div>
     </Dialog>

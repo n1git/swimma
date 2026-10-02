@@ -25,9 +25,11 @@ export interface AttendanceBooking {
 export function AttendanceRoster({
   classId,
   bookings,
+  readOnly = false,
 }: {
   classId: string;
   bookings: AttendanceBooking[];
+  readOnly?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const attendedCount = bookings.filter((b) => b.isAttended).length;
@@ -60,8 +62,8 @@ export function AttendanceRoster({
           <TableRow>
             <TableHead>Nama Anggota</TableHead>
             <TableHead>Kehadiran</TableHead>
-            <TableHead>Catatan (opsional)</TableHead>
-            <TableHead>Aksi</TableHead>
+            <TableHead>{readOnly ? "Catatan" : "Catatan (opsional)"}</TableHead>
+            {readOnly ? null : <TableHead>Aksi</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -73,6 +75,9 @@ export function AttendanceRoster({
                   {b.isAttended ? "Hadir" : "Belum Hadir"}
                 </Badge>
               </TableCell>
+              {readOnly ? (
+                <TableCell>{b.notes ?? "-"}</TableCell>
+              ) : (
               <TableCell>
                 <ActionForm action={updateBookingNotes}>
                   <input type="hidden" name="bookingId" value={b.id} />
@@ -89,6 +94,8 @@ export function AttendanceRoster({
                   />
                 </ActionForm>
               </TableCell>
+              )}
+              {readOnly ? null : (
               <TableCell>
                 <ActionForm action={markAttendance}>
                   <input type="hidden" name="bookingId" value={b.id} />
@@ -99,11 +106,12 @@ export function AttendanceRoster({
                   </Button>
                 </ActionForm>
               </TableCell>
+              )}
             </TableRow>
           ))}
           {visible.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground">
+              <TableCell colSpan={readOnly ? 3 : 4} className="text-center text-muted-foreground">
                 {bookings.length === 0
                   ? "Belum ada peserta terdaftar di kelas ini."
                   : "Tidak ada anggota yang cocok dengan pencarian."}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { certificationWarningDate } from "@/lib/certifications";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/shared/list-filters";
@@ -21,12 +22,16 @@ export default async function CoachesPage({
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("profiles")
-    .select("id, full_name, email, phone, is_active")
+    .select("id, full_name, email, phone, is_active, specialization, is_head_coach")
     .eq("role", "coach")
     .order("full_name");
   if (q) query = query.ilike("full_name", `%${q}%`);
   if (status) query = query.eq("is_active", status === "active");
-  const { data: coaches } = await query;
+  const [{ data: coaches }, { data: expiring }] = await Promise.all([
+    query,
+    supabase.from("coach_certifications").select("coach_id").lte("valid_until", certificationWarningDate()),
+  ]);
+  const expiringCoachIds = new Set((expiring ?? []).map((c) => c.coach_id as string));
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,6 +59,7 @@ export default async function CoachesPage({
         <TableHeader>
           <TableRow>
             <TableHead>Nama</TableHead>
+            <TableHead>Spesialisasi</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Telepon</TableHead>
             <TableHead>Status</TableHead>
@@ -63,7 +69,14 @@ export default async function CoachesPage({
         <TableBody>
           {(coaches ?? []).map((coach) => (
             <TableRow key={coach.id}>
-              <TableCell>{coach.full_name}</TableCell>
+              <TableCell>
+                <span className="flex flex-wrap items-center gap-2">
+                  {coach.full_name}
+                  {coach.is_head_coach ? <Badge variant="outline">Kepala Pelatih</Badge> : null}
+                  {expiringCoachIds.has(coach.id) ? <Badge variant="warning">Sertifikat perlu diperbarui</Badge> : null}
+                </span>
+              </TableCell>
+              <TableCell>{coach.specialization ?? "-"}</TableCell>
               <TableCell>{coach.email}</TableCell>
               <TableCell>{coach.phone ?? "-"}</TableCell>
               <TableCell>
@@ -83,7 +96,7 @@ export default async function CoachesPage({
           ))}
           {(coaches ?? []).length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 Belum ada pelatih.
               </TableCell>
             </TableRow>

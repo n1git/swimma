@@ -1,6 +1,17 @@
-export type AppRole = "admin" | "coach";
+export type AppRole = "admin" | "coach" | "receptionist" | "finance";
 
-export const APP_ROLES: AppRole[] = ["admin", "coach"];
+export const APP_ROLES: AppRole[] = ["admin", "coach", "receptionist", "finance"];
+
+export const STAFF_ROLES = ["admin", "receptionist", "finance"] as const satisfies readonly AppRole[];
+
+export type StaffRole = (typeof STAFF_ROLES)[number];
+
+export const ROLE_LABEL: Record<AppRole, string> = {
+  admin: "Admin",
+  coach: "Pelatih",
+  receptionist: "Resepsionis",
+  finance: "Keuangan",
+};
 
 export const OWNER_HOME = "/admin/klub";
 
@@ -10,5 +21,32 @@ export function roleHome(role: AppRole): string {
       return "/admin";
     case "coach":
       return "/coach";
+    case "receptionist":
+      return "/admin/schedule";
+    case "finance":
+      return "/admin/billing/invoices";
   }
+}
+
+const ADMIN_SECTION_ACCESS: { prefix: string; roles: AppRole[] }[] = [
+  { prefix: "/admin/members", roles: ["admin", "receptionist"] },
+  { prefix: "/admin/schedule/new", roles: ["admin"] },
+  { prefix: "/admin/schedule", roles: ["admin", "receptionist"] },
+  { prefix: "/admin/billing/invoices", roles: ["admin", "finance", "receptionist"] },
+  { prefix: "/admin/billing", roles: ["admin", "finance"] },
+  { prefix: "/admin/cash-ledger", roles: ["admin", "finance"] },
+  { prefix: "/admin/payroll", roles: ["admin", "finance"] },
+  { prefix: "/admin/reports", roles: ["admin", "finance"] },
+];
+
+function underPath(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+export function canAccessPath(role: AppRole, pathname: string): boolean {
+  if (underPath(pathname, "/coach")) return role === "coach";
+  if (!underPath(pathname, "/admin")) return true;
+  if (role === "admin") return true;
+  const rule = ADMIN_SECTION_ACCESS.find((r) => underPath(pathname, r.prefix));
+  return rule ? rule.roles.includes(role) : false;
 }

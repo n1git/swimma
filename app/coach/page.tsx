@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -17,6 +18,8 @@ interface ClassRow {
   start_time: string;
   end_time: string;
   capacity: number;
+  instructor_id: string;
+  substitute_id: string | null;
   locations: { name: string } | null;
   class_types: { name: string } | null;
   bookings: { count: number }[];
@@ -27,8 +30,8 @@ export default async function CoachSchedulePage() {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
     .from("classes")
-    .select("id, start_time, end_time, capacity, locations(name), class_types(name), bookings(count)")
-    .eq("instructor_id", session?.sub)
+    .select("id, start_time, end_time, capacity, instructor_id, substitute_id, locations(name), class_types(name), bookings(count)")
+    .or(`instructor_id.eq.${session?.sub},substitute_id.eq.${session?.sub}`)
     .order("start_time");
 
   const classes = (data ?? []) as unknown as ClassRow[];
@@ -54,11 +57,17 @@ export default async function CoachSchedulePage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {classes.map((cls) => (
+          {classes.map((cls) => {
+            const substituting = cls.substitute_id === session?.sub;
+            const replaced = !substituting && cls.substitute_id !== null;
+            return (
             <TableRow key={cls.id}>
               <TableCell>
-                {formatJakartaDateTime(cls.start_time)} —{" "}
-                {formatJakartaTime(cls.end_time)}
+                <span className="flex flex-wrap items-center gap-2">
+                  {formatJakartaDateTime(cls.start_time)} — {formatJakartaTime(cls.end_time)}
+                  {substituting ? <Badge variant="warning">Pengganti</Badge> : null}
+                  {replaced ? <Badge variant="secondary">Digantikan</Badge> : null}
+                </span>
               </TableCell>
               <TableCell>{cls.locations?.name ?? "-"}</TableCell>
               <TableCell>{cls.class_types?.name ?? "-"}</TableCell>
@@ -66,12 +75,17 @@ export default async function CoachSchedulePage() {
                 {cls.bookings?.[0]?.count ?? 0} / {cls.capacity}
               </TableCell>
               <TableCell>
-                <Link href={`/coach/attendance/${cls.id}`} className={buttonVariants({ size: "sm" })}>
-                  Absensi
-                </Link>
+                {replaced ? (
+                  <span className="text-sm text-muted-foreground">Diajar pelatih pengganti</span>
+                ) : (
+                  <Link href={`/coach/attendance/${cls.id}`} className={buttonVariants({ size: "sm" })}>
+                    Absensi
+                  </Link>
+                )}
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
           {classes.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">

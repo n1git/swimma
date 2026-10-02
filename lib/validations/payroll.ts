@@ -13,3 +13,9 @@ export const payrollRunSchema = z
     message: "Akhir periode harus setelah awal periode",
     path: ["periodEnd"],
   });
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const payrollPreviewSchema = z
+  .object({ coachId: z.string().uuid(), periodStart: isoDate, periodEnd: isoDate })
+  .refine((v) => v.periodEnd >= v.periodStart);

@@ -31,7 +31,7 @@ export async function getActiveCoaches(): Promise<Lookup[]> {
 export async function getActiveMembers(): Promise<Lookup[]> {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
-    .from("members")
+    .from("member_names")
     .select("id, full_name")
     .eq("is_active", true)
     .order("full_name");

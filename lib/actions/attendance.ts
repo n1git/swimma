@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { type ActionState } from "./types";
 
 export async function markAttendance(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireActionRole("coach");
+  await requireActionRole(["coach", "admin", "receptionist"]);
   const bookingId = String(formData.get("bookingId"));
   const classId = String(formData.get("classId"));
   const isAttended = formData.get("isAttended") === "true";
@@ -23,6 +23,7 @@ export async function markAttendance(_prevState: ActionState, formData: FormData
   if (error || !data?.length) return { ok: false, error: "Gagal menyimpan kehadiran" };
 
   revalidatePath(`/coach/attendance/${classId}`);
+  revalidatePath(`/admin/schedule/${classId}`);
   return { ok: true, message: isAttended ? "Ditandai hadir" : "Kehadiran dibatalkan" };
 }
 

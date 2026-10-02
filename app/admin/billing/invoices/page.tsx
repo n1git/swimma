@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { markInvoicePaid, voidInvoice } from "@/lib/actions/billing";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { ListFilters } from "@/components/shared/list-filters";
@@ -33,13 +34,14 @@ export default async function InvoicesPage({
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const { status, q } = await searchParams;
-  const supabase = await createServerSupabaseClient();
+  const [supabase, session] = await Promise.all([createServerSupabaseClient(), getSession()]);
+  const canManage = session?.app_role !== "receptionist";
   let query = supabase
     .from("invoices")
-    .select("id, amount, status, due_date, period_start, period_end, members!inner(full_name)")
+    .select("id, amount, status, due_date, period_start, period_end, member_names!inner(full_name)")
     .order("due_date", { ascending: false });
   if (status) query = query.eq("status", status);
-  if (q) query = query.ilike("members.full_name", `%${q}%`);
+  if (q) query = query.ilike("member_names.full_name", `%${q}%`);
   const { data: invoices } = await query;
 
   return (
@@ -81,11 +83,11 @@ export default async function InvoicesPage({
               due_date: string;
               period_start: string;
               period_end: string;
-              members: { full_name: string } | null;
+              member_names: { full_name: string } | null;
             };
             return (
               <TableRow key={row.id}>
-                <TableCell>{row.members?.full_name ?? "-"}</TableCell>
+                <TableCell>{row.member_names?.full_name ?? "-"}</TableCell>
                 <TableCell>
                   {row.period_start} – {row.period_end}
                 </TableCell>
@@ -105,6 +107,7 @@ export default async function InvoicesPage({
                           Tandai Lunas
                         </ActionSubmitButton>
                       </ActionForm>
+                      {canManage ? (
                       <ActionForm action={voidInvoice}>
                         <input type="hidden" name="invoiceId" value={row.id} />
                         <ActionSubmitButton
@@ -115,6 +118,7 @@ export default async function InvoicesPage({
                           Batalkan Tagihan
                         </ActionSubmitButton>
                       </ActionForm>
+                      ) : null}
                     </div>
                   ) : null}
                 </TableCell>
@@ -131,6 +135,7 @@ export default async function InvoicesPage({
         </TableBody>
       </Table>
 
+      {canManage ? (
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>Buat Tagihan Periode Berjalan</CardTitle>
@@ -139,6 +144,7 @@ export default async function InvoicesPage({
           <GenerateInvoicesForm />
         </CardContent>
       </Card>
+      ) : null}
     </div>
   );
 }

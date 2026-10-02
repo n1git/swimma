@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { getActiveCoaches, getLocations, getClassTypes } from "@/lib/data/lookups";
 import { buttonVariants } from "@/components/ui/button";
 import { ListFilters } from "@/components/shared/list-filters";
@@ -19,6 +20,7 @@ interface ClassRow {
   end_time: string;
   capacity: number;
   profiles: { full_name: string } | null;
+  substitute: { full_name: string } | null;
   locations: { name: string } | null;
   class_types: { name: string } | null;
   bookings: { count: number }[];
@@ -30,8 +32,9 @@ export default async function SchedulePage({
   searchParams: Promise<{ coach?: string; location?: string; classType?: string }>;
 }) {
   const { coach, location, classType } = await searchParams;
-  const [supabase, coaches, locations, classTypes] = await Promise.all([
+  const [supabase, session, coaches, locations, classTypes] = await Promise.all([
     createServerSupabaseClient(),
+    getSession(),
     getActiveCoaches(),
     getLocations(),
     getClassTypes(),
@@ -39,7 +42,7 @@ export default async function SchedulePage({
   let query = supabase
     .from("classes")
     .select(
-      "id, start_time, end_time, capacity, profiles(full_name), locations(name), class_types(name), bookings(count)"
+      "id, start_time, end_time, capacity, profiles!classes_instructor_id_fkey(full_name), substitute:profiles!classes_substitute_id_fkey(full_name), locations(name), class_types(name), bookings(count)"
     )
     .order("start_time");
   if (coach) query = query.eq("instructor_id", coach);
@@ -53,9 +56,11 @@ export default async function SchedulePage({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Jadwal Kelas</h1>
-        <Link href="/admin/schedule/new" className={buttonVariants({})}>
-          Tambah Kelas
-        </Link>
+        {session?.app_role === "admin" ? (
+          <Link href="/admin/schedule/new" className={buttonVariants({})}>
+            Tambah Kelas
+          </Link>
+        ) : null}
       </div>
       <ListFilters
         fields={[
@@ -97,7 +102,12 @@ export default async function SchedulePage({
                 {formatJakartaDateTime(cls.start_time)} —{" "}
                 {formatJakartaTime(cls.end_time)}
               </TableCell>
-              <TableCell>{cls.profiles?.full_name ?? "-"}</TableCell>
+              <TableCell>
+                {cls.profiles?.full_name ?? "-"}
+                {cls.substitute ? (
+                  <span className="block text-xs text-muted-foreground">Pengganti: {cls.substitute.full_name}</span>
+                ) : null}
+              </TableCell>
               <TableCell>{cls.locations?.name ?? "-"}</TableCell>
               <TableCell>{cls.class_types?.name ?? "-"}</TableCell>
               <TableCell>

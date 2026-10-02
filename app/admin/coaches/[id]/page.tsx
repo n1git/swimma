@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { BackLink } from "@/components/shared/back-link";
 import { CoachEditForm } from "@/components/coaches/coach-edit-form";
 import { CoachMembers } from "@/components/coaches/coach-members";
+import { CoachCertifications } from "@/components/coaches/coach-certifications";
 
 export default async function CoachDetailPage({
   params,
@@ -13,7 +14,7 @@ export default async function CoachDetailPage({
   const supabase = await createServerSupabaseClient();
   const { data: coach } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, is_active")
+    .select("id, full_name, email, phone, is_active, specialization, session_rate, is_head_coach")
     .eq("id", id)
     .eq("role", "coach")
     .maybeSingle();
@@ -21,13 +22,14 @@ export default async function CoachDetailPage({
   if (!coach) notFound();
 
   return (
-    <div className="flex max-w-md flex-col gap-6">
+    <div className="flex max-w-2xl flex-col gap-6">
       <BackLink href="/admin/coaches" label="Pelatih" />
       <div>
         <h1 className="text-2xl font-semibold">{coach.full_name}</h1>
         <p className="text-sm text-muted-foreground">{coach.email}</p>
       </div>
       <CoachEditForm coach={coach} />
+      <CoachCertifications coachId={coach.id} />
       <CoachMembers coachId={coach.id} />
     </div>
   );

@@ -6,15 +6,16 @@ import { roleHome, type AppRole } from "./roles";
 
 export class UnauthorizedError extends Error {}
 
-export async function requireRole(role: AppRole) {
+export async function requireRole(role: AppRole | readonly AppRole[]) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.app_role !== role) redirect(roleHome(session.app_role));
+  const roles: readonly AppRole[] = typeof role === "string" ? [role] : role;
+  if (!roles.includes(session.app_role)) redirect(roleHome(session.app_role));
 
   const supabase = await createServerSupabaseClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_active, must_change_password, full_name, sessions_valid_after, owner_id, tenants(is_active)")
+    .select("id, is_active, must_change_password, full_name, sessions_valid_after, owner_id, is_head_coach, tenants(is_active)")
     .eq("id", session.sub)
     .maybeSingle();
 
@@ -50,13 +51,14 @@ export async function requireRole(role: AppRole) {
     tenantId: session.tenant_id,
     orgId: session.org_id,
     fullName: profile.full_name as string,
+    isHeadCoach: Boolean(profile.is_head_coach),
   };
 }
 
-export async function requireActionRole(role: AppRole | AppRole[]) {
+export async function requireActionRole(role: AppRole | readonly AppRole[]) {
   const session = await getSession();
   if (!session) throw new UnauthorizedError("Anda harus login");
-  const roles = Array.isArray(role) ? role : [role];
+  const roles: readonly AppRole[] = typeof role === "string" ? [role] : role;
   if (!roles.includes(session.app_role)) {
     throw new UnauthorizedError("Anda tidak memiliki akses untuk aksi ini");
   }

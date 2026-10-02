@@ -74,7 +74,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       .or(`active_until.is.null,active_until.gte.${new Date().toISOString()}`),
     supabase
       .from("classes")
-      .select("id, start_time, end_time, capacity, profiles(full_name), locations(name), class_types(name), bookings(id)")
+      .select("id, start_time, end_time, capacity, profiles!classes_instructor_id_fkey(full_name), locations(name), class_types(name), bookings(id)")
       .gte("start_time", todayStart)
       .lt("start_time", todayEnd)
       .order("start_time"),

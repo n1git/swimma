@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parseJakartaLocalInput } from "@/lib/format";
@@ -78,7 +79,7 @@ export async function addBooking(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "receptionist"]);
   const memberId = String(formData.get("memberId") ?? "");
   if (!memberId) {
     return { ok: false, error: "Pilih anggota yang akan didaftarkan" };
@@ -102,7 +103,7 @@ export async function addBooking(
 }
 
 export async function removeBooking(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireActionRole("admin");
+  await requireActionRole(["admin", "receptionist"]);
   const bookingId = String(formData.get("bookingId"));
   const classId = String(formData.get("classId"));
   const supabase = await createServerSupabaseClient();
@@ -110,4 +111,37 @@ export async function removeBooking(_prevState: ActionState, formData: FormData)
   if (error || !data?.length) return { ok: false, error: "Gagal mengeluarkan anggota dari kelas" };
   revalidatePath(`/admin/schedule/${classId}`);
   return { ok: true, message: "Anggota dikeluarkan dari kelas" };
+}
+
+const substituteSchema = z.object({
+  classId: z.string().uuid("Kelas tidak valid"),
+  substituteId: z.union([z.literal(""), z.string().uuid("Pelatih tidak valid")]),
+});
+
+export async function setClassSubstitute(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  await requireActionRole(["admin", "coach"]);
+  const parsed = substituteSchema.safeParse({
+    classId: formData.get("classId"),
+    substituteId: formData.get("substituteId") ?? "",
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("classes")
+    .update({ substitute_id: parsed.data.substituteId || null })
+    .eq("id", parsed.data.classId)
+    .select("id");
+  if (error) {
+    if (error.code === "23P01") {
+      return { ok: false, error: "Pelatih pengganti sudah mengajar kelas lain pada waktu tersebut" };
+    }
+    return { ok: false, error: "Gagal menyimpan pelatih pengganti" };
+  }
+  if (!data?.length) return { ok: false, error: "Anda tidak memiliki akses untuk mengubah kelas ini" };
+
+  revalidatePath("/admin/schedule");
+  revalidatePath(`/admin/schedule/${parsed.data.classId}`);
+  revalidatePath("/coach", "layout");
+  return { ok: true, message: parsed.data.substituteId ? "Pelatih pengganti disimpan" : "Pelatih pengganti dihapus" };
 }

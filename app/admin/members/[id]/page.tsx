@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 import { getActiveCoaches, getLocations } from "@/lib/data/lookups";
 import { BackLink } from "@/components/shared/back-link";
 import { MemberEditForm } from "@/components/members/member-edit-form";
@@ -11,7 +12,7 @@ export default async function MemberDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
-  const [{ data: member }, locations, coaches] = await Promise.all([
+  const [{ data: member }, locations, coaches, session] = await Promise.all([
     supabase
       .from("members")
       .select(
@@ -21,6 +22,7 @@ export default async function MemberDetailPage({
       .maybeSingle(),
     getLocations(),
     getActiveCoaches(),
+    getSession(),
   ]);
 
   if (!member) notFound();
@@ -29,7 +31,12 @@ export default async function MemberDetailPage({
     <div className="flex max-w-2xl flex-col gap-6">
       <BackLink href="/admin/members" label="Anggota" />
       <h1 className="text-2xl font-semibold">{member.full_name}</h1>
-      <MemberEditForm member={member} locations={locations} coaches={coaches} />
+      <MemberEditForm
+        member={member}
+        locations={locations}
+        coaches={coaches}
+        canChangeStatus={session?.app_role === "admin"}
+      />
     </div>
   );
 }
