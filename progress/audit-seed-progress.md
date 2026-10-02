@@ -5,7 +5,7 @@ Status and counts only. Findings, evidence and exploit details stay in the untra
 ## Status
 
 - [x] Phase 0: preparation. OK received.
-- [~] Phase 1: environment (migrations, hosted project, fake data). Local part in progress. Hosted part blocked after migration 011, see below.
+- [~] Phase 1: environment. Local part done (migrations on PG17, seed tooling, full local seed, `docs/DEPLOY.md`). Hosted part blocked after migration 011, see below.
 - [ ] Phase 2: audit, database and authorization
 - [ ] Phase 3: audit, application security
 - [ ] Phase 4: audit, logic, data integrity, UX, performance
@@ -37,3 +37,10 @@ Blocker found in Phase 0: the plan cannot run unchanged. One migration fails on 
 ## Findings by severity
 
 Not counted yet.
+
+## Phase 1 local result
+
+- Migrations 001-023 apply on an empty local PG17 database laid out like the hosted one (after the pgcrypto step) and on a database holding data from 001-016; one migration fails without that step.
+- `npm run seed:demo` (`scripts/seed-demo.ts`, `scripts/seed-demo.sql`): deterministic, idempotent, built through the real SQL functions; `--scale demo|full`, `--emit-sql`, `--hosted`, `--purge`. Full local seed: 5 organizations, 10 clubs, one club with 5,000 members, 20,000 bookings and 50,000 check-ins, in about 13 seconds. The hosted-sized set is not seeded on the hosted project yet because migrations 012-023 are not there.
+- `package.json` gained one script entry (`seed:demo`), outside the folders the task allows editing; it is required by the task's `npm run seed:demo`.
+- `npx tsc --noEmit` and `npm run lint` pass.
