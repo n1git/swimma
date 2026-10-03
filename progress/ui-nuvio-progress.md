@@ -25,3 +25,7 @@ Restyle of the signed-in app to the framed, hatched card structure. Colors and f
 - Tokens added only: `--frame`, `--stripe` (color-mix of existing tokens, so light and dark follow the existing values), `--radius-inner`, `--radius-frame`, easing and four durations that become 0 ms under reduced motion; `.hatch` and `.ui-transition` utilities. No existing token or font setup changed.
 - `Card` (framed), `Table` (tabular numbers, lighter header), `Dialog` and `TriggerDialog` (framed), `Button`, `Input`, `Select`, `Textarea`, `Label`, `Badge` restyled; app controls are 44 px high with 16 px text on phones and 32 px with 12 px text from `sm` up.
 - New: `FramedCard`, `MetricCard` (replaces `StatCard`, optional delta with text and optional sparkline), `PageHeader` with `Breadcrumb`, `NavGroupsProvider`.
+
+## Phase 2 done
+
+- Shell: the sidebar now runs full height with a 54 px brand row (small logo tile, brand name, dashed bottom border), captions, 34 px rows and a soft border and shadow on the active row (sidebar colors unchanged); the header sits beside it with the same 54 px height and a dashed bottom border, and keeps the club name, role chip, tenant and club switchers, theme toggle, password and sign-out controls in the same order. Bottom bar gets a dashed top border and transitions on the shared motion tokens; the menu sheet's group containers use the frame radius. Switchers inherit the new control sizes through `Select`.

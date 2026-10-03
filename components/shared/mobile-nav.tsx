@@ -30,13 +30,13 @@ export function MobileNav({ groups }: { groups: NavGroup[] }) {
   }, [pathname]);
 
   const tabClass =
-    "flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+    "flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium text-muted-foreground ui-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 
   return (
     <>
       <nav
         aria-label="Navigasi utama"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] print:hidden sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-dashed border-border bg-card pb-[env(safe-area-inset-bottom)] print:hidden sm:hidden"
       >
         <ul className="grid" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
           {tabs.map((item) => {
@@ -96,7 +96,7 @@ export function MobileNav({ groups }: { groups: NavGroup[] }) {
                         {group.label}
                       </h3>
                     ) : null}
-                    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+                    <ul className="divide-y divide-border overflow-hidden rounded-[var(--radius-frame)] border border-border bg-card shadow-sm">
                       {group.items.map((item) => {
                         const active = isNavActive(pathname, item);
                         return (
@@ -105,7 +105,7 @@ export function MobileNav({ groups }: { groups: NavGroup[] }) {
                               href={item.href}
                               aria-current={active ? "page" : undefined}
                               className={cn(
-                                "flex min-h-12 items-center gap-3 px-4 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                                "flex min-h-12 items-center gap-3 px-4 text-sm font-medium ui-transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                                 active && "text-primary"
                               )}
                             >
