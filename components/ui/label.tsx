@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
     <label
-      className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70", className)}
+      className={cn("text-sm font-medium leading-none in-[.app-ui]:sm:text-xs peer-disabled:cursor-not-allowed peer-disabled:opacity-70", className)}
       {...props}
     />
   );

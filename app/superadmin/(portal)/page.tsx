@@ -4,7 +4,7 @@ import { formatJakartaDate, getJakartaDateString } from "@/lib/format";
 import { formatRupiah, PERIOD_LABEL, type PricingPlan } from "@/lib/pricing";
 import { PLAN_COLUMNS, toPlan } from "@/lib/data/platform-pricing";
 import { STATUS_LABEL, type PlatformSubscriptionStatus } from "@/lib/validations/superadmin";
-import { StatCard } from "@/components/reports/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { OrganizationControls, type OwnerRow } from "@/components/superadmin/organization-controls";
 import { PlanEditor } from "@/components/superadmin/plan-editor";
 import { Badge } from "@/components/ui/badge";
@@ -72,11 +72,11 @@ export default async function SuperadminDashboardPage() {
       <h1 className="text-2xl font-semibold">Dasbor Platform</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard title="Organisasi / klub" value={`${rows.length} / ${(tenants ?? []).length}`} />
-        <StatCard title="Menunggu aktivasi" value={String(rows.filter((r) => r.status === "pending").length)} />
-        <StatCard title="Trial berjalan" value={String(rows.filter((r) => r.status === "trial" && !isTrialExpired(r)).length)} />
-        <StatCard title="Trial berakhir" value={String(rows.filter(isTrialExpired).length)} />
-        <StatCard
+        <MetricCard title="Organisasi / klub" value={`${rows.length} / ${(tenants ?? []).length}`} />
+        <MetricCard title="Menunggu aktivasi" value={String(rows.filter((r) => r.status === "pending").length)} />
+        <MetricCard title="Trial berjalan" value={String(rows.filter((r) => r.status === "trial" && !isTrialExpired(r)).length)} />
+        <MetricCard title="Trial berakhir" value={String(rows.filter(isTrialExpired).length)} />
+        <MetricCard
           title={`Pendapatan bulanan (${rows.filter((r) => r.status === "active").length} aktif)`}
           value={formatRupiah(monthlyRevenue)}
         />

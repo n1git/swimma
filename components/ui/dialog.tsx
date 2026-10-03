@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DIALOG_CLASS =
-  "m-auto w-full max-w-lg rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/50";
+  "hatch m-auto w-full max-w-lg rounded-[var(--radius-frame)] border border-border p-[3px] text-card-foreground shadow-lg backdrop:bg-black/50";
 
 export function Dialog({
   children,
@@ -32,7 +32,7 @@ export function Dialog({
       }}
       className={cn(DIALOG_CLASS, className)}
     >
-      <div className="max-h-[85vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[85vh] overflow-y-auto rounded-[var(--radius-inner)] border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </dialog>
@@ -60,7 +60,7 @@ export function TriggerDialog({
         }}
         className={cn(DIALOG_CLASS, className)}
       >
-        <div className="max-h-[85vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="max-h-[85vh] overflow-y-auto rounded-[var(--radius-inner)] border border-border bg-card p-6" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             aria-label="Tutup"

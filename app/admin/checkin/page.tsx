@@ -4,7 +4,7 @@ import { getCheckinOverview } from "@/lib/data/checkin";
 import { getLocations } from "@/lib/data/lookups";
 import { getClubTerms } from "@/lib/club-type";
 import { formatJakartaDate } from "@/lib/format";
-import { StatCard } from "@/components/reports/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { TriggerDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PointsManager } from "@/components/checkin/points-manager";
@@ -41,8 +41,8 @@ export default async function CheckinPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard title={`${terms.visit} hari ini`} value={String(overview.visitsToday)} />
-        <StatCard title={`${terms.visit} minggu ini`} value={String(overview.visitsWeek)} />
+        <MetricCard title={`${terms.visit} hari ini`} value={String(overview.visitsToday)} />
+        <MetricCard title={`${terms.visit} minggu ini`} value={String(overview.visitsWeek)} />
       </div>
 
       <section className="flex flex-col gap-3">

@@ -24,7 +24,7 @@ export default async function CheckinResultPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-secondary p-4">
-      <Card className="w-full max-w-sm text-center">
+      <Card frame={false} className="w-full max-w-sm text-center">
         <CardHeader className="items-center gap-3">
           {success ? (
             <CheckCircle2 className="size-14 text-success" aria-hidden />

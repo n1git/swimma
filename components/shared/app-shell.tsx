@@ -3,6 +3,7 @@ import { KeyRound } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { LogoutButton } from "./logout-button";
 import { MobileNav } from "./mobile-nav";
+import { NavGroupsProvider } from "./nav-context";
 import type { NavGroup } from "./nav-types";
 import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
@@ -23,7 +24,8 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <NavGroupsProvider groups={navGroups}>
+    <div className="app-ui flex min-h-screen w-full flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-4 py-3 print:hidden sm:px-6">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="min-w-0 truncate font-heading text-base font-semibold tracking-tight text-primary">{clubName}</span>
@@ -48,5 +50,6 @@ export function AppShell({
       </div>
       <MobileNav groups={navGroups} />
     </div>
+    </NavGroupsProvider>
   );
 }

@@ -7,7 +7,7 @@ export function Table({ className, ...props }: React.ComponentProps<"table">) {
       className="w-full overflow-auto rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       tabIndex={0}
     >
-      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
+      <table className={cn("w-full caption-bottom text-sm tabular-nums", className)} {...props} />
     </div>
   );
 }
@@ -21,14 +21,14 @@ export function TableBody({ className, ...props }: React.ComponentProps<"tbody">
 }
 
 export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
-  return <tr className={cn("border-b border-border transition-colors hover:bg-muted/50", className)} {...props} />;
+  return <tr className={cn("border-b border-border transition-colors ui-transition hover:bg-muted/50", className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       className={cn(
-        "h-10 px-3 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-9 px-3 text-left align-middle text-xs font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -37,5 +37,5 @@ export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return <td className={cn("p-3 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />;
+  return <td className={cn("px-3 py-2.5 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />;
 }

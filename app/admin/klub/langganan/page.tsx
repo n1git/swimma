@@ -6,7 +6,7 @@ import { STATUS_LABEL } from "@/lib/validations/superadmin";
 import { SubscriptionBanner } from "@/components/subscription/subscription-banner";
 import { ChangePlanForm } from "@/components/subscription/change-plan-form";
 import { ModuleList } from "@/components/pricing/pricing-picker";
-import { StatCard } from "@/components/reports/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -48,13 +48,13 @@ export default async function SubscriptionPage() {
       <SubscriptionBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Paket" value={`${plan.name} · ${PERIOD_LABEL[subscription.billingPeriod]}`} />
-        <StatCard title="Pengguna internal" value={String(billing.internalUsers)} />
-        <StatCard
+        <MetricCard title="Paket" value={`${plan.name} · ${PERIOD_LABEL[subscription.billingPeriod]}`} />
+        <MetricCard title="Pengguna internal" value={String(billing.internalUsers)} />
+        <MetricCard
           title="Klub"
           value={billing.clubLimit !== null ? `${billing.clubs} / ${billing.clubLimit}` : `${billing.clubs} (tak terbatas)`}
         />
-        <StatCard title={`Total per ${periodUnit}`} value={formatRupiah(quote.total)} />
+        <MetricCard title={`Total per ${periodUnit}`} value={formatRupiah(quote.total)} />
       </div>
 
       <p className="max-w-2xl text-sm text-muted-foreground">

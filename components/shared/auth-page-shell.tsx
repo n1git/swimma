@@ -26,7 +26,7 @@ export function AuthPageShell({
         </Link>
         <ThemeToggle />
       </div>
-      <Card className={wide ? "w-full max-w-3xl" : "w-full max-w-sm"}>
+      <Card frame={false} className={wide ? "w-full max-w-3xl" : "w-full max-w-sm"}>
         <CardHeader>
           <h1 className="text-lg font-semibold leading-none tracking-tight">{title}</h1>
           <CardDescription>{description}</CardDescription>

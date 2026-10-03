@@ -7,7 +7,7 @@ export default async function ChangePasswordPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center bg-secondary p-4">
-      <Card className="w-full max-w-sm">
+      <Card frame={false} className="w-full max-w-sm">
         <CardHeader>
           <h1 className="text-lg font-semibold leading-none tracking-tight">Ganti Kata Sandi</h1>
           <CardDescription>

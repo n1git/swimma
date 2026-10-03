@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/reports/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { CashflowChart } from "@/components/reports/cashflow-chart";
 import { RevenueByProgramChart } from "@/components/reports/revenue-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,13 +59,13 @@ export default async function ReportsPage() {
       <h1 className="text-2xl font-semibold">Laporan</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Pendapatan" value={formatRupiah(totalRevenue)} />
-        <StatCard
+        <MetricCard title="Total Pendapatan" value={formatRupiah(totalRevenue)} />
+        <MetricCard
           title="Tagihan Belum Bayar"
           value={`${outstanding?.outstanding_count ?? 0} (${formatRupiah(outstanding?.outstanding_amount ?? 0)})`}
         />
-        <StatCard title="Total Biaya Gaji" value={formatRupiah(totalPayrollCost)} />
-        <StatCard
+        <MetricCard title="Total Biaya Gaji" value={formatRupiah(totalPayrollCost)} />
+        <MetricCard
           title="Anggota Aktif / Nonaktif"
           value={`${memberCounts?.active_members ?? 0} / ${memberCounts?.inactive_members ?? 0}`}
         />

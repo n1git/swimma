@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition duration-150 active:scale-95 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ui-transition active:scale-95 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
@@ -15,10 +15,10 @@ export const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-9 px-4 py-2 in-[.app-ui]:h-11 in-[.app-ui]:rounded-lg in-[.app-ui]:px-3 in-[.app-ui]:py-0 in-[.app-ui]:text-sm in-[.app-ui]:sm:h-8 in-[.app-ui]:sm:text-xs",
+        sm: "h-8 rounded-md px-3 text-xs in-[.app-ui]:h-11 in-[.app-ui]:rounded-lg in-[.app-ui]:sm:h-8",
+        lg: "h-10 rounded-md px-8 in-[.app-ui]:h-11 in-[.app-ui]:rounded-lg in-[.app-ui]:px-5 in-[.app-ui]:sm:h-9",
+        icon: "h-9 w-9 in-[.app-ui]:size-11 in-[.app-ui]:rounded-lg in-[.app-ui]:sm:size-8",
       },
     },
     defaultVariants: {

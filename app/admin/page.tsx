@@ -6,7 +6,7 @@ import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
 import { SubscriptionBanner } from "@/components/subscription/subscription-banner";
 import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
 import { getEnabledModules } from "@/lib/modules";
-import { StatCard } from "@/components/reports/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -61,13 +61,13 @@ export default async function AdminDashboardPage() {
       <OnboardingBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Pendapatan" value={formatRupiah(data.totalRevenue)} />
-        <StatCard
+        <MetricCard title="Total Pendapatan" value={formatRupiah(data.totalRevenue)} />
+        <MetricCard
           title="Tagihan Belum Bayar"
           value={`${data.outstandingCount} (${formatRupiah(data.outstandingAmount)})`}
         />
-        <StatCard title="Saldo Kas" value={formatRupiah(data.cashBalance)} />
-        <StatCard
+        <MetricCard title="Saldo Kas" value={formatRupiah(data.cashBalance)} />
+        <MetricCard
           title="Anggota Aktif / Nonaktif"
           value={`${data.activeMembers} / ${data.inactiveMembers}`}
         />
@@ -75,14 +75,14 @@ export default async function AdminDashboardPage() {
 
       {booking || sales ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {booking ? <StatCard title="Booking Hari Ini" value={String(booking.bookingsToday)} /> : null}
+          {booking ? <MetricCard title="Booking Hari Ini" value={String(booking.bookingsToday)} /> : null}
           {booking ? (
-            <StatCard
+            <MetricCard
               title="Okupansi Fasilitas Minggu Ini"
               value={booking.utilizationWeek === null ? "Belum ada jam buka" : `${booking.utilizationWeek.toLocaleString("id-ID")}%`}
             />
           ) : null}
-          {sales ? <StatCard title="Penjualan Hari Ini" value={`${formatRupiah(sales.total)} (${sales.count} pesanan)`} /> : null}
+          {sales ? <MetricCard title="Penjualan Hari Ini" value={`${formatRupiah(sales.total)} (${sales.count} pesanan)`} /> : null}
         </div>
       ) : null}
 

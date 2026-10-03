@@ -31,7 +31,7 @@ export function HeroPreview() {
             </div>
           ))}
         </dl>
-        <Card className="mt-3 p-4 shadow-none">
+        <Card frame={false} className="mt-3 p-4 shadow-none">
           <p className="mb-3 text-sm font-semibold">Booking · Sabtu</p>
           <div>
             <ul className="grid grid-cols-2 gap-2">
