@@ -72,12 +72,17 @@ export default async function AdminDashboardPage() {
         <MetricCard
           title="Total Pendapatan"
           value={formatRupiah(data.totalRevenue)}
+          spark={data.revenueSpark}
         />
         <MetricCard
           title="Tagihan Belum Bayar"
           value={`${data.outstandingCount} (${formatRupiah(data.outstandingAmount)})`}
         />
-        <MetricCard title="Saldo Kas" value={formatRupiah(data.cashBalance)} />
+        <MetricCard
+          title="Saldo Kas"
+          value={formatRupiah(data.cashBalance)}
+          spark={data.balanceSpark}
+        />
         <MetricCard
           title="Anggota Aktif / Nonaktif"
           value={`${data.activeMembers} / ${data.inactiveMembers}`}

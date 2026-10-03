@@ -32,6 +32,8 @@ export interface DashboardData {
     amount: number;
     dueDate: string;
   }[];
+  revenueSpark: number[];
+  balanceSpark: number[];
   recentCashEntries: {
     id: string;
     entryDate: string;
@@ -41,11 +43,18 @@ export interface DashboardData {
   }[];
 }
 
+const SPARK_DAYS = 14;
+
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createServerSupabaseClient();
   const today = getJakartaDateString();
   const { start: todayStart, end: todayEnd } = getJakartaDayRangeIso();
   const in7Days = getJakartaDateString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+
+  const sparkDays = Array.from({ length: SPARK_DAYS }, (_, i) =>
+    getJakartaDateString(new Date(Date.now() - (SPARK_DAYS - 1 - i) * 86400000)),
+  );
+  const sparkStartIso = getJakartaDayRangeIso(new Date(`${sparkDays[0]}T12:00:00+07:00`)).start;
 
   const [
     { data: revenue },
@@ -57,6 +66,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     { data: todaysClasses },
     { data: expiringSubs },
     { data: overdueInvoices },
+    { data: paidInvoices },
+    { data: ledgerWindow },
   ] = await Promise.all([
     supabase.from("report_revenue").select("revenue"),
     supabase.from("report_outstanding").select("outstanding_count, outstanding_amount").maybeSingle(),
@@ -92,12 +103,38 @@ export async function getDashboardData(): Promise<DashboardData> {
       .lt("due_date", today)
       .order("due_date")
       .limit(20),
+    supabase.from("invoices").select("amount, paid_at").eq("status", "paid").gte("paid_at", sparkStartIso),
+    supabase
+      .from("cash_ledger_with_balance")
+      .select("entry_date, running_balance")
+      .gte("entry_date", sparkDays[0])
+      .order("entry_date")
+      .order("id"),
   ]);
 
   const totalRevenue = (revenue ?? []).reduce((sum, r) => sum + Number(r.revenue), 0);
   const totalPayrollCost = (payrollCost ?? []).reduce((sum, r) => sum + Number(r.payroll_cost), 0);
 
+  const revenueByDay = new Map<string, number>();
+  for (const inv of paidInvoices ?? []) {
+    const day = getJakartaDateString(new Date(inv.paid_at));
+    revenueByDay.set(day, (revenueByDay.get(day) ?? 0) + Number(inv.amount));
+  }
+  const lastBalanceByDay = new Map<string, number>();
+  for (const row of ledgerWindow ?? []) {
+    lastBalanceByDay.set(row.entry_date, Number(row.running_balance));
+  }
+  let carry: number | null = null;
+  const balanceSpark: number[] = [];
+  for (const day of sparkDays) {
+    const v = lastBalanceByDay.get(day);
+    if (v !== undefined) carry = v;
+    if (carry !== null) balanceSpark.push(carry);
+  }
+
   return {
+    revenueSpark: sparkDays.map((d) => revenueByDay.get(d) ?? 0),
+    balanceSpark,
     totalRevenue,
     outstandingCount: outstanding?.outstanding_count ?? 0,
     outstandingAmount: Number(outstanding?.outstanding_amount ?? 0),
