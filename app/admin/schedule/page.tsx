@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
@@ -29,9 +31,10 @@ interface ClassRow {
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ coach?: string; location?: string; classType?: string }>;
+  searchParams: Promise<{ coach?: string; location?: string; classType?: string; page?: string }>;
 }) {
-  const { coach, location, classType } = await searchParams;
+  const { coach, location, classType, page: pageParam } = await searchParams;
+  const { page, from, to } = pageRange(pageParam);
   const [supabase, session, coaches, locations, classTypes] = await Promise.all([
     createServerSupabaseClient(),
     getSession(),
@@ -42,13 +45,15 @@ export default async function SchedulePage({
   let query = supabase
     .from("classes")
     .select(
-      "id, start_time, end_time, capacity, profiles!classes_instructor_id_fkey(full_name), substitute:profiles!classes_substitute_id_fkey(full_name), locations(name), class_types(name), bookings(count)"
+      "id, start_time, end_time, capacity, profiles!classes_instructor_id_fkey(full_name), substitute:profiles!classes_substitute_id_fkey(full_name), locations(name), class_types(name), bookings(count)",
+      { count: "exact" }
     )
-    .order("start_time");
+    .order("start_time")
+    .order("id");
   if (coach) query = query.eq("instructor_id", coach);
   if (location) query = query.eq("location_id", location);
   if (classType) query = query.eq("class_type_id", classType);
-  const { data } = await query;
+  const { data, count } = await query.range(from, to);
 
   const classes = (data ?? []) as unknown as ClassRow[];
 
@@ -132,6 +137,7 @@ export default async function SchedulePage({
           ) : null}
         </TableBody>
       </Table>
+      <Pagination page={page} total={count ?? 0} pathname="/admin/schedule" params={{ coach, location, classType }} />
     </div>
   );
 }

@@ -13,8 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import type { Lookup } from "@/lib/data/lookups";
+import { MemberPicker } from "@/components/shared/member-picker";
 
 interface Selected {
   column: GridColumn;
@@ -33,7 +32,7 @@ function cellSummary(column: GridColumn, cell: GridCell) {
   return { text: `${count}/${cap} terisi`, tone: count >= cap ? ("full" as const) : ("part" as const) };
 }
 
-function BookForm({ selected, members, onDone }: { selected: Selected; members: Lookup[]; onDone: () => void }) {
+function BookForm({ selected, onDone }: { selected: Selected; onDone: () => void }) {
   const [state, action, pending] = useActionState(bookResource, {});
   const [who, setWho] = useState<"member" | "guest">("member");
   useEffect(() => {
@@ -73,16 +72,7 @@ function BookForm({ selected, members, onDone }: { selected: Selected; members: 
       {who === "member" ? (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="bk-member">Anggota</Label>
-          <Select id="bk-member" name="memberId" required defaultValue="">
-            <option value="" disabled>
-              Pilih anggota
-            </option>
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </Select>
+          <MemberPicker id="bk-member" name="memberId" required />
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -105,12 +95,10 @@ function BookForm({ selected, members, onDone }: { selected: Selected; members: 
 
 export function BookingCalendar({
   columns,
-  members,
   nowIso,
   emptyText,
 }: {
   columns: GridColumn[];
-  members: Lookup[];
   nowIso: string;
   emptyText: string;
 }) {
@@ -259,7 +247,7 @@ export function BookingCalendar({
               {remaining > 0 && !ended ? (
                 <div className="flex flex-col gap-3 border-t border-border pt-4">
                   <h3 className="text-sm font-semibold">Booking baru</h3>
-                  <BookForm key={`${selected.column.key}-${selected.cell.start}`} selected={selected} members={members} onDone={close} />
+                  <BookForm key={`${selected.column.key}-${selected.cell.start}`} selected={selected} onDone={close} />
                 </div>
               ) : null}
               {remaining > 0 && ended ? <p className="text-sm text-muted-foreground">Slot ini sudah lewat.</p> : null}

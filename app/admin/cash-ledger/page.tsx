@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { buttonVariants } from "@/components/ui/button";
 import { TriggerDialog } from "@/components/ui/dialog";
@@ -21,15 +23,26 @@ const CATEGORY_LABEL: Record<string, string> = {
   order_reversal: "Pembatalan Kasir",
 };
 
-export default async function CashLedgerPage() {
+export default async function CashLedgerPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const { page, from, to } = pageRange((await searchParams).page);
   const supabase = await createServerSupabaseClient();
-  const { data: entries } = await supabase
-    .from("cash_ledger_with_balance")
-    .select("id, entry_date, category, direction, amount, reason, running_balance")
-    .order("entry_date", { ascending: false })
-    .limit(200);
+  const [{ data: entries, count }, { data: latest }] = await Promise.all([
+    supabase
+      .from("cash_ledger_with_balance")
+      .select("id, entry_date, category, direction, amount, reason, running_balance", { count: "exact" })
+      .order("entry_date", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+    supabase
+      .from("cash_ledger_with_balance")
+      .select("running_balance")
+      .order("entry_date", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
-  const latestBalance = entries?.[0]?.running_balance ?? 0;
+  const latestBalance = latest?.running_balance ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,6 +95,7 @@ export default async function CashLedgerPage() {
           ) : null}
         </TableBody>
       </Table>
+      <Pagination page={page} total={count ?? 0} pathname="/admin/cash-ledger" params={{}} />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getLocations } from "@/lib/data/lookups";
@@ -37,18 +39,20 @@ function calculateAge(dateOfBirth: string): number {
 export default async function MembersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; location?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; location?: string; page?: string }>;
 }) {
-  const { q, status, location } = await searchParams;
+  const { q, status, location, page: pageParam } = await searchParams;
+  const { page, from, to } = pageRange(pageParam);
   const [supabase, locations] = await Promise.all([createServerSupabaseClient(), getLocations()]);
   let query = supabase
     .from("members")
-    .select("id, full_name, date_of_birth, is_active, contact_name, coach:profiles!coach_id(full_name), locations(name)")
-    .order("full_name");
+    .select("id, full_name, date_of_birth, is_active, contact_name, coach:profiles!coach_id(full_name), locations(name)", { count: "exact" })
+    .order("full_name")
+    .order("id");
   if (q) query = query.ilike("full_name", `%${q}%`);
   if (status) query = query.eq("is_active", status === "active");
   if (location) query = query.eq("preferred_location_id", location);
-  const { data } = await query;
+  const { data, count } = await query.range(from, to);
 
   const members = (data ?? []) as unknown as MemberRow[];
 
@@ -124,6 +128,7 @@ export default async function MembersPage({
           ) : null}
         </TableBody>
       </Table>
+      <Pagination page={page} total={count ?? 0} pathname="/admin/members" params={{ q, status, location }} />
     </div>
   );
 }

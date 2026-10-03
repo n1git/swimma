@@ -1,5 +1,7 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getActiveMembers, getActivePackages } from "@/lib/data/lookups";
+import { getActivePackages } from "@/lib/data/lookups";
 import { cancelSubscription } from "@/lib/actions/billing";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { ListFilters } from "@/components/shared/list-filters";
@@ -27,22 +29,23 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function SubscriptionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; package?: string }>;
+  searchParams: Promise<{ status?: string; package?: string; page?: string }>;
 }) {
-  const { status, package: packageId } = await searchParams;
+  const { status, package: packageId, page: pageParam } = await searchParams;
+  const { page, from, to } = pageRange(pageParam);
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("subscriptions")
-    .select("id, status, start_date, end_date, member_names(full_name), membership_packages(name)")
-    .order("start_date", { ascending: false });
+    .select("id, status, start_date, end_date, member_names(full_name), membership_packages(name)", { count: "exact" })
+    .order("start_date", { ascending: false })
+    .order("id");
   if (status) query = query.eq("status", status);
   if (packageId) query = query.eq("package_id", packageId);
-  const [{ data: subscriptions }, { data: usageRows }, memberOptions, packages] = await Promise.all([
-    query,
-    supabase.from("subscription_usage").select("subscription_id, sessions_used, sessions_included"),
-    getActiveMembers(),
-    getActivePackages(),
-  ]);
+  const [{ data: subscriptions, count }, packages] = await Promise.all([query.range(from, to), getActivePackages()]);
+  const { data: usageRows } = await supabase
+    .from("subscription_usage")
+    .select("subscription_id, sessions_used, sessions_included")
+    .in("subscription_id", (subscriptions ?? []).map((s) => s.id));
   const usageBySubscription = new Map(
     (usageRows ?? []).map((u) => [u.subscription_id, u])
   );
@@ -53,7 +56,7 @@ export default async function SubscriptionsPage({
         <h1 className="text-2xl font-semibold">Langganan</h1>
         <TriggerDialog trigger={<span className={buttonVariants({})}>Tambah Langganan</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah Langganan</h2>
-          <SubscriptionForm memberOptions={memberOptions} packages={packages} />
+          <SubscriptionForm packages={packages} />
         </TriggerDialog>
       </div>
       <h2 className="text-sm font-semibold text-muted-foreground">Daftar Langganan</h2>
@@ -138,6 +141,7 @@ export default async function SubscriptionsPage({
           ) : null}
         </TableBody>
       </Table>
+      <Pagination page={page} total={count ?? 0} pathname="/admin/billing/subscriptions" params={{ status, package: packageId }} />
     </div>
   );
 }

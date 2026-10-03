@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
 import { markInvoicePaid, voidInvoice } from "@/lib/actions/billing";
@@ -31,18 +33,20 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
-  const { status, q } = await searchParams;
+  const { status, q, page: pageParam } = await searchParams;
+  const { page, from, to } = pageRange(pageParam);
   const [supabase, session] = await Promise.all([createServerSupabaseClient(), getSession()]);
   const canManage = session?.app_role !== "receptionist";
   let query = supabase
     .from("invoices")
-    .select("id, amount, status, due_date, period_start, period_end, member_names!inner(full_name)")
-    .order("due_date", { ascending: false });
+    .select("id, amount, status, due_date, period_start, period_end, member_names!inner(full_name)", { count: "exact" })
+    .order("due_date", { ascending: false })
+    .order("id");
   if (status) query = query.eq("status", status);
   if (q) query = query.ilike("member_names.full_name", `%${q}%`);
-  const { data: invoices } = await query;
+  const { data: invoices, count } = await query.range(from, to);
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,6 +138,7 @@ export default async function InvoicesPage({
           ) : null}
         </TableBody>
       </Table>
+      <Pagination page={page} total={count ?? 0} pathname="/admin/billing/invoices" params={{ status, q }} />
 
       {canManage ? (
       <Card className="max-w-2xl">

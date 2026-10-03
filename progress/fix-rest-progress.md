@@ -5,7 +5,7 @@
 - [x] Phase 0: preparation (OK received)
 - [x] Phase 1: sessions, access, superadmin (migration 025; hosted pending)
 - [x] Phase 2: money and billing (migration 026; hosted pending)
-- [ ] Phase 3: performance and pagination
+- [x] Phase 3: performance and pagination (migration 027; hosted pending)
 - [ ] Phase 4: public auth
 - [ ] Phase 5: uploads, audit log, privacy
 - [ ] Phase 6: UI, validation, finish
@@ -56,3 +56,9 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 - Invoice generation skips inactive members and clubs, organizations outside an active or running trial status and subscriptions outside their dates; deactivating a member pauses their subscriptions.
 - Expired trial and pending organizations: reads and settling existing invoices keep working; new bookings, orders, check-ins, classes, payroll runs and invoice generation are refused with `SW003`; banner text updated.
 - Local checks in `audit/fix/` and a UI run passed; demo seed and purge run on a fresh database through 026. Hosted pending.
+
+## Phase 3 done
+
+- Row policies and helper calls evaluated once per statement; duplicate permissive policies merged with the same rows for every role (local probe comparison identical); missing foreign-key indexes added; check-in and usage views rewritten. This also removes the per-row cost that fixed function search paths introduced in migration 024.
+- Server-side pagination (50 per page, exact count) for members, subscriptions, invoices, schedule, orders and the cash book; member pickers search on the server instead of loading every member.
+- On the local 5,000-member club: every page statement under 120 ms, check-in page and invoices well under budget, every admin page under 240 KB of HTML. Before and after plans kept in `audit/perf/`. Hosted pending.

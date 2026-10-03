@@ -25,6 +25,7 @@ export function ListFilters({ fields }: { fields: FilterField[] }) {
 
   function updateParam(name: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
     if (value) params.set(name, value);
     else params.delete(name);
     router.replace(`${pathname}?${params.toString()}`);

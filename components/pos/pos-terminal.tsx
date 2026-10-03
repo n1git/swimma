@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import type { Lookup } from "@/lib/data/lookups";
+import { MemberPicker } from "@/components/shared/member-picker";
 
 interface Line {
   key: string;
@@ -36,11 +36,9 @@ const hm = (v: string) => formatJakartaTime(v, { hour: "2-digit", minute: "2-dig
 export function PosTerminal({
   products,
   bookings,
-  members,
 }: {
   products: Product[];
   bookings: UnpaidBooking[];
-  members: Lookup[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -235,14 +233,13 @@ export function PosTerminal({
         <div className="grid gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="pos-member">Anggota (opsional)</Label>
-            <Select id="pos-member" value={memberId} onChange={(e) => setMemberId(e.target.value)} className="h-10">
-              <option value="">Tanpa anggota</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </Select>
+            <MemberPicker
+              id="pos-member"
+              value={memberId}
+              valueLabel={bookings.find((b) => b.memberId === memberId)?.memberName}
+              onChange={setMemberId}
+              emptyLabel="Tanpa anggota"
+            />
           </div>
           {memberId ? null : (
             <div className="flex flex-col gap-1.5">

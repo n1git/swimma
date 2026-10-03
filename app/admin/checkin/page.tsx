@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth/guard";
 import { requireModule } from "@/lib/modules";
 import { getCheckinOverview } from "@/lib/data/checkin";
-import { getActiveMembers, getLocations } from "@/lib/data/lookups";
+import { getLocations } from "@/lib/data/lookups";
 import { getClubTerms } from "@/lib/club-type";
 import { formatJakartaDate } from "@/lib/format";
 import { StatCard } from "@/components/reports/stat-card";
@@ -23,9 +23,8 @@ import {
 export default async function CheckinPage() {
   await requireRole("admin");
   await requireModule("checkin");
-  const [overview, members, locations, terms] = await Promise.all([
+  const [overview, locations, terms] = await Promise.all([
     getCheckinOverview(),
-    getActiveMembers(),
     getLocations(),
     getClubTerms(),
   ]);
@@ -37,7 +36,7 @@ export default async function CheckinPage() {
         <h1 className="text-2xl font-semibold">Check-in</h1>
         <TriggerDialog trigger={<Button type="button">Check-in manual</Button>}>
           <h2 className="mb-4 text-xl font-semibold">Check-in manual</h2>
-          <ManualCheckinForm members={members} points={activePoints} />
+          <ManualCheckinForm points={activePoints} />
         </TriggerDialog>
       </div>
 

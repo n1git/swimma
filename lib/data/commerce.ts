@@ -68,20 +68,23 @@ function toOrder(o: OrderRecord, names: Map<string, string>): OrderRow {
   };
 }
 
-export async function getOrders(filter: { status?: string; fromIso?: string; toIso?: string; limit?: number } = {}): Promise<OrderRow[]> {
+export async function getOrders(
+  filter: { status?: string; fromIso?: string; toIso?: string; from?: number; to?: number } = {}
+): Promise<{ rows: OrderRow[]; total: number }> {
   const supabase = await createServerSupabaseClient();
   let query = supabase
     .from("orders")
-    .select("id, number, member_id, customer_name, status, total, created_at, paid_at, order_payments(amount)")
+    .select("id, number, member_id, customer_name, status, total, created_at, paid_at, order_payments(amount)", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(filter.limit ?? 100);
+    .order("id")
+    .range(filter.from ?? 0, filter.to ?? 99);
   if (filter.status) query = query.eq("status", filter.status);
   if (filter.fromIso) query = query.gte("created_at", filter.fromIso);
   if (filter.toIso) query = query.lt("created_at", filter.toIso);
-  const { data } = await query;
+  const { data, count } = await query;
   const rows = (data ?? []) as unknown as OrderRecord[];
   const names = await memberNames(rows.map((r) => r.member_id).filter((x): x is string => Boolean(x)));
-  return rows.map((r) => toOrder(r, names));
+  return { rows: rows.map((r) => toOrder(r, names)), total: count ?? 0 };
 }
 
 export async function getOrderDetail(id: string): Promise<OrderDetail | null> {

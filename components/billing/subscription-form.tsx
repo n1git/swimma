@@ -10,12 +10,11 @@ import { Select } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useActionToast } from "@/components/shared/use-action-toast";
 import type { Lookup } from "@/lib/data/lookups";
+import { MemberPicker } from "@/components/shared/member-picker";
 
 export function SubscriptionForm({
-  memberOptions,
   packages,
 }: {
-  memberOptions: Lookup[];
   packages: Lookup[];
 }) {
   const [state, formAction, pending] = useActionState(createSubscription, {});
@@ -30,16 +29,7 @@ export function SubscriptionForm({
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="memberId">Anggota</Label>
-        <Select id="memberId" name="memberId" required defaultValue="">
-          <option value="" disabled>
-            Pilih anggota
-          </option>
-          {memberOptions.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
+        <MemberPicker id="memberId" name="memberId" required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="packageId">Paket</Label>

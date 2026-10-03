@@ -1,3 +1,5 @@
+import { Pagination } from "@/components/shared/pagination";
+import { pageRange } from "@/lib/pagination";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/guard";
 import { getOrders } from "@/lib/data/commerce";
@@ -16,11 +18,12 @@ const FILTERS = [
   { value: "void", label: "Dibatalkan" },
 ];
 
-export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
   const session = await requireRole(["admin", "receptionist", "finance"]);
-  const { status } = await searchParams;
+  const { status, page: pageParam } = await searchParams;
+  const { page, from, to } = pageRange(pageParam);
   const active = FILTERS.some((f) => f.value === status) ? (status ?? "") : "";
-  const orders = await getOrders({ status: active || undefined });
+  const { rows: orders, total } = await getOrders({ status: active || undefined, from, to });
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,6 +94,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 ))}
               </TableBody>
             </Table>
+            <Pagination page={page} total={total} pathname="/admin/pesanan" params={{ status: active || undefined }} />
           </CardContent>
         </Card>
       )}

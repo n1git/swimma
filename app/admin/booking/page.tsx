@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/guard";
 import { getClubTerms } from "@/lib/club-type";
-import { getActiveMembers } from "@/lib/data/lookups";
 import { getAllResourceHours, getBookingsInRange, getResources } from "@/lib/data/booking";
 import { addDays, buildCells, mondayOf, type GridColumn } from "@/lib/booking-grid";
 import { getJakartaDateString } from "@/lib/format";
@@ -29,11 +28,10 @@ export default async function BookingPage({
   const date = sp.tanggal && DATE_RE.test(sp.tanggal) && !Number.isNaN(Date.parse(sp.tanggal)) ? sp.tanggal : today;
   const week = sp.tampilan === "minggu";
 
-  const [terms, resources, hours, members] = await Promise.all([
+  const [terms, resources, hours] = await Promise.all([
     getClubTerms(),
     getResources({ activeOnly: true }),
     getAllResourceHours(),
-    getActiveMembers(),
   ]);
 
   const chosen = resources.find((r) => r.id === sp.fasilitas) ?? resources[0];
@@ -143,7 +141,7 @@ export default async function BookingPage({
               ? `${formatDay(days[0])} – ${formatDay(days[6])}`
               : formatDay(date)}
           </p>
-          <BookingCalendar columns={columns} members={members} nowIso={new Date().toISOString()} emptyText="Tutup" />
+          <BookingCalendar columns={columns} nowIso={new Date().toISOString()} emptyText="Tutup" />
         </>
       )}
     </div>
