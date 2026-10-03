@@ -37,12 +37,41 @@ async function hasSuperadminSession(request: NextRequest): Promise<boolean> {
   }
 }
 
+function contentSecurityPolicy(nonce: string) {
+  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : "";
+  const dev = process.env.NODE_ENV === "development";
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' blob: data: ${supabase}`.trim(),
+    "font-src 'self'",
+    `connect-src 'self' ${supabase}`.trim(),
+    "frame-src https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ");
+}
+
+function withCsp(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = contentSecurityPolicy(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", csp);
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/superadmin" || pathname.startsWith("/superadmin/")) {
     if (pathname === "/superadmin/login" || (await hasSuperadminSession(request))) {
-      return NextResponse.next();
+      return withCsp(request);
     }
     return NextResponse.redirect(new URL("/superadmin/login", request.url));
   }
@@ -61,7 +90,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(roleHome(appRole), request.url));
   }
 
-  return NextResponse.next();
+  return withCsp(request);
 }
 
 export const config = {

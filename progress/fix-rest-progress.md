@@ -6,7 +6,7 @@
 - [x] Phase 1: sessions, access, superadmin (migration 025; hosted pending)
 - [x] Phase 2: money and billing (migration 026; hosted pending)
 - [x] Phase 3: performance and pagination (migration 027; hosted pending)
-- [ ] Phase 4: public auth
+- [x] Phase 4: public auth (migration 028; hosted pending)
 - [ ] Phase 5: uploads, audit log, privacy
 - [ ] Phase 6: UI, validation, finish
 
@@ -62,3 +62,10 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 - Row policies and helper calls evaluated once per statement; duplicate permissive policies merged with the same rows for every role (local probe comparison identical); missing foreign-key indexes added; check-in and usage views rewritten. This also removes the per-row cost that fixed function search paths introduced in migration 024.
 - Server-side pagination (50 per page, exact count) for members, subscriptions, invoices, schedule, orders and the cash book; member pickers search on the server instead of loading every member.
 - On the local 5,000-member club: every page statement under 120 ms, check-in page and invoices well under budget, every admin page under 240 KB of HTML. Before and after plans kept in `audit/perf/`. Hosted pending.
+
+## Phase 4 done
+
+- Login, platform admin login and registration answer unknown, wrong, locked, inactive and existing accounts the same way and always run a password hash comparison; cross-site POSTs are refused; bodies capped at 10 KB and passwords at 128 characters / 72 bytes; client IP taken only from `x-real-ip`; the limiter fails closed for sign-in and registration.
+- Registration with email configured keeps the organization unverified until the emailed single-use link (24 hours, stored hashed) is opened; no session before that; re-registering an unverified email replaces the pending registration. Captcha via Turnstile when configured. Both steps are skipped with a startup warning when unset.
+- Pages send a nonce-based Content-Security-Policy with `default-src 'self'`; enforced (no violations on the local page sweep).
+- Local checks in `audit/appsec/p4_*` passed, including a run with email and captcha configured (Cloudflare test keys). Hosted pending.

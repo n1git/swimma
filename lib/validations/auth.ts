@@ -14,9 +14,15 @@ const COMMON_PASSWORDS = new Set([
 
 export const PASSWORD_HINT = "Minimal 10 karakter, berisi huruf dan angka, dan bukan kata sandi umum.";
 
+const boundedPassword = z
+  .string()
+  .min(1, "Kata sandi wajib diisi")
+  .max(128, "Email atau kata sandi salah")
+  .refine((value) => new TextEncoder().encode(value).length <= 72, "Email atau kata sandi salah");
+
 export const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Email tidak valid"),
-  password: z.string().min(1, "Kata sandi wajib diisi"),
+  email: z.string().trim().toLowerCase().email("Email tidak valid").max(254),
+  password: boundedPassword,
 });
 
 export const passwordSchema = z
@@ -34,6 +40,6 @@ export const changePasswordSchema = z.object({
 });
 
 export const superadminLoginSchema = z.object({
-  email: z.string().email("Email tidak valid"),
-  password: z.string().min(1, "Kata sandi wajib diisi"),
+  email: z.string().email("Email tidak valid").max(254),
+  password: boundedPassword,
 });

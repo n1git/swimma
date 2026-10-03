@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 
 const STATUS_VARIANT: Record<PlatformSubscriptionStatus, "success" | "secondary" | "destructive" | "warning"> = {
+  pending_verification: "secondary",
   pending: "secondary",
   trial: "warning",
   active: "success",

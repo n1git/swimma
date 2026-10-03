@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { computeQuote, formatRupiah, PERIOD_LABEL, type BillingPeriod, type PlanCode, type PricingPlan } from "@/lib/pricing";
 import { PeriodToggle, PlanCard, UsersInput } from "@/components/pricing/pricing-picker";
+import { TurnstileWidget } from "@/components/shared/turnstile-widget";
 
 export function RegisterClubForm({
   plans,
@@ -17,12 +18,16 @@ export function RegisterClubForm({
   initialPeriod,
   initialUsers,
   clubTypes,
+  captchaSiteKey,
+  nonce,
 }: {
   plans: PricingPlan[];
   initialPlan: PlanCode;
   initialPeriod: BillingPeriod;
   initialUsers: number;
   clubTypes: { code: string; name: string }[];
+  captchaSiteKey?: string | null;
+  nonce?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -31,6 +36,9 @@ export function RegisterClubForm({
   const [users, setUsers] = useState(initialUsers);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const onCaptcha = useCallback((token: string) => setCaptchaToken(token), []);
 
   const plan = plans.find((p) => p.code === planCode) ?? plans[0];
 
@@ -56,6 +64,7 @@ export function RegisterClubForm({
         billingPeriod: period,
         estimatedUsers: users,
         clubType: formData.get("clubType") || undefined,
+        captchaToken: captchaToken || undefined,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -66,8 +75,29 @@ export function RegisterClubForm({
       return;
     }
 
+    if (data.status === "check_email") {
+      setSentTo(String(formData.get("ownerEmail") ?? ""));
+      setLoading(false);
+      return;
+    }
+
     router.push(data.redirectTo);
     router.refresh();
+  }
+
+  if (sentTo) {
+    return (
+      <div role="status" className="flex max-w-md flex-col gap-3 rounded-md border border-border bg-muted/30 p-4 text-sm">
+        <p className="text-base font-semibold">Cek email Anda</p>
+        <p>
+          Kami mengirim tautan verifikasi ke <span className="font-medium">{sentTo}</span>. Buka tautan itu dalam 24 jam
+          untuk menyelesaikan pendaftaran dan masuk ke klub Anda.
+        </p>
+        <p className="text-muted-foreground">
+          Tidak menerima email? Periksa folder spam, atau daftar ulang dengan email yang sama untuk mendapat tautan baru.
+        </p>
+      </div>
+    );
   }
 
   const quote = computeQuote(plan, period, users);
@@ -168,7 +198,8 @@ export function RegisterClubForm({
               Minimal 10 karakter, berisi huruf dan angka, dan bukan kata sandi umum.
             </p>
           </div>
-          <Button type="submit" disabled={loading}>
+          {captchaSiteKey ? <TurnstileWidget siteKey={captchaSiteKey} nonce={nonce} onToken={onCaptcha} /> : null}
+          <Button type="submit" disabled={loading || Boolean(captchaSiteKey && !captchaToken)}>
             {loading ? "Mendaftarkan..." : "Daftarkan klub"}
           </Button>
         </form>

@@ -6,17 +6,21 @@ import { generateTotpSecret, otpauthUri, sealSecret } from "@/lib/auth/totp";
 import { superadminLoginSchema } from "@/lib/validations/auth";
 import { clientIp, isKeyLocked, isRateLimited, recordFailure, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 import { APP_NAME } from "@/lib/config";
+import { isCrossSite, readJsonBody } from "@/lib/auth/request";
 
 const FAIL_LIMIT = 5;
 const FAIL_WINDOW = 900;
 const GENERIC_ERROR = "Email atau kata sandi salah";
 
 export async function POST(request: Request) {
-  if (await isRateLimited(request, "superadmin-login", 10, 900)) {
+  if (isCrossSite(request)) {
+    return NextResponse.json({ error: "Permintaan tidak valid" }, { status: 403 });
+  }
+  if (await isRateLimited(request, "superadmin-login", 10, 900, true)) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const parsed = superadminLoginSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });

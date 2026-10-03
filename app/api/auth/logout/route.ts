@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { isCrossSite } from "@/lib/auth/request";
 import { clearSession, getSession } from "@/lib/auth/session";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (isCrossSite(request)) return NextResponse.json({ error: "Permintaan tidak valid" }, { status: 403 });
   const session = await getSession();
   if (session) {
     const supabase = createAdminSupabaseClient();

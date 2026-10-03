@@ -54,9 +54,16 @@ Migration 024 sets the privileges of the public schema: no `TRUNCATE`, `REFERENC
 | `SUPABASE_JWT_SECRET` | Project Settings, API, JWT Keys, legacy secret. The app signs its own HS256 tokens, so the legacy secret must stay enabled. |
 | `CRON_SECRET` | Any long random string (mandatory). The cron route answers 401 to every request while it is unset or empty, and compares the header against `Bearer ${CRON_SECRET}` in constant time. |
 | `SUPERADMIN_JWT_SECRET` | Long random string (mandatory), different from `SUPABASE_JWT_SECRET`. Signs platform admin sessions (12 hours, revocable) and encrypts their authenticator secrets; changing it ends every platform admin session and requires an MFA reset. |
+| `EMAIL_API_KEY`, `EMAIL_FROM` | Resend API key and a verified sender (for example `Swimma <noreply@domain>`). With both set, a new club stays unverified until the owner opens the emailed link (single use, 24 hours) and no session is issued before that. Without them registration signs the owner in immediately and the server logs a warning. |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile keys for the registration captcha. Without them the captcha is skipped and the server logs a warning. |
+| `NEXT_PUBLIC_SITE_URL` | Public base URL; used in verification links. |
 | `NEXT_PUBLIC_APP_NAME` | Optional |
 
 Vercel Authentication is on by default for the project; turn it off only when the site should be public.
+
+Client IP for rate limits is read only from `x-real-ip`, which Vercel sets on every request. Behind another proxy, make sure it overwrites that header.
+
+Pages send a Content-Security-Policy with a per-request nonce (`script-src 'nonce-…' 'strict-dynamic'`); every page renders dynamically for that reason.
 
 ## 3. Smoke test
 

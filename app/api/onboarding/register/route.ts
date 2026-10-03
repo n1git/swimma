@@ -1,54 +1,104 @@
+import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { serverQuote } from "@/lib/data/platform-pricing";
 import { registerClubSchema } from "@/lib/validations/onboarding";
-import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { clientIp, isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { isCrossSite, readJsonBody } from "@/lib/auth/request";
+import { verifyCaptcha } from "@/lib/captcha";
+import { isEmailConfigured, sendEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
+import { APP_NAME } from "@/lib/config";
+
+const GENERIC_ERROR = "Pendaftaran tidak dapat diproses. Periksa data Anda atau masuk jika sudah punya akun.";
+
+function verificationEmail(link: string, name: string) {
+  return {
+    subject: `Verifikasi email pendaftaran ${APP_NAME}`,
+    text: `Halo ${name},\n\nBuka tautan ini dalam 24 jam untuk menyelesaikan pendaftaran klub Anda:\n${link}\n\nAbaikan email ini jika Anda tidak mendaftar.`,
+    html: `<p>Halo ${escapeHtml(name)},</p><p>Buka tautan ini dalam 24 jam untuk menyelesaikan pendaftaran klub Anda:</p><p><a href="${link}">${link}</a></p><p>Abaikan email ini jika Anda tidak mendaftar.</p>`,
+  };
+}
+
+function existingAccountEmail() {
+  const link = `${SITE_URL}/login`;
+  return {
+    subject: `Email Anda sudah terdaftar di ${APP_NAME}`,
+    text: `Seseorang mencoba mendaftarkan klub baru dengan email ini, tetapi email ini sudah terdaftar. Masuk di ${link}. Abaikan email ini jika bukan Anda.`,
+    html: `<p>Seseorang mencoba mendaftarkan klub baru dengan email ini, tetapi email ini sudah terdaftar.</p><p>Masuk di <a href="${link}">${link}</a>. Abaikan email ini jika bukan Anda.</p>`,
+  };
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
 
 export async function POST(request: Request) {
-  if (await isRateLimited(request, "register", 5, 3600)) {
+  if (isCrossSite(request)) {
+    return NextResponse.json({ error: "Permintaan tidak valid" }, { status: 403 });
+  }
+  if (await isRateLimited(request, "register", 5, 3600, true)) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const parsed = registerClubSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Data tidak valid" },
+      { error: body === null ? "Data pendaftaran tidak valid" : (parsed.error.issues[0]?.message ?? "Data pendaftaran tidak valid") },
       { status: 400 }
     );
   }
   const { tenantName, ownerFullName, ownerEmail, password, planCode, billingPeriod, estimatedUsers, clubType } = parsed.data;
+
+  if (!(await verifyCaptcha((body as { captchaToken?: unknown }).captchaToken, clientIp(request)))) {
+    return NextResponse.json({ error: "Verifikasi keamanan gagal. Muat ulang halaman lalu coba lagi." }, { status: 400 });
+  }
 
   const quote = await serverQuote(planCode, billingPeriod, estimatedUsers);
   if (!quote) {
     return NextResponse.json({ error: "Paket tidak tersedia" }, { status: 400 });
   }
 
-  const { data, error } = await createAdminSupabaseClient().rpc("register_organization", {
+  const supabase = createAdminSupabaseClient();
+  const passwordHash = await hashPassword(password);
+  const args = {
     p_organization_name: tenantName,
     p_tenant_name: tenantName,
     p_owner_name: ownerFullName,
     p_owner_email: ownerEmail,
-    p_password_hash: await hashPassword(password),
+    p_password_hash: passwordHash,
     p_plan: planCode,
     p_period: billingPeriod,
     p_club_type: clubType,
-  });
+  };
 
+  if (isEmailConfigured()) {
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    await supabase.rpc("discard_unverified_registration", { p_email: ownerEmail });
+    const { error } = await supabase.rpc("register_organization_unverified", { ...args, p_token_hash: tokenHash });
+    if (!error) {
+      await sendEmail({ to: ownerEmail, ...verificationEmail(`${SITE_URL}/api/onboarding/verify?token=${token}`, ownerFullName) });
+    } else if (error.code === "23505") {
+      await sendEmail({ to: ownerEmail, ...existingAccountEmail() });
+    } else if (error.message.includes("club type not available") || error.message.includes("plan not available")) {
+      return NextResponse.json({ error: "Paket atau jenis klub tidak tersedia" }, { status: 400 });
+    } else {
+      return NextResponse.json({ error: "Gagal mendaftarkan klub. Coba lagi nanti." }, { status: 500 });
+    }
+    return NextResponse.json({ status: "check_email", quote }, { status: 202 });
+  }
+
+  const { data, error } = await supabase.rpc("register_organization", args);
   const created = (data as { organization_id: string; tenant_id: string; profile_id: string }[] | null)?.[0];
   if (error || !created) {
-    if (error?.code === "23505") {
-      return NextResponse.json({ error: "Email sudah terdaftar. Masuk dengan email tersebut." }, { status: 409 });
+    if (error?.message.includes("club type not available") || error?.message.includes("plan not available")) {
+      return NextResponse.json({ error: "Paket atau jenis klub tidak tersedia" }, { status: 400 });
     }
-    if (error?.message.includes("club type not available")) {
-      return NextResponse.json({ error: "Jenis klub belum tersedia" }, { status: 400 });
-    }
-    if (error?.message.includes("plan not available")) {
-      return NextResponse.json({ error: "Paket tidak tersedia" }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Gagal mendaftarkan klub" }, { status: 500 });
+    return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
 
   await createSession({

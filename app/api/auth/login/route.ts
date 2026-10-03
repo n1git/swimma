@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { verifyPassword } from "@/lib/auth/password";
+import { verifyPasswordOrDummy } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
 import { roleHome, OWNER_HOME, type AppRole } from "@/lib/auth/roles";
 import { loginSchema } from "@/lib/validations/auth";
 import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { isCrossSite, readJsonBody } from "@/lib/auth/request";
 import { APP_NAME } from "@/lib/config";
 import { listMemberClubs } from "@/lib/data/member-clubs";
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
 const GENERIC_ERROR = "Email atau kata sandi salah";
+const UNVERIFIED_ERROR = "Email pendaftaran belum diverifikasi. Buka tautan verifikasi di email Anda.";
 const DEACTIVATED_ERROR = `Akses klub Anda sedang dinonaktifkan. Data klub tetap tersimpan. Hubungi admin platform ${APP_NAME} untuk mengaktifkannya kembali.`;
 
 interface LoginAccount {
@@ -36,11 +38,14 @@ interface SessionTarget {
 type TenantJoin = { is_active: boolean; organization_id: string; created_at: string } | null;
 
 export async function POST(request: Request) {
-  if (await isRateLimited(request, "login", 20, 600)) {
+  if (isCrossSite(request)) {
+    return NextResponse.json({ error: "Permintaan tidak valid" }, { status: 403 });
+  }
+  if (await isRateLimited(request, "login", 20, 600, true)) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR }, { status: 429 });
   }
 
-  const body = await request.json().catch(() => null);
+  const body = await readJsonBody(request);
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
@@ -50,7 +55,7 @@ export async function POST(request: Request) {
   const supabase = createAdminSupabaseClient();
 
   let account: LoginAccount | null = null;
-  let resolveTarget: () => Promise<SessionTarget | "deactivated">;
+  let resolveTarget: () => Promise<SessionTarget | "deactivated" | "unverified"> = async () => "deactivated";
 
   const { data: owner } = await supabase
     .from("org_owners")
@@ -66,8 +71,7 @@ export async function POST(request: Request) {
         .eq("email", email)
         .maybeSingle();
 
-  if (owner) {
-    if (!owner.is_active) return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+  if (owner?.is_active) {
     account = {
       table: "org_owners",
       key: "id",
@@ -77,6 +81,12 @@ export async function POST(request: Request) {
       lockedUntil: owner.locked_until,
     };
     resolveTarget = async () => {
+      const { data: subscription } = await supabase
+        .from("organization_subscriptions")
+        .select("status")
+        .eq("organization_id", owner.organization_id)
+        .maybeSingle();
+      if (subscription?.status === "pending_verification") return "unverified";
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, email, full_name, tenant_id, tenants(is_active, organization_id, created_at)")
@@ -98,8 +108,7 @@ export async function POST(request: Request) {
         redirectTo: OWNER_HOME,
       };
     };
-  } else if (memberAccount) {
-    if (!memberAccount.is_active) return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+  } else if (memberAccount?.is_active) {
     account = {
       table: "member_accounts",
       key: "id",
@@ -123,7 +132,7 @@ export async function POST(request: Request) {
         clubPending: clubs.length > 1,
       };
     };
-  } else {
+  } else if (!owner && !memberAccount) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, role, email, full_name, is_active, tenant_id, tenants(is_active, organization_id, created_at)")
@@ -131,20 +140,15 @@ export async function POST(request: Request) {
       .is("owner_id", null)
       .maybeSingle();
 
-    if (!profile || !profile.is_active) {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
-    }
+    const { data: credentials } = profile?.is_active
+      ? await supabase
+          .from("auth_credentials")
+          .select("password_hash, failed_login_count, locked_until")
+          .eq("profile_id", profile.id)
+          .maybeSingle()
+      : { data: null };
 
-    const { data: credentials } = await supabase
-      .from("auth_credentials")
-      .select("password_hash, failed_login_count, locked_until")
-      .eq("profile_id", profile.id)
-      .maybeSingle();
-
-    if (!credentials) {
-      return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
-    }
-    account = {
+    if (profile && credentials) account = {
       table: "auth_credentials",
       key: "profile_id",
       id: profile.id,
@@ -152,7 +156,7 @@ export async function POST(request: Request) {
       failedCount: credentials.failed_login_count,
       lockedUntil: credentials.locked_until,
     };
-    resolveTarget = async () => {
+    if (profile) resolveTarget = async () => {
       const tenant = profile.tenants as unknown as TenantJoin;
       if (!tenant?.is_active) return "deactivated";
       return {
@@ -167,15 +171,10 @@ export async function POST(request: Request) {
     };
   }
 
-  if (account.lockedUntil && new Date(account.lockedUntil) > new Date()) {
-    return NextResponse.json(
-      { error: "Akun terkunci sementara karena terlalu banyak percobaan. Coba lagi nanti." },
-      { status: 423 }
-    );
-  }
-
-  const valid = await verifyPassword(password, account.passwordHash);
-  if (!valid) {
+  const locked = Boolean(account?.lockedUntil && new Date(account.lockedUntil) > new Date());
+  const valid = await verifyPasswordOrDummy(password, account && !locked ? account.passwordHash : null);
+  if (!account || locked || !valid) {
+    if (!account || locked) return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
     const nextCount = account.failedCount + 1;
     await supabase
       .from(account.table)
@@ -193,6 +192,9 @@ export async function POST(request: Request) {
   const target = await resolveTarget();
   if (target === "deactivated") {
     return NextResponse.json({ error: DEACTIVATED_ERROR }, { status: 403 });
+  }
+  if (target === "unverified") {
+    return NextResponse.json({ error: UNVERIFIED_ERROR }, { status: 403 });
   }
 
   await supabase

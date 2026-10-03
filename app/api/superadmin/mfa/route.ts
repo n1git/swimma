@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createSuperadminSession, readSuperadminChallenge } from "@/lib/auth/superadmin";
 import { generateRecoveryCodes, hashRecoveryCode, openSecret, sealSecret, verifyTotp } from "@/lib/auth/totp";
 import { clientIp, isKeyLocked, recordFailure } from "@/lib/auth/rate-limit";
+import { isCrossSite, readJsonBody } from "@/lib/auth/request";
 
 const FAIL_LIMIT = 5;
 const FAIL_WINDOW = 900;
@@ -15,10 +16,11 @@ const invalid = () => NextResponse.json({ error: "Kode tidak valid" }, { status:
 const expired = () => NextResponse.json({ error: "Sesi masuk berakhir. Masukkan email dan kata sandi lagi.", restart: true }, { status: 401 });
 
 export async function POST(request: Request) {
+  if (isCrossSite(request)) return invalid();
   const superadminId = await readSuperadminChallenge();
   if (!superadminId) return expired();
 
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonBody(request));
   if (!parsed.success || (!parsed.data.code && !parsed.data.recoveryCode)) return invalid();
 
   const failKey = `superadmin-mfa:${clientIp(request)}:${superadminId}`;
