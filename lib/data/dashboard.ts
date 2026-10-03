@@ -68,6 +68,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     { data: overdueInvoices },
     { data: paidInvoices },
     { data: ledgerWindow },
+    { data: ledgerBefore },
   ] = await Promise.all([
     supabase.from("report_revenue").select("revenue"),
     supabase.from("report_outstanding").select("outstanding_count, outstanding_amount").maybeSingle(),
@@ -107,9 +108,16 @@ export async function getDashboardData(): Promise<DashboardData> {
     supabase
       .from("cash_ledger_with_balance")
       .select("entry_date, running_balance")
-      .gte("entry_date", sparkDays[0])
+      .gte("entry_date", sparkStartIso)
       .order("entry_date")
       .order("id"),
+    supabase
+      .from("cash_ledger_with_balance")
+      .select("running_balance")
+      .lt("entry_date", sparkStartIso)
+      .order("entry_date", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1),
   ]);
 
   const totalRevenue = (revenue ?? []).reduce((sum, r) => sum + Number(r.revenue), 0);
@@ -122,14 +130,14 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
   const lastBalanceByDay = new Map<string, number>();
   for (const row of ledgerWindow ?? []) {
-    lastBalanceByDay.set(row.entry_date, Number(row.running_balance));
+    lastBalanceByDay.set(getJakartaDateString(new Date(row.entry_date)), Number(row.running_balance));
   }
-  let carry: number | null = null;
+  let carry = ledgerBefore?.[0] ? Number(ledgerBefore[0].running_balance) : 0;
   const balanceSpark: number[] = [];
   for (const day of sparkDays) {
     const v = lastBalanceByDay.get(day);
     if (v !== undefined) carry = v;
-    if (carry !== null) balanceSpark.push(carry);
+    balanceSpark.push(carry);
   }
 
   return {
