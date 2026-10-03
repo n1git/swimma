@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TriggerDialog } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function FacilitiesPage() {
   await requireRole("admin");
@@ -27,18 +28,14 @@ export default async function FacilitiesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{terms.resource}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Yang bisa dibooking di klub ini, lengkap dengan jam buka dan aturannya.</p>
-        </div>
+      <PageHeader title={<>{terms.resource}</>} subtitle={<>Yang bisa dibooking di klub ini, lengkap dengan jam buka dan aturannya.</>}>
         {locations.length > 0 ? (
           <TriggerDialog trigger={<span className={buttonVariants()}>Tambah {terms.resource}</span>}>
             <h2 className="mb-4 text-xl font-semibold">Tambah {terms.resource}</h2>
             <ResourceForm locations={locations} />
           </TriggerDialog>
         ) : null}
-      </div>
+      </PageHeader>
 
       {locations.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-border p-6">

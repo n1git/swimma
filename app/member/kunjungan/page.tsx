@@ -4,6 +4,7 @@ import { getVisitHistory } from "@/lib/data/checkin";
 import { getClubTerms } from "@/lib/club-type";
 import { MetricCard } from "@/components/ui/metric-card";
 import { VisitTable } from "@/components/checkin/visit-table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function MemberVisitsPage() {
   await requireMemberClub();
@@ -12,7 +13,7 @@ export default async function MemberVisitsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{terms.visit} Saya</h1>
+      <PageHeader title={<>{terms.visit} Saya</>} />
       <div className="grid gap-4 sm:grid-cols-2">
         <MetricCard title={`${terms.visit} bulan ini`} value={String(visitsThisMonth)} />
       </div>

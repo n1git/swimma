@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 function formatRupiah(value: number) {
   return `Rp ${Number(value).toLocaleString("id-ID")}`;
@@ -56,7 +57,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Laporan</h1>
+      <PageHeader title={<>Laporan</>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Total Pendapatan" value={formatRupiah(totalRevenue)} />

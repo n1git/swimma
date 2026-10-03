@@ -2,6 +2,7 @@ import { getClubModules } from "@/lib/modules";
 import { BackLink } from "@/components/shared/back-link";
 import { ModuleToggle } from "@/components/modules/module-toggle";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function ModulePage() {
   const modules = await getClubModules();
@@ -9,13 +10,10 @@ export default async function ModulePage() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <BackLink href="/admin/settings" label="Pengaturan" />
-      <div>
-        <h1 className="text-2xl font-semibold">Modul</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader title={<>Modul</>} subtitle={<>
           Pilih modul yang dipakai klub ini. Menonaktifkan modul hanya menyembunyikan menu dan halamannya; data tetap
           tersimpan dan kembali saat modul diaktifkan lagi.
-        </p>
-      </div>
+        </>} />
       <ul className="divide-y divide-border rounded-lg border border-border bg-card">
         {modules.map((module) => {
           const soon = module.status === "soon";

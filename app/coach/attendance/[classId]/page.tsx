@@ -5,6 +5,7 @@ import { BackLink } from "@/components/shared/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { AttendanceRoster } from "@/components/attendance/attendance-roster";
 import { formatJakartaDate, formatJakartaTime } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
@@ -64,7 +65,7 @@ export default async function AttendancePage({
   return (
     <div className="flex max-w-3xl flex-col gap-4">
       <BackLink href="/coach" label="Jadwal Saya" />
-      <h1 className="text-2xl font-semibold">{info.class_types?.name ?? "Kelas"}</h1>
+      <PageHeader title={<>{info.class_types?.name ?? "Kelas"}</>} />
 
       <Card>
         <CardContent className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-4">

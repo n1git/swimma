@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 const SUBSCRIPTION_STATUS: Record<string, string> = {
   active: "Aktif",
@@ -40,7 +41,7 @@ export default async function MemberHomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Halo, {overview.fullName}</h1>
+      <PageHeader title={<>Halo, {overview.fullName}</>} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Langganan</h2>

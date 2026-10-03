@@ -6,6 +6,7 @@ import { ActionForm } from "@/components/shared/action-form";
 import { ActionSubmitButton } from "@/components/shared/action-submit-button";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function HeadCoachMembersPage() {
   await requireHeadCoach();
@@ -22,7 +23,7 @@ export default async function HeadCoachMembersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Semua Anggota ({members.length})</h1>
+      <PageHeader title={<>Semua Anggota ({members.length})</>} />
       <Table>
         <TableHeader>
           <TableRow>

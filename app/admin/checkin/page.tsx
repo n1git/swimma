@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CheckinPage() {
   await requireRole("admin");
@@ -33,7 +34,7 @@ export default async function CheckinPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Check-in</h1>
+        <PageHeader title={<>Check-in</>} />
         <TriggerDialog trigger={<Button type="button">Check-in manual</Button>}>
           <h2 className="mb-4 text-xl font-semibold">Check-in manual</h2>
           <ManualCheckinForm points={activePoints} />

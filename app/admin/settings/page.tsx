@@ -9,6 +9,7 @@ import { TriggerDialog } from "@/components/ui/dialog";
 import { LocationForm } from "@/components/settings/location-form";
 import { ClassTypeForm } from "@/components/settings/class-type-form";
 import { TenantBrandingForm } from "@/components/settings/tenant-branding-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function SettingsPage() {
   const [locations, classTypes, tenant, terms] = await Promise.all([
@@ -20,7 +21,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Pengaturan</h1>
+      <PageHeader title={<>Pengaturan</>} />
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>

@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 function formatRupiah(value: number) {
   return `Rp ${Number(value).toLocaleString("id-ID")}`;
@@ -42,12 +43,19 @@ const CASH_CATEGORY_LABEL: Record<string, string> = {
 const QUICK_LINKS = [
   { href: "/admin/members/new", label: "Tambah Anggota" },
   { href: "/admin/schedule/new", label: "Tambah Kelas", module: "classes" },
-  { href: "/admin/billing/invoices", label: "Kelola Tagihan", module: "billing" },
+  {
+    href: "/admin/billing/invoices",
+    label: "Kelola Tagihan",
+    module: "billing",
+  },
   { href: "/admin/promo", label: "Kelola Promo", module: "promo" },
 ];
 
 export default async function AdminDashboardPage() {
-  const [data, enabled] = await Promise.all([getDashboardData(), getEnabledModules()]);
+  const [data, enabled] = await Promise.all([
+    getDashboardData(),
+    getEnabledModules(),
+  ]);
   const [booking, sales] = await Promise.all([
     enabled.has("resource_booking") ? getBookingKpis() : null,
     enabled.has("pos") ? getSalesToday() : null,
@@ -55,13 +63,16 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Dasbor Admin</h1>
+      <PageHeader title={<>Dasbor Admin</>} />
 
       <SubscriptionBanner />
       <OnboardingBanner />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard title="Total Pendapatan" value={formatRupiah(data.totalRevenue)} />
+        <MetricCard
+          title="Total Pendapatan"
+          value={formatRupiah(data.totalRevenue)}
+        />
         <MetricCard
           title="Tagihan Belum Bayar"
           value={`${data.outstandingCount} (${formatRupiah(data.outstandingAmount)})`}
@@ -71,95 +82,32 @@ export default async function AdminDashboardPage() {
           title="Anggota Aktif / Nonaktif"
           value={`${data.activeMembers} / ${data.inactiveMembers}`}
         />
+        {booking ? (
+          <MetricCard
+            title="Booking Hari Ini"
+            value={String(booking.bookingsToday)}
+          />
+        ) : null}
+        {booking ? (
+          <MetricCard
+            title="Okupansi Fasilitas Minggu Ini"
+            value={
+              booking.utilizationWeek === null
+                ? "Belum ada jam buka"
+                : `${booking.utilizationWeek.toLocaleString("id-ID")}%`
+            }
+          />
+        ) : null}
+        {sales ? (
+          <MetricCard
+            title="Penjualan Hari Ini"
+            value={`${formatRupiah(sales.total)} (${sales.count} pesanan)`}
+          />
+        ) : null}
       </div>
 
-      {booking || sales ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {booking ? <MetricCard title="Booking Hari Ini" value={String(booking.bookingsToday)} /> : null}
-          {booking ? (
-            <MetricCard
-              title="Okupansi Fasilitas Minggu Ini"
-              value={booking.utilizationWeek === null ? "Belum ada jam buka" : `${booking.utilizationWeek.toLocaleString("id-ID")}%`}
-            />
-          ) : null}
-          {sales ? <MetricCard title="Penjualan Hari Ini" value={`${formatRupiah(sales.total)} (${sales.count} pesanan)`} /> : null}
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tagihan Terlambat</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Anggota</TableHead>
-                  <TableHead>Jatuh Tempo</TableHead>
-                  <TableHead>Jumlah</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.overdueInvoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>{inv.memberName}</TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">{formatDate(inv.dueDate)}</Badge>
-                    </TableCell>
-                    <TableCell>{formatRupiah(inv.amount)}</TableCell>
-                  </TableRow>
-                ))}
-                {data.overdueInvoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
-                      Tidak ada tagihan terlambat.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Langganan Akan Berakhir (7 Hari)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Anggota</TableHead>
-                  <TableHead>Paket</TableHead>
-                  <TableHead>Berakhir</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.expiringSubscriptions.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>{s.memberName}</TableCell>
-                    <TableCell>{s.packageName}</TableCell>
-                    <TableCell>
-                      <Badge variant="warning">{formatDate(s.endDate)}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {data.expiringSubscriptions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
-                      Tidak ada langganan yang akan berakhir.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Kelas Hari Ini</CardTitle>
           </CardHeader>
@@ -190,7 +138,10 @@ export default async function AdminDashboardPage() {
                 ))}
                 {data.todaysClasses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
                       Tidak ada kelas hari ini.
                     </TableCell>
                   </TableRow>
@@ -199,7 +150,6 @@ export default async function AdminDashboardPage() {
             </Table>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Transaksi Kas Terbaru</CardTitle>
@@ -217,9 +167,13 @@ export default async function AdminDashboardPage() {
                 {data.recentCashEntries.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>{formatDate(e.entryDate)}</TableCell>
-                    <TableCell>{CASH_CATEGORY_LABEL[e.category] ?? e.category}</TableCell>
                     <TableCell>
-                      <Badge variant={e.direction === "in" ? "success" : "secondary"}>
+                      {CASH_CATEGORY_LABEL[e.category] ?? e.category}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={e.direction === "in" ? "success" : "secondary"}
+                      >
                         {e.direction === "in" ? "+" : "-"}
                         {formatRupiah(e.amount)}
                       </Badge>
@@ -228,7 +182,10 @@ export default async function AdminDashboardPage() {
                 ))}
                 {data.recentCashEntries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
                       Belum ada transaksi.
                     </TableCell>
                   </TableRow>
@@ -241,15 +198,102 @@ export default async function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Tagihan Terlambat</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Anggota</TableHead>
+                <TableHead>Jatuh Tempo</TableHead>
+                <TableHead>Jumlah</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.overdueInvoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell>{inv.memberName}</TableCell>
+                  <TableCell>
+                    <Badge variant="destructive">
+                      {formatDate(inv.dueDate)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{formatRupiah(inv.amount)}</TableCell>
+                </TableRow>
+              ))}
+              {data.overdueInvoices.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center text-muted-foreground"
+                  >
+                    Tidak ada tagihan terlambat.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Langganan Akan Berakhir (7 Hari)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Anggota</TableHead>
+                <TableHead>Paket</TableHead>
+                <TableHead>Berakhir</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.expiringSubscriptions.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>{s.memberName}</TableCell>
+                  <TableCell>{s.packageName}</TableCell>
+                  <TableCell>
+                    <Badge variant="warning">{formatDate(s.endDate)}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {data.expiringSubscriptions.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center text-muted-foreground"
+                  >
+                    Tidak ada langganan yang akan berakhir.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Aksi Cepat</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          {QUICK_LINKS.filter((link) => !link.module || enabled.has(link.module)).map((link) => (
-            <Link key={link.href} href={link.href} className={buttonVariants({ variant: "outline" })}>
+          {QUICK_LINKS.filter(
+            (link) => !link.module || enabled.has(link.module),
+          ).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={buttonVariants({ variant: "outline" })}
+            >
               {link.label}
             </Link>
           ))}
-          <Link href="/admin/reports" className={buttonVariants({ variant: "ghost" })}>
+          <Link
+            href="/admin/reports"
+            className={buttonVariants({ variant: "ghost" })}
+          >
             Lihat Laporan Lengkap ({data.activePromoCount} promo aktif)
           </Link>
         </CardContent>

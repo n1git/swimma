@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function OrganizationPage() {
   const owner = await requireOwner();
@@ -29,7 +30,7 @@ export default async function OrganizationPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{overview.name}</h1>
+          <PageHeader title={<>{overview.name}</>} />
           <p className="text-sm text-muted-foreground">
             {overview.tenants.length}{overview.clubLimit !== null ? ` / ${overview.clubLimit}` : ""} klub
             {full ? " — batas tercapai. Hubungi admin platform untuk menambah." : ""}

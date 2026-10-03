@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 const STATUS_VARIANT: Record<PlatformSubscriptionStatus, "success" | "secondary" | "destructive" | "warning"> = {
   pending_verification: "secondary",
@@ -69,7 +70,7 @@ export default async function SuperadminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Dasbor Platform</h1>
+      <PageHeader title={<>Dasbor Platform</>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MetricCard title="Organisasi / klub" value={`${rows.length} / ${(tenants ?? []).length}`} />

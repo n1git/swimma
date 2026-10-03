@@ -4,6 +4,7 @@ import { BackLink } from "@/components/shared/back-link";
 import { CoachEditForm } from "@/components/coaches/coach-edit-form";
 import { CoachMembers } from "@/components/coaches/coach-members";
 import { CoachCertifications } from "@/components/coaches/coach-certifications";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CoachDetailPage({
   params,
@@ -25,7 +26,7 @@ export default async function CoachDetailPage({
     <div className="flex max-w-2xl flex-col gap-6">
       <BackLink href="/admin/coaches" label="Pelatih" />
       <div>
-        <h1 className="text-2xl font-semibold">{coach.full_name}</h1>
+        <PageHeader title={<>{coach.full_name}</>} />
         <p className="text-sm text-muted-foreground">{coach.email}</p>
       </div>
       <CoachEditForm coach={coach} />

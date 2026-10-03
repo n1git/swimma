@@ -2,6 +2,7 @@ import { requireMemberClub } from "@/lib/auth/guard";
 import { getMyOrders } from "@/lib/data/commerce";
 import { formatJakartaDateTime, formatRupiahFull } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function MemberOrdersPage() {
   await requireMemberClub();
@@ -9,10 +10,7 @@ export default async function MemberOrdersPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Pesanan saya</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Riwayat pembelian yang sudah lunas di klub ini.</p>
-      </div>
+      <PageHeader title={<>Pesanan saya</>} subtitle={<>Riwayat pembelian yang sudah lunas di klub ini.</>} />
       {orders.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">Belum ada pesanan.</p>
       ) : (

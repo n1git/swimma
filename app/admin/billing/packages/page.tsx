@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PackageForm } from "@/components/billing/package-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CYCLE_LABEL: Record<string, string> = {
   monthly: "Bulanan",
@@ -27,7 +28,7 @@ export default async function PackagesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Paket Keanggotaan</h1>
+        <PageHeader title={<>Paket Keanggotaan</>} />
         <TriggerDialog trigger={<span className={buttonVariants({})}>Tambah Paket</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah Paket Baru</h2>
           <PackageForm />

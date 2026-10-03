@@ -13,6 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/page-header";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -39,10 +40,7 @@ export default async function MemberBookingPage({
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Booking</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pilih {terms.resource.toLowerCase()}, tanggal, lalu slot. Waktu dalam WIB.</p>
-      </div>
+      <PageHeader title={<>Booking</>} subtitle={<>Pilih {terms.resource.toLowerCase()}, tanggal, lalu slot. Waktu dalam WIB.</>} />
 
       {resources.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">

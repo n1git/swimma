@@ -8,6 +8,7 @@ import { MemberPortalAccess } from "@/components/members/member-portal-access";
 import { isModuleReady } from "@/lib/modules";
 import { MemberVisits } from "@/components/checkin/member-visits";
 import { MemberPrivacy } from "@/components/members/member-privacy";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function MemberDetailPage({
   params,
@@ -36,7 +37,7 @@ export default async function MemberDetailPage({
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <BackLink href="/admin/members" label="Anggota" />
-      <h1 className="text-2xl font-semibold">{member.full_name}</h1>
+      <PageHeader title={<>{member.full_name}</>} />
       <MemberEditForm
         member={member}
         locations={locations}

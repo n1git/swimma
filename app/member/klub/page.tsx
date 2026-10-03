@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function MemberClubsPage() {
   const user = await requireRole("member");
@@ -18,7 +19,7 @@ export default async function MemberClubsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">{user.clubPending ? "Pilih klub" : "Klub saya"}</h1>
+        <PageHeader title={<>{user.clubPending ? "Pilih klub" : "Klub saya"}</>} />
         <p className="text-sm text-muted-foreground">
           {user.clubPending
             ? "Akun Anda terdaftar di lebih dari satu klub. Pilih klub yang ingin dibuka."

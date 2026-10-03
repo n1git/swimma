@@ -29,3 +29,10 @@ Restyle of the signed-in app to the framed, hatched card structure. Colors and f
 ## Phase 2 done
 
 - Shell: the sidebar now runs full height with a 54 px brand row (small logo tile, brand name, dashed bottom border), captions, 34 px rows and a soft border and shadow on the active row (sidebar colors unchanged); the header sits beside it with the same 54 px height and a dashed bottom border, and keeps the club name, role chip, tenant and club switchers, theme toggle, password and sign-out controls in the same order. Bottom bar gets a dashed top border and transitions on the shared motion tokens; the menu sheet's group containers use the frame radius. Switchers inherit the new control sizes through `Select`.
+
+## Phase 3 done
+
+- `PageHeader` with the automatic breadcrumb replaces the heading block on all 39 signed-in pages that had one (admin, coach, member, superadmin portal), keeping titles, subtitles and actions as they were.
+- Admin dashboard: metric cards in one grid (the booking and sales cards join it only when their module is on), "Kelas Hari Ini" at two thirds beside "Transaksi Kas Terbaru" at one third, then the overdue invoices and expiring subscriptions tables full width, then quick actions. No queries added, so there is no chart or sparkline on the dashboard.
+- Reports charts: rounded bar tops, horizontal gridlines only, dashed reference line (average for programs, zero for cash flow), tooltip with a highlighted band and a darker hovered bar, total above the plot, and a visually hidden table per chart as the text alternative. The cash flow chart now shows monthly in and out as bars; the net total sits above the plot.
+- Tables: `Table` now draws its own hatch frame and inner surface and drops them when it sits inside a card, so every table inherits the look; on members, coaches, schedule, subscriptions and invoices the existing search and filters moved into the framed card header.

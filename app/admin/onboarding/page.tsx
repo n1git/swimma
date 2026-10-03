@@ -13,6 +13,7 @@ import { PackageForm } from "@/components/billing/package-form";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string }> }) {
   await requireRole("admin");
@@ -39,10 +40,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Penyiapan klub</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Setiap langkah boleh dilewati dan bisa dilengkapi nanti di Pengaturan.</p>
-      </div>
+      <PageHeader title={<>Penyiapan klub</>} subtitle={<>Setiap langkah boleh dilewati dan bisa dilengkapi nanti di Pengaturan.</>} />
       <Stepper steps={steps} current={current} />
 
       {current === "lokasi" ? (

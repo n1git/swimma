@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PayrollRunForm } from "@/components/payroll/payroll-run-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function PayrollPage() {
   const supabase = await createServerSupabaseClient();
@@ -26,7 +27,7 @@ export default async function PayrollPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Gaji Pelatih</h1>
+        <PageHeader title={<>Gaji Pelatih</>} />
         <TriggerDialog trigger={<span className={buttonVariants({})}>Buat Gaji Baru</span>}>
           <h2 className="mb-4 text-xl font-semibold">Buat Gaji Baru</h2>
           <PayrollRunForm coaches={coaches} />

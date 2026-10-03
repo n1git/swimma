@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 const FILTERS = [
   { value: "", label: "Semua" },
@@ -27,17 +28,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Pesanan</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Riwayat penjualan dan pembayarannya.</p>
-        </div>
+      <PageHeader title={<>Pesanan</>} subtitle={<>Riwayat penjualan dan pembayarannya.</>}>
         {session.role !== "finance" ? (
           <Link href="/admin/kasir" className={buttonVariants()}>
             Buka kasir
           </Link>
         ) : null}
-      </div>
+      </PageHeader>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter status">
         {FILTERS.map((f) => (
           <Link

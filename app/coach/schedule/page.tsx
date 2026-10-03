@@ -5,6 +5,7 @@ import { getActiveCoaches } from "@/lib/data/lookups";
 import { getJakartaDayRangeIso, formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
 import { SubstituteForm } from "@/components/schedule/substitute-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface ClassRow {
   id: string;
@@ -34,7 +35,7 @@ export default async function HeadCoachSchedulePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Semua Jadwal</h1>
+      <PageHeader title={<>Semua Jadwal</>} />
       <Table>
         <TableHeader>
           <TableRow>

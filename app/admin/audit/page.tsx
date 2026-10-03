@@ -7,6 +7,7 @@ import { pageRange } from "@/lib/pagination";
 import { Pagination } from "@/components/shared/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/page-header";
 
 const ACTION_LABEL: Record<string, string> = {
   "password.reset": "Atur ulang kata sandi",
@@ -86,10 +87,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Log Audit</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Tindakan penting di klub, siapa yang melakukan, dan kapan. Catatan tidak bisa diubah atau dihapus.</p>
-      </div>
+      <PageHeader title={<>Log Audit</>} subtitle={<>Tindakan penting di klub, siapa yang melakukan, dan kapan. Catatan tidak bisa diubah atau dihapus.</>} />
       {owner ? (
         <div className="flex gap-2" role="group" aria-label="Cakupan log">
           <Link href="/admin/audit" className={tabClass(!orgScope)} aria-current={!orgScope ? "page" : undefined}>

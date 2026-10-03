@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 const STATUS_VARIANT = {
   pending_verification: "secondary",
@@ -41,7 +42,7 @@ export default async function SubscriptionPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold">Langganan</h1>
+        <PageHeader title={<>Langganan</>} />
         <Badge variant={STATUS_VARIANT[subscription.status]}>{STATUS_LABEL[subscription.status]}</Badge>
       </div>
 

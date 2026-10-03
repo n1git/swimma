@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { AdjustmentForm } from "@/components/cash-ledger/adjustment-form";
 import { formatJakartaDateTime } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 
 const CATEGORY_LABEL: Record<string, string> = {
   payment_received: "Pembayaran Diterima",
@@ -47,7 +48,7 @@ export default async function CashLedgerPage({ searchParams }: { searchParams: P
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Buku Kas</h1>
+        <PageHeader title={<>Buku Kas</>} />
         <div className="flex items-center gap-3">
           <Badge variant={Number(latestBalance) >= 0 ? "success" : "destructive"} className="text-sm">
             Saldo: Rp {Number(latestBalance).toLocaleString("id-ID")}

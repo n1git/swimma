@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PromoForm } from "@/components/promo/promo-form";
 import { ActionForm } from "@/components/shared/action-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function PromoAdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -20,7 +21,7 @@ export default async function PromoAdminPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Promo</h1>
+        <PageHeader title={<>Promo</>} />
         <TriggerDialog trigger={<span className={buttonVariants({})}>Tambah Promo</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah Promo Baru</h2>
           <PromoForm />

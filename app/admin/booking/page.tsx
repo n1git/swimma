@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/ui/page-header";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -63,12 +64,9 @@ export default async function BookingPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Booking</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <PageHeader title={<>Booking</>} subtitle={<>
           Pilih slot untuk membuat booking atau mengelola yang sudah ada. Waktu dalam WIB.
-        </p>
-      </div>
+        </>} />
 
       {resources.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-border p-6">

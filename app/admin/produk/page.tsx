@@ -9,6 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TriggerDialog } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function ProductsPage() {
   await requireRole("admin");
@@ -17,16 +18,12 @@ export default async function ProductsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Produk</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Barang dan jasa yang dijual di kasir.</p>
-        </div>
+      <PageHeader title={<>Produk</>} subtitle={<>Barang dan jasa yang dijual di kasir.</>}>
         <TriggerDialog trigger={<span className={buttonVariants()}>Tambah produk</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah produk</h2>
           <ProductForm categories={categories} />
         </TriggerDialog>
-      </div>
+      </PageHeader>
 
       {products.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">

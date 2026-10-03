@@ -17,6 +17,7 @@ import { TriggerDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MemberPortalAccess } from "@/components/members/member-portal-access";
 import { ManualCheckinForm } from "@/components/checkin/manual-checkin-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface ClassRow {
   id: string;
@@ -53,7 +54,7 @@ export default async function CoachSchedulePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Jadwal Saya</h1>
+      <PageHeader title={<>Jadwal Saya</>} />
       <Table>
         <TableHeader>
           <TableRow>

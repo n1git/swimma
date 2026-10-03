@@ -10,6 +10,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { TriggerDialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 
 const ROLE_DESCRIPTION: Record<string, string> = {
   admin: "Semua menu klub",
@@ -30,7 +31,7 @@ export default async function StaffPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Staf</h1>
+        <PageHeader title={<>Staf</>} />
         <TriggerDialog trigger={<span className={buttonVariants({})}>Tambah Staf</span>}>
           <h2 className="mb-4 text-xl font-semibold">Tambah Staf</h2>
           <StaffForm />
