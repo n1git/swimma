@@ -32,11 +32,11 @@ export function MetricCard({
 }) {
   const up = (delta ?? 0) >= 0;
   return (
-    <Card className={cn("flex min-h-[8.75rem] flex-col", className)}>
+    <Card className={cn("flex flex-col", className)}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 items-start justify-between gap-3">
+      <CardContent className="flex flex-1 items-center justify-between gap-3 py-2.5">
         <div className="min-w-0">
           <p className="truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
           {delta !== undefined ? (

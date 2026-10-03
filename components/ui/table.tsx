@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div className="hatch w-full rounded-[var(--radius-frame)] border border-border p-[3px] in-data-[frame=true]:rounded-none in-data-[frame=true]:border-0 in-data-[frame=true]:p-0 in-data-[frame=true]:[background:none] print:border-0 print:p-0 print:[background:none]">
+    <div className="w-full rounded-[var(--radius-inner)] border border-border bg-card in-data-[frame=true]:rounded-none in-data-[frame=true]:border-0 in-data-[frame=true]:bg-transparent">
       <div
-        className="w-full overflow-auto rounded-[var(--radius-inner)] border border-border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring in-data-[frame=true]:rounded-none in-data-[frame=true]:border-0 in-data-[frame=true]:bg-transparent"
+        className="w-full overflow-auto rounded-[var(--radius-inner)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         tabIndex={0}
       >
         <table className={cn("w-full caption-bottom text-sm tabular-nums", className)} {...props} />

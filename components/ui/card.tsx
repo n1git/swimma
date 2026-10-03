@@ -49,7 +49,7 @@ export function CardContent({ className, ...props }: React.ComponentProps<"div">
   return (
     <div
       className={cn(
-        "p-6 pt-0 group-data-[frame=true]/card:rounded-[var(--radius-inner)] group-data-[frame=true]/card:border group-data-[frame=true]/card:border-border group-data-[frame=true]/card:bg-card group-data-[frame=true]/card:p-4 group-data-[frame=true]/card:shadow-sm",
+        "p-6 pt-0 group-data-[frame=true]/card:rounded-[var(--radius-inner)] group-data-[frame=true]/card:border group-data-[frame=true]/card:border-border group-data-[frame=true]/card:bg-card group-data-[frame=true]/card:p-3 group-data-[frame=true]/card:shadow-sm",
         className
       )}
       {...props}
