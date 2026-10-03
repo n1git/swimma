@@ -31,3 +31,10 @@
 - `docs/DEPLOY.md` rewritten for the new layout, apply methods, status, mandatory `CRON_SECRET`, smoke test and rollback row for 024; README changelog added.
 - Local checks: migrations 001-024 apply on an empty database with pgcrypto in `extensions` and with it in `public`; schema dumps of the two layouts differ only in the extension location; 39 tables, all with RLS; catalog queries show no `TRUNCATE`, `REFERENCES` or `TRIGGER` for client roles, no function executable by `anon` or `public` outside extensions, no function without a fixed `search_path`; client roles cannot read the retired plan tables while landing data tables stay readable; behavior tests for booking and cashier produce output identical to the run without 024 (including the anon section); cron route: unset or empty secret, wrong secret and missing header give 401, the right secret gives 200; `npm run build`, `npx tsc --noEmit` and `npm run lint` pass.
 - Not verifiable locally: hosted migration list, hosted schema diff, hosted advisor comparison.
+
+## Resume, second session
+
+- Hosted `swimma` (ap-northeast-1, Postgres 17.6) is visible to this session's Supabase MCP; migration list stops at 011.
+- pgcrypto moved back to `extensions` on hosted (no object depended on it).
+- Local probes in `audit/` rerun against migration 024 on the seeded database: only the intended changes (client roles lose the retired plan tables, anon loses function execute, no TRUNCATE for client roles); every other result identical. Migrations 001-024 apply on empty databases with pgcrypto in `extensions` and in `public`.
+- Phase 2 still blocked: no `SUPABASE_ACCESS_TOKEN` or `DATABASE_URL` in the environment, and the MCP cannot run migrations 012 onward. Set one of them for the `swimma` project to continue.

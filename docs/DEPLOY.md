@@ -30,7 +30,7 @@ Migrations are not idempotent; apply each once. Do not edit an applied migration
 
 | Range | State on the hosted project |
 |---|---|
-| 001-011 | Applied |
+| 001-011 | Applied; pgcrypto is back in `extensions` |
 | 012-024 | Pending: no credential was available when this was written. Needed: `SUPABASE_ACCESS_TOKEN` (CLI) or `DATABASE_URL` in the environment |
 
 Migration 024 sets the privileges of the public schema: no `TRUNCATE`, `REFERENCES` or `TRIGGER` for `anon` and `authenticated`, execute on functions only for `authenticated` and `service_role`, a fixed `search_path` on every function, and no client access to the retired plan tables. New functions follow the same defaults; a helper that row policies call must be granted to `authenticated` explicitly if it was created with a revoke.
