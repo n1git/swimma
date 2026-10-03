@@ -10,7 +10,7 @@ export async function addManualAdjustment(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const session = await requireActionRole(["admin", "finance"]);
+  await requireActionRole(["admin", "finance"]);
 
   const parsed = manualAdjustmentSchema.safeParse({
     direction: formData.get("direction"),
@@ -27,7 +27,6 @@ export async function addManualAdjustment(
     direction: parsed.data.direction,
     amount: parsed.data.amount,
     reason: parsed.data.reason,
-    created_by: session.sub,
   });
 
   if (error) {

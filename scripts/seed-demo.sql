@@ -290,7 +290,7 @@ begin
         v_orders := create_order(null, 'Pesanan Dibatalkan',
           jsonb_build_array(jsonb_build_object('kind', 'product', 'product_id', (select id from products where tenant_id = v_tenant and sku = 'AIR-01'), 'qty', 2)),
           jsonb_build_array(jsonb_build_object('method', 'cash', 'amount', 10000)));
-        perform void_order(v_orders);
+        perform void_order(v_orders, 'Salah input jumlah barang');
       exception when others then
         raise notice 'seed-demo: orders skipped (%): %', c ->> 'type', sqlerrm;
       end;

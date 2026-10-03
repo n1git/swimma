@@ -130,7 +130,7 @@ export async function generateInvoices(
     p_tenant_id: session.tenant_id,
   });
 
-  if (error) return { ok: false, error: "Gagal membuat tagihan" };
+  if (error) return { ok: false, error: error.code === "SW003" ? error.message : "Gagal membuat tagihan" };
 
   revalidatePath("/admin/billing/invoices");
   return { ok: true, message: `${(data as unknown[])?.length ?? 0} tagihan baru dibuat` };
@@ -151,13 +151,8 @@ export async function voidInvoice(_prevState: ActionState, formData: FormData): 
   await requireActionRole(["admin", "finance"]);
   const invoiceId = String(formData.get("invoiceId"));
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("invoices")
-    .update({ status: "void" })
-    .eq("id", invoiceId)
-    .eq("status", "outstanding")
-    .select("id");
-  if (error || !data?.length) return { ok: false, error: "Gagal membatalkan tagihan. Tagihan mungkin sudah lunas." };
+  const { error } = await supabase.rpc("void_invoice", { p_invoice_id: invoiceId });
+  if (error) return { ok: false, error: "Gagal membatalkan tagihan. Tagihan mungkin sudah lunas." };
   revalidatePath("/admin/billing/invoices");
   return { ok: true, message: "Tagihan dibatalkan" };
 }

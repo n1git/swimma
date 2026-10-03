@@ -56,7 +56,7 @@ export async function createClass(
   });
 
   if (error) {
-    if (error.code.startsWith("RB")) return { ok: false, error: error.message };
+    if (error.code.startsWith("RB") || error.code === "SW003") return { ok: false, error: error.message };
     if (error.code === "23P01") {
       return { ok: false, error: "Pelatih sudah memiliki kelas lain pada waktu tersebut" };
     }
@@ -92,6 +92,7 @@ export async function addBooking(
   const { error } = await supabase.from("bookings").insert({ member_id: memberId, class_id: classId });
 
   if (error) {
+    if (error.code === "SW003") return { ok: false, error: error.message };
     if (error.code === "23505") {
       return { ok: false, error: "Anggota ini sudah terdaftar di kelas ini" };
     }

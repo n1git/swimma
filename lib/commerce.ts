@@ -16,7 +16,7 @@ export const ORDER_STATUS_LABEL: Record<string, string> = {
 };
 
 export function commerceErrorMessage(error: { code?: string; message?: string }, fallback: string): string {
-  if (error.code?.startsWith("PS") && error.message) return error.message;
+  if ((error.code?.startsWith("PS") || error.code === "SW003") && error.message) return error.message;
   if (error.code === "42501") return "Anda tidak memiliki akses untuk aksi ini";
   return fallback;
 }

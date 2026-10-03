@@ -19,7 +19,7 @@ export const BOOKING_STATUS_LABEL: Record<string, string> = {
 export const WEEKDAY_LABEL = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
 export function bookingErrorMessage(error: { code?: string; message?: string }, fallback: string): string {
-  if (error.code?.startsWith("RB") && error.message) return error.message;
+  if ((error.code?.startsWith("RB") || error.code === "SW003") && error.message) return error.message;
   if (error.code === "42501") return "Anda tidak memiliki akses untuk aksi ini";
   return fallback;
 }

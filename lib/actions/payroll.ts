@@ -37,6 +37,7 @@ export async function createPayrollRun(
   });
 
   if (error) {
+    if (error.code === "SW003") return { ok: false, error: error.message };
     if (error.code === "23505") {
       return { ok: false, error: "Gaji untuk pelatih dan periode ini sudah pernah dibuat" };
     }

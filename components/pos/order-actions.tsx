@@ -52,11 +52,26 @@ export function PaymentForm({ orderId, remaining }: { orderId: string; remaining
 
 export function VoidForm({ orderId, paid }: { orderId: string; paid: boolean }) {
   return (
-    <ActionForm action={voidOrder}>
+    <ActionForm action={voidOrder} className="flex flex-col gap-2">
       <input type="hidden" name="orderId" value={orderId} />
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`void-reason-${orderId}`}>Alasan pembatalan</Label>
+        <Input
+          id={`void-reason-${orderId}`}
+          name="reason"
+          required
+          minLength={5}
+          maxLength={500}
+          className="h-10"
+          aria-describedby={`void-reason-hint-${orderId}`}
+        />
+        <p id={`void-reason-hint-${orderId}`} className="text-xs text-muted-foreground">
+          Minimal 5 karakter. Resepsionis hanya bisa membatalkan pesanan yang lunas hari ini.
+        </p>
+      </div>
       <ActionSubmitButton
         variant="destructive"
-        className="h-10"
+        className="h-10 w-fit"
         confirmMessage={
           paid
             ? "Batalkan pesanan ini? Stok dikembalikan dan pembayaran dicatat keluar di Buku Kas."

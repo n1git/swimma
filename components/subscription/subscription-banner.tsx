@@ -32,7 +32,7 @@ export async function SubscriptionBanner() {
       <AlertDescription className="flex flex-col gap-3">
         <span>
           {blocked
-            ? `Menambah anggota, klub, dan pengguna baru dinonaktifkan sampai admin platform ${APP_NAME} mengaktifkan langganan. Anda tetap bisa masuk dan melihat data.`
+            ? `Data tetap bisa dilihat dan tagihan yang ada tetap bisa dilunasi. Menambah anggota, klub, pengguna, kelas, booking, pesanan kasir, check-in, gaji, dan membuat tagihan baru dinonaktifkan sampai admin platform ${APP_NAME} mengaktifkan langganan.`
             : `Agar tetap berjalan setelah trial, pilih paket dan hubungi admin platform ${APP_NAME}. Pembayaran dilakukan di luar aplikasi.`}
         </span>
         {owner ? (

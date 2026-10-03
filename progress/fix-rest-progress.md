@@ -4,7 +4,7 @@
 
 - [x] Phase 0: preparation (OK received)
 - [x] Phase 1: sessions, access, superadmin (migration 025; hosted pending)
-- [ ] Phase 2: money and billing
+- [x] Phase 2: money and billing (migration 026; hosted pending)
 - [ ] Phase 3: performance and pagination
 - [ ] Phase 4: public auth
 - [ ] Phase 5: uploads, audit log, privacy
@@ -48,3 +48,11 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 - Password resets by staff admins limited to coaches, receptionists and finance; owners can also reset staff admins; owner-linked profiles protected from staff admin updates; club-wide reference tables require an active session.
 - Platform admin: authenticator enrolment at first login, recovery codes, separate signing secret, revocable 12-hour sessions, failure limit per IP and account, reset script.
 - Local probes in `audit/` rerun for these items with the intended results; migration 025 applies on empty databases with both pgcrypto layouts and on the seeded data. Hosted pending.
+
+## Phase 2 done
+
+- Invoices and payroll change only through functions; settled, voided and posted rows are immutable; manual ledger entries take their author and time from the session; profile and ledger references checked against the club.
+- Order cancellation needs a reason and records a reversal linked to the order; receptionists cancel only orders paid the same day (WIB) or unpaid open orders.
+- Invoice generation skips inactive members and clubs, organizations outside an active or running trial status and subscriptions outside their dates; deactivating a member pauses their subscriptions.
+- Expired trial and pending organizations: reads and settling existing invoices keep working; new bookings, orders, check-ins, classes, payroll runs and invoice generation are refused with `SW003`; banner text updated.
+- Local checks in `audit/fix/` and a UI run passed; demo seed and purge run on a fresh database through 026. Hosted pending.

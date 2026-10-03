@@ -72,8 +72,10 @@ export async function voidOrder(_prevState: ActionState, formData: FormData): Pr
   await requireActionRole(["admin", "receptionist"]);
   const id = z.string().uuid().safeParse(formData.get("orderId"));
   if (!id.success) return { ok: false, error: "Data tidak valid" };
+  const reason = z.string().trim().min(5, "Tulis alasan pembatalan, minimal 5 karakter").max(500, "Alasan terlalu panjang").safeParse(formData.get("reason") ?? "");
+  if (!reason.success) return { ok: false, error: reason.error.issues[0]?.message ?? "Alasan tidak valid" };
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.rpc("void_order", { p_order_id: id.data });
+  const { error } = await supabase.rpc("void_order", { p_order_id: id.data, p_reason: reason.data });
   if (error) return { ok: false, error: commerceErrorMessage(error, "Gagal membatalkan pesanan") };
   refresh();
   return { ok: true, message: "Pesanan dibatalkan" };

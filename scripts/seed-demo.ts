@@ -192,6 +192,7 @@ begin
     return;
   end if;
   v_tenants := coalesce(v_tenants, '{}');
+  perform set_config('swimma.purge', 'on', true);
   update payroll_runs set cash_ledger_entry_id = null where tenant_id = any(v_tenants);
   delete from order_payments where tenant_id = any(v_tenants);
   delete from order_items where tenant_id = any(v_tenants);
