@@ -14,7 +14,7 @@ export interface CashFlowPoint {
 export function CashflowChart({ data }: { data: CashFlowPoint[] }) {
   const net = data.reduce((sum, d) => sum + Number(d.net), 0);
   return (
-    <div>
+    <div className="relative">
       <ChartTotal label="Bersih" value={formatRupiahFull(net)} />
       <div className="h-72 w-full" role="img" aria-label="Diagram batang arus kas bulanan, rinciannya ada pada tabel di bawah">
         <ResponsiveContainer width="100%" height="100%">

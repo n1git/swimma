@@ -106,7 +106,7 @@ export default async function AdminDashboardPage() {
         ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid items-start gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Kelas Hari Ini</CardTitle>

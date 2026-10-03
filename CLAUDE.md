@@ -35,6 +35,7 @@ Aturan teknis
 - Jenis klub = data (`club_types`, `club_type_modules`, `club_type_presets`); menambah olahraga cukup insert SQL, jangan menambah cabang kode per olahraga.
 - Landing (`/`): konten di `components/landing/`, olahraga dibaca dari `club_types`, harga dari `subscription_plans`; setiap klaim harus benar dan tercatat di tabel klaim `progress/landing-rework-progress.md`. Visual produk hanya data contoh berlabel "Contoh data". Kontak tampil hanya jika `NEXT_PUBLIC_CONTACT_EMAIL`/`NEXT_PUBLIC_CONTACT_WHATSAPP` diisi; URL kanonik dari `NEXT_PUBLIC_SITE_URL`.
 - Navigasi: `AppShell` menerima `navGroups` (`NavGroup { label?, items }`, `NavItem { href, label, icon, exact?, primary? }`); ikon berupa key string di `components/shared/nav-icon.tsx`. Menu admin dibangun di `app/admin/layout.tsx` dengan filter modul dan `canAccessPath`; di HP jadi tab bawah (item `primary`) + sheet "Menu".
+- Tata letak halaman: `PageHeader` (breadcrumb otomatis dari menu) lalu `Card`/`FramedCard`/`MetricCard`/`Table` berbingkai (`components/ui/`); ukuran kontrol ringkas hanya di dalam `.app-ui`; jangan menambah warna atau font baru, pakai token `--frame`/`--stripe`. `Card frame={false}` untuk halaman auth dan landing.
 - Suspended/cancelled mematikan akses lewat `tenants.is_active`; data tidak pernah dihapus.
 - Ganti/atur ulang kata sandi mencabut semua sesi lama lewat `profiles.sessions_valid_after`.
 - Aksi server yang dipakai sebagai form harus mengembalikan `ActionState` dan dibungkus `ActionForm`, supaya error tampil ke pengguna.

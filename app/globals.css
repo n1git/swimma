@@ -38,7 +38,7 @@ html {
   --sidebar-border: rgba(255, 255, 255, 0.1);
 
   --frame: color-mix(in oklab, var(--background) 55%, var(--muted));
-  --stripe: color-mix(in oklab, var(--frame) 94%, var(--foreground));
+  --stripe: color-mix(in oklab, var(--frame) 96%, var(--foreground));
   --radius-inner: calc(var(--radius) - 0.0625rem);
   --radius-frame: calc(var(--radius) + 0.125rem);
   --ease-ui: cubic-bezier(0.2, 0, 0, 1);
@@ -121,16 +121,18 @@ html {
   }
 }
 
-.hatch {
-  background:
-    repeating-linear-gradient(120deg, transparent 0 8px, var(--stripe) 8px 9px),
-    var(--frame);
-}
+@layer components {
+  .hatch {
+    background:
+      repeating-linear-gradient(120deg, transparent 0 8px, var(--stripe) 8px 9px),
+      var(--frame);
+  }
 
-.ui-transition {
-  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: var(--dur-2);
-  transition-timing-function: var(--ease-ui);
+  .ui-transition {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--dur-2);
+    transition-timing-function: var(--ease-ui);
+  }
 }
 
 @keyframes fade-up {

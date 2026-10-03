@@ -8,7 +8,7 @@ export function Card({ className, frame = true, ...props }: React.ComponentProps
       className={cn(
         "group/card min-w-0 border border-border text-card-foreground",
         frame
-          ? "hatch rounded-[var(--radius-frame)] p-[3px]"
+          ? "hatch rounded-[var(--radius-frame)] p-[3px] print:border-0 print:p-0 print:[background:none]"
           : "rounded-lg bg-card shadow-sm",
         className
       )}
@@ -33,7 +33,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
     <h2
       className={cn(
-        "text-lg font-semibold leading-none tracking-tight group-data-[frame=true]/card:text-sm group-data-[frame=true]/card:font-medium group-data-[frame=true]/card:text-muted-foreground",
+        "text-lg font-semibold leading-none tracking-tight group-data-[frame=true]/card:text-sm group-data-[frame=true]/card:font-medium group-data-[frame=true]/card:text-[color-mix(in_oklab,var(--muted-foreground)_75%,var(--foreground))]",
         className
       )}
       {...props}
@@ -42,7 +42,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
 }
 
 export function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("text-sm text-muted-foreground group-data-[frame=true]/card:text-xs", className)} {...props} />;
+  return <p className={cn("text-sm text-muted-foreground group-data-[frame=true]/card:text-xs group-data-[frame=true]/card:text-[color-mix(in_oklab,var(--muted-foreground)_75%,var(--foreground))]", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.ComponentProps<"div">) {

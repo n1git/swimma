@@ -13,7 +13,7 @@ export function RevenueByProgramChart({ data }: { data: RevenueByProgramPoint[] 
   const total = data.reduce((sum, d) => sum + Number(d.revenue), 0);
   const average = data.length ? total / data.length : 0;
   return (
-    <div>
+    <div className="relative">
       <ChartTotal label="Total" value={formatRupiahFull(total)} />
       <div className="h-72 w-full" role="img" aria-label="Diagram batang pendapatan per program, rinciannya ada pada tabel di bawah">
         <ResponsiveContainer width="100%" height="100%">

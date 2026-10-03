@@ -349,6 +349,16 @@ final call to action, footer. A signed-in session is redirected to its home.
   `NEXT_PUBLIC_CONTACT_WHATSAPP` (digits only). Contact links render only
   when set; with neither set no contact element exists.
 
+## Page layout (framed cards)
+
+Signed-in pages share one structure (the `.app-ui` class on the shell root scopes the compact control sizes, so the landing and auth pages keep theirs):
+
+- Start every page with `PageHeader` (`components/ui/page-header.tsx`): `title`, optional `subtitle`, and the page actions as children. It renders a breadcrumb built from the grouped navigation (group label, then item label) automatically; pass `breadcrumb` only to override it.
+- Put content in `Card` with `CardHeader` (title on the hatch, tools on the right) and `CardContent` (the inner body), or use `FramedCard` (`title`, `tools`, `bodyClassName`). `MetricCard` shows a title, a value and optionally a delta (`delta`, `deltaLabel`) and a sparkline (`spark`); only pass them when the page already has that data. A `Card` with `frame={false}` keeps the old flat look (used by the landing preview and the auth pages).
+- `Table` draws its own frame when it stands alone and drops it inside a card; put a list's search and filters in the card's `tools`.
+- Tokens: `--frame`, `--stripe`, `--radius-frame`, `--radius-inner`, `--ease-ui` and `--dur-1` to `--dur-4` (all 0 ms under reduced motion), plus the `.hatch` and `.ui-transition` utilities in `app/globals.css`. Colors and fonts are the existing tokens; do not add new ones for a page.
+- Charts: rounded bar tops, horizontal gridlines, a dashed reference line, a highlighted hover band, and a visually hidden table as the text alternative (`components/reports/chart-parts.tsx`).
+
 ## Platform billing (superadmin)
 
 Swimma bills clubs separately from how a club bills its members. A
@@ -442,6 +452,11 @@ status from `/superadmin`.
   hardware, CSV export of check-ins, push notifications.
 
 ## Changelog
+
+### 2026-10-10
+
+- Signed-in pages restyled to a framed card layout: hatched card frames with the title on the frame and the content in an inner body, page headers with breadcrumbs, metric cards, framed table cards with filters in the header, and rounded-top bar charts.
+- Full-height sidebar with a brand row, compact 32 px controls on desktop and 44 px controls on phones; motion uses shared durations that drop to zero under reduced motion. Colors, fonts, routes and permissions are unchanged.
 
 ### 2026-10-10
 
