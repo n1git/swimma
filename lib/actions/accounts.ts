@@ -6,6 +6,8 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { hashPassword, generateTempPassword } from "@/lib/auth/password";
 import { type ActionState } from "./types";
 
+const RESETTABLE_ROLES = new Set(["coach", "receptionist", "finance", "admin"]);
+
 const resetSchema = z.object({ profileId: z.string().uuid("Akun tidak valid") });
 
 export async function resetUserPassword(
@@ -17,16 +19,22 @@ export async function resetUserPassword(
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
 
   const supabase = createAdminSupabaseClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", parsed.data.profileId)
-    .eq("tenant_id", session.tenant_id)
-    .is("owner_id", null)
-    .is("member_account_id", null)
-    .neq("id", session.sub)
-    .maybeSingle();
-  if (!profile) return { ok: false, error: "Akun tidak ditemukan" };
+  const [{ data: profile }, { data: caller }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", parsed.data.profileId)
+      .eq("tenant_id", session.tenant_id)
+      .is("owner_id", null)
+      .is("member_account_id", null)
+      .neq("id", session.sub)
+      .maybeSingle(),
+    supabase.from("profiles").select("owner_id").eq("id", session.sub).maybeSingle(),
+  ]);
+  if (!profile || !RESETTABLE_ROLES.has(profile.role)) return { ok: false, error: "Akun tidak ditemukan" };
+  if (profile.role === "admin" && !caller?.owner_id) {
+    return { ok: false, error: "Hanya pemilik klub yang dapat mengatur ulang kata sandi admin" };
+  }
 
   const tempPassword = generateTempPassword();
   const { error: credError } = await supabase

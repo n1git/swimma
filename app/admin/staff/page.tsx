@@ -25,6 +25,7 @@ export default async function StaffPage() {
     .in("role", [...STAFF_ROLES])
     .order("full_name");
   const staff = data ?? [];
+  const callerIsOwner = Boolean(staff.find((p) => p.id === session?.sub)?.owner_id);
 
   return (
     <div className="flex flex-col gap-4">
@@ -77,7 +78,7 @@ export default async function StaffPage() {
                           {p.is_active ? "Nonaktifkan" : "Aktifkan Kembali"}
                         </ActionSubmitButton>
                       </ActionForm>
-                      <ResetPasswordForm profileId={p.id} label="staf" />
+                      {p.role !== "admin" || callerIsOwner ? <ResetPasswordForm profileId={p.id} label="staf" /> : null}
                     </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">-</span>

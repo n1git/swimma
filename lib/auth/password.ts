@@ -23,3 +23,12 @@ export function generateTempPassword(length = 10): string {
   }
   return out;
 }
+
+let dummyHash: Promise<string> | null = null;
+
+export async function verifyPasswordOrDummy(password: string, hash: string | null | undefined): Promise<boolean> {
+  if (hash) return verifyPassword(password, hash);
+  dummyHash ??= bcrypt.hash("dummy-password-for-timing", SALT_ROUNDS);
+  await verifyPassword(password, await dummyHash);
+  return false;
+}

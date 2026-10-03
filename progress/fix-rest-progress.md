@@ -2,8 +2,8 @@
 
 ## Status
 
-- [x] Phase 0: preparation (waiting for OK)
-- [ ] Phase 1: sessions, access, superadmin
+- [x] Phase 0: preparation (OK received)
+- [x] Phase 1: sessions, access, superadmin (migration 025; hosted pending)
 - [ ] Phase 2: money and billing
 - [ ] Phase 3: performance and pagination
 - [ ] Phase 4: public auth
@@ -41,3 +41,10 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 4. Public auth: uniform responses with dummy hash, Origin/Fetch-Metadata check, body and password caps, trusted client IP, fail-closed limiter; pending-verification signup with Resend link and Turnstile (skipped with a startup warning when unset); nonce CSP.
 5. Uploads, audit log, privacy: bucket limits and server checks, object removal and orphan script, class delete rule, https logo; `audit_log` with admin and owner views; consent records, `anonymise_member`, JSON export, `docs/RESTORE.md`.
 6. UI and validation: layout, labels, focusable tables, contrast, landmarks, targets; zod and CHECK limits (existing rows checked first); booking rules with the late-attendance confirmation; member form hint; final checks and docs.
+
+## Phase 1 done
+
+- Shared session check used by page guards, action guards, the change-password page and action, logout and session-ended; current password required unless a change is forced; password policy updated; logout ends the account's sessions on all devices; session-ended keeps a valid session.
+- Password resets by staff admins limited to coaches, receptionists and finance; owners can also reset staff admins; owner-linked profiles protected from staff admin updates; club-wide reference tables require an active session.
+- Platform admin: authenticator enrolment at first login, recovery codes, separate signing secret, revocable 12-hour sessions, failure limit per IP and account, reset script.
+- Local probes in `audit/` rerun for these items with the intended results; migration 025 applies on empty databases with both pgcrypto layouts and on the seeded data. Hosted pending.

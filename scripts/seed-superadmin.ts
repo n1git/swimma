@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 
 async function main() {
-  const email = process.env.SEED_SUPERADMIN_EMAIL;
+  const email = process.env.SEED_SUPERADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_SUPERADMIN_PASSWORD;
   const fullName = process.env.SEED_SUPERADMIN_NAME ?? "Superadmin";
 

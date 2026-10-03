@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { KeyRound } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { LogoutButton } from "./logout-button";
 import { MobileNav } from "./mobile-nav";
 import type { NavGroup } from "./nav-types";
@@ -32,6 +35,10 @@ export function AppShell({
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{fullName}</span>
           <ThemeToggle />
+          <Link href="/change-password" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <KeyRound className="size-4" aria-hidden="true" />
+            <span className="sr-only sm:not-sr-only">Kata sandi</span>
+          </Link>
           <LogoutButton />
         </div>
       </header>

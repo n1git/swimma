@@ -27,10 +27,11 @@ async function readAppRole(request: NextRequest): Promise<AppRole | null> {
 
 async function hasSuperadminSession(request: NextRequest): Promise<boolean> {
   const token = request.cookies.get(SUPERADMIN_COOKIE_NAME)?.value;
-  if (!token) return false;
+  const secret = process.env.SUPERADMIN_JWT_SECRET;
+  if (!token || !secret) return false;
   try {
-    const { payload } = await jwtVerify(token, getSecret(), { audience: SUPERADMIN_AUDIENCE });
-    return payload.superadmin === true;
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret), { audience: SUPERADMIN_AUDIENCE });
+    return payload.superadmin === true && typeof payload.sid === "string";
   } catch {
     return false;
   }

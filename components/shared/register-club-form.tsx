@@ -159,12 +159,13 @@ export function RegisterClubForm({
               name="password"
               type="password"
               required
-              minLength={8}
+              minLength={10}
+              maxLength={128}
               autoComplete="new-password"
               aria-describedby="password-hint"
             />
             <p id="password-hint" className="text-xs text-muted-foreground">
-              Minimal 8 karakter, berisi huruf dan angka.
+              Minimal 10 karakter, berisi huruf dan angka, dan bukan kata sandi umum.
             </p>
           </div>
           <Button type="submit" disabled={loading}>

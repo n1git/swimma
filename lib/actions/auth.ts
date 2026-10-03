@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { getSession, createSession } from "@/lib/auth/session";
+import { checkSession, sessionEndedPath } from "@/lib/auth/guard";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { hashPassword } from "@/lib/auth/password";
+import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { isKeyRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
 import { changePasswordSchema } from "@/lib/validations/auth";
 import { roleHome } from "@/lib/auth/roles";
 
@@ -16,11 +18,13 @@ export async function changePassword(
   formData: FormData
 ): Promise<ChangePasswordState> {
   const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
+  const check = await checkSession(session);
+  if (!check.ok) redirect(sessionEndedPath(check.reason));
+  const { ownerId, memberAccountId } = check.profile;
 
   const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword") ?? undefined,
     newPassword: formData.get("newPassword"),
   });
   if (!parsed.success) {
@@ -28,24 +32,39 @@ export async function changePassword(
   }
 
   const supabase = createAdminSupabaseClient();
+  const hashQuery = memberAccountId
+    ? supabase.from("member_accounts").select("password_hash").eq("id", memberAccountId)
+    : ownerId
+      ? supabase.from("org_owners").select("password_hash").eq("id", ownerId)
+      : supabase.from("auth_credentials").select("password_hash").eq("profile_id", session.sub);
+  const { data: current } = await hashQuery.maybeSingle();
+  if (!current?.password_hash) return { error: "Akun tidak ditemukan" };
+
+  if (!check.mustChangePassword) {
+    if (await isKeyRateLimited(`change-password:${session.sub}`, 10, 900)) return { error: RATE_LIMIT_ERROR };
+    if (!parsed.data.currentPassword || !(await verifyPassword(parsed.data.currentPassword, current.password_hash))) {
+      return { error: "Kata sandi saat ini salah" };
+    }
+  }
+  if (await verifyPassword(parsed.data.newPassword, current.password_hash)) {
+    return { error: "Kata sandi baru harus berbeda dari kata sandi saat ini" };
+  }
+
   const passwordHash = await hashPassword(parsed.data.newPassword);
   const validAfter = new Date(Math.floor(Date.now() / 1000) * 1000).toISOString();
 
-  const { data: own } = await supabase
-    .from("profiles")
-    .select("owner_id, member_account_id")
-    .eq("id", session.sub)
-    .maybeSingle();
-
-  if (own?.member_account_id) {
+  if (memberAccountId) {
     await supabase
       .from("member_accounts")
       .update({ password_hash: passwordHash, must_change_password: false })
-      .eq("id", own.member_account_id);
-    await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("member_account_id", own.member_account_id);
-  } else if (own?.owner_id) {
-    await supabase.from("org_owners").update({ password_hash: passwordHash }).eq("id", own.owner_id);
-    await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("owner_id", own.owner_id);
+      .eq("id", memberAccountId);
+    await supabase.from("profiles").update({ sessions_valid_after: validAfter }).eq("member_account_id", memberAccountId);
+  } else if (ownerId) {
+    await supabase.from("org_owners").update({ password_hash: passwordHash }).eq("id", ownerId);
+    await supabase
+      .from("profiles")
+      .update({ must_change_password: false, sessions_valid_after: validAfter })
+      .eq("owner_id", ownerId);
   } else {
     await supabase.from("auth_credentials").update({ password_hash: passwordHash }).eq("profile_id", session.sub);
     await supabase

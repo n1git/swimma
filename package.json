@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:superadmin": "tsx scripts/seed-superadmin.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "superadmin:reset-mfa": "tsx scripts/reset-superadmin-mfa.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

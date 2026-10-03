@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
-import { verifyPassword } from "@/lib/auth/password";
-import { createSuperadminSession } from "@/lib/auth/superadmin";
+import { verifyPasswordOrDummy } from "@/lib/auth/password";
+import { startSuperadminChallenge } from "@/lib/auth/superadmin";
+import { generateTotpSecret, otpauthUri, sealSecret } from "@/lib/auth/totp";
 import { superadminLoginSchema } from "@/lib/validations/auth";
-import { isRateLimited, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { clientIp, isKeyLocked, isRateLimited, recordFailure, RATE_LIMIT_ERROR } from "@/lib/auth/rate-limit";
+import { APP_NAME } from "@/lib/config";
 
-const LOCKOUT_THRESHOLD = 5;
-const LOCKOUT_MINUTES = 15;
+const FAIL_LIMIT = 5;
+const FAIL_WINDOW = 900;
 const GENERIC_ERROR = "Email atau kata sandi salah";
 
 export async function POST(request: Request) {
@@ -19,52 +21,32 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
-  const { email, password } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
+  const failKey = `superadmin-fail:${clientIp(request)}:${email}`;
 
   const supabase = createAdminSupabaseClient();
-  const { data: superadmin } = await supabase
-    .from("superadmins")
-    .select("id, email, full_name, password_hash, is_active, failed_login_count, locked_until")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (!superadmin || !superadmin.is_active) {
-    return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
-  }
-
-  if (superadmin.locked_until && new Date(superadmin.locked_until) > new Date()) {
-    return NextResponse.json(
-      { error: "Akun terkunci sementara karena terlalu banyak percobaan. Coba lagi nanti." },
-      { status: 423 }
-    );
-  }
-
-  const valid = await verifyPassword(password, superadmin.password_hash);
-  if (!valid) {
-    const nextCount = superadmin.failed_login_count + 1;
-    await supabase
+  const [{ data: superadmin }, locked] = await Promise.all([
+    supabase
       .from("superadmins")
-      .update({
-        failed_login_count: nextCount,
-        locked_until:
-          nextCount >= LOCKOUT_THRESHOLD
-            ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString()
-            : null,
-      })
-      .eq("id", superadmin.id);
+      .select("id, email, password_hash, is_active, totp_enabled_at")
+      .eq("email", email)
+      .maybeSingle(),
+    isKeyLocked(failKey, FAIL_LIMIT, FAIL_WINDOW),
+  ]);
+
+  const valid = await verifyPasswordOrDummy(parsed.data.password, superadmin?.password_hash);
+  if (!superadmin || !superadmin.is_active || locked || !valid) {
+    if (!locked) await recordFailure(failKey, FAIL_WINDOW);
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
   }
 
-  await supabase
-    .from("superadmins")
-    .update({ failed_login_count: 0, locked_until: null, last_login_at: new Date().toISOString() })
-    .eq("id", superadmin.id);
+  await startSuperadminChallenge(superadmin.id);
 
-  await createSuperadminSession({
-    id: superadmin.id,
-    email: superadmin.email,
-    fullName: superadmin.full_name,
-  });
+  if (superadmin.totp_enabled_at) {
+    return NextResponse.json({ step: "totp" });
+  }
 
-  return NextResponse.json({ redirectTo: "/superadmin" });
+  const secret = generateTotpSecret();
+  await supabase.from("superadmins").update({ totp_pending_secret: sealSecret(secret) }).eq("id", superadmin.id);
+  return NextResponse.json({ step: "enroll", secret, uri: otpauthUri(superadmin.email, secret, APP_NAME) });
 }
