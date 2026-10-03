@@ -1,14 +1,15 @@
 import { z } from "zod";
+import { nameField, phoneField } from "./limits";
 
 export const coachSchema = z.object({
-  fullName: z.string().min(2, "Nama pelatih wajib diisi"),
-  email: z.string().trim().toLowerCase().email("Email tidak valid"),
-  phone: z.string().optional(),
+  fullName: nameField("Nama pelatih"),
+  email: z.string().trim().toLowerCase().email("Email tidak valid").max(254, "Email terlalu panjang"),
+  phone: phoneField.optional(),
 });
 
 export const coachUpdateSchema = z.object({
-  fullName: z.string().min(2, "Nama pelatih wajib diisi"),
-  phone: z.string().optional(),
+  fullName: nameField("Nama pelatih"),
+  phone: phoneField.optional(),
   specialization: z.string().trim().max(200, "Spesialisasi terlalu panjang").optional(),
   sessionRate: z.coerce.number().nonnegative("Tarif per sesi tidak valid").optional(),
   isHeadCoach: z.boolean(),

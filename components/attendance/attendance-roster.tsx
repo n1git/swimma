@@ -86,6 +86,8 @@ export function AttendanceRoster({
                     name="notes"
                     defaultValue={b.notes ?? ""}
                     placeholder="Tambahkan catatan..."
+                    maxLength={2000}
+                    aria-label={`Catatan untuk ${b.memberName}`}
                     className="min-w-40"
                     onBlur={(e) => {
                       if (e.target.value === (b.notes ?? "")) return;

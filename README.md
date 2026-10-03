@@ -443,6 +443,14 @@ status from `/superadmin`.
 
 ## Changelog
 
+### 2026-10-10
+
+- Sign-out and password changes end every session of the account; platform admins sign in with an authenticator app and recovery codes.
+- Invoices, payroll and order cancellations change only through database functions, with reasons and linked reversal entries; expired trials and pending organizations keep read access only.
+- Paginated lists and faster row policies; club registration verifies the owner's email and a captcha when those services are configured.
+- Audit log, consent records, member data export and anonymisation, and stricter promo image checks.
+- Booking rules for started classes and members without an active package (admins can record late attendance), matching length and date limits in forms and database, and phone layout, contrast and touch target fixes.
+
 ### 2026-10-09
 
 - Migration 019 no longer depends on where `pgcrypto` is installed, so the migrations apply on the hosted layout (`pgcrypto` in `extensions`) and on a plain local one.

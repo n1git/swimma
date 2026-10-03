@@ -8,7 +8,7 @@
 - [x] Phase 3: performance and pagination (migration 027; hosted pending)
 - [x] Phase 4: public auth (migration 028; hosted pending)
 - [x] Phase 5: uploads, audit log, privacy (migration 029; hosted pending)
-- [ ] Phase 6: UI, validation, finish
+- [x] Phase 6: UI, validation, finish (migration 030; hosted pending)
 
 Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN` or `DATABASE_URL` in the environment; hosted is at migration 011). Started with the user's go-ahead although the hosted part of `fix-hosted` is still open.
 
@@ -76,3 +76,18 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 - Append-only audit log written by database triggers and server functions (password resets and changes, staff role and status, member status and anonymisation, account activation, invoice payment and void, order void, plan and subscription changes, platform admin actions); `/admin/audit` for club admins with an organization view for owners.
 - Consent records with policy version at registration and member creation (guardian name for members under 18), described on the privacy draft; member anonymisation (admin, reason, typed confirmation) keeps financial and attendance rows; JSON export for admins per member and for members themselves; `docs/RESTORE.md` (not yet rehearsed).
 - Local checks in `audit/fix/audit.sql` and `audit/appsec/f5_*` passed. Upload to real storage and object removal not verifiable locally (no storage service). Hosted pending.
+
+## Phase 6 done
+
+- Layout: no horizontal page scroll at 375, 768 and 1440 px in both themes on the local page sweep (49 pages across roles); filter selects labelled; scrolling tables focusable; muted text and chart tooltips meet contrast in both themes; `<main>` landmarks and heading order fixed; table action and back links at least 44 px tall on phones.
+- Limits in forms and database: names 200 characters, free text 2,000, birth date from 1900 to today (WIB), promo end not before start, no overlapping payroll periods per coach. Migration 030 skips a check with a warning when existing rows break it; locally only demo rows from an earlier seed edge case (12 names of 201 characters) did, the seed now stays at 200.
+- Class bookings go through `book_class`: none on started classes and an active package on the class date required; an admin can record late attendance after a confirmation, written to the audit log. The member form explains and links to adding a coach when none exists. The cash book amount field accepts any whole rupiah amount.
+
+## Final checks
+
+- Build, typecheck and lint pass (lint warnings only in untracked local probes).
+- Saved probes rerun on the local data through 030: row policy matrix and scenarios unchanged except the intended new tables and the attended-class rule; sessions, revocation, logout, reset limits, platform admin MFA, money, billing, races, uploads, audit log, anonymisation, export, consent and public auth checks behave as intended; page statements stay under 36 ms on the load club.
+- Accessibility sweep: no critical or serious axe results. Playwright smoke per role (sign in, change password, sign out, old cookie refused, one core task per module, validation rejected in form and database): 42/42.
+- Migration 030 applies on an empty database with both pgcrypto layouts, on the hosted-like layout and on seeded data; demo seed and purge run through 030.
+- Hosted: pending. Migrations 012-030 still to apply; needs `SUPABASE_ACCESS_TOKEN` or `DATABASE_URL`.
+

@@ -102,7 +102,7 @@ begin
         case
           when g <= 3 then firsts[g] || ' ' || lasts[g]
           when g between 4 and 6 then firsts[g - 3] || ' ' || lasts[g - 3]
-          when g = 7 then repeat('Nama Sangat Panjang ', 10) || g
+          when g = 7 then left(repeat('Nama Sangat Panjang ', 10), 199) || g
           else firsts[1 + floor(random() * array_length(firsts, 1))::int] || ' ' || lasts[1 + floor(random() * array_length(lasts, 1))::int]
         end,
         case when g % 3 = 0 then date '1985-01-01' + floor(random() * 6000)::int else date '2012-01-01' + floor(random() * 3000)::int end,

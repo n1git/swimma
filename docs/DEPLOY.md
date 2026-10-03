@@ -31,13 +31,14 @@ Migrations are not idempotent; apply each once. Do not edit an applied migration
 | Range | State on the hosted project |
 |---|---|
 | 001-011 | Applied; pgcrypto is back in `extensions` |
-| 012-024 | Pending: no credential was available when this was written. Needed: `SUPABASE_ACCESS_TOKEN` (CLI) or `DATABASE_URL` in the environment |
+| 012-030 | Pending: no credential was available when this was written. Needed: `SUPABASE_ACCESS_TOKEN` (CLI) or `DATABASE_URL` in the environment |
 
 Migration 024 sets the privileges of the public schema: no `TRUNCATE`, `REFERENCES` or `TRIGGER` for `anon` and `authenticated`, execute on functions only for `authenticated` and `service_role`, a fixed `search_path` on every function, and no client access to the retired plan tables. New functions follow the same defaults; a helper that row policies call must be granted to `authenticated` explicitly if it was created with a revoke.
 
 ### After the last migration
 
-1. `select count(*) from information_schema.tables where table_schema = 'public'` must equal the local count (39 tables) and every table must have RLS on.
+1. `select count(*) from pg_tables where schemaname = 'public'` must equal the local count (44 tables) and `select count(*) from pg_tables where schemaname = 'public' and not rowsecurity` must return 0.
+   - Migration 030 adds length, date and period checks. If existing rows break one of them, that check is skipped with a `WARNING` naming it; correct those rows and add the check by hand with the definition from the migration.
 2. Run the Supabase security and performance advisors; expect "extension in public" for `btree_gist` and `pg_trgm` only.
    - Catalog check: no row for `anon` or `authenticated` in `information_schema.role_table_grants` with privilege `TRUNCATE`, `REFERENCES` or `TRIGGER`, and `select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and has_function_privilege('anon', p.oid, 'execute')` returns only extension functions.
    - Move pgcrypto back to `extensions` if it was moved (see above).

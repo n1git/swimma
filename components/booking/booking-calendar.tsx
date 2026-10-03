@@ -146,7 +146,7 @@ export function BookingCalendar({
                     summary.tone === "free" && "border-dashed border-border bg-card hover:bg-accent",
                     summary.tone === "part" && "border-primary/30 bg-primary/5 hover:bg-primary/10",
                     summary.tone === "full" && "border-primary/40 bg-primary/10 hover:bg-primary/15",
-                    past && "opacity-60"
+                    past && "border-solid bg-muted hover:bg-muted"
                   )}
                 >
                   <span className="text-xs tabular-nums text-muted-foreground">

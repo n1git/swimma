@@ -121,7 +121,7 @@ export default async function SchedulePage({
               <TableCell>
                 <Link
                   href={`/admin/schedule/${cls.id}`}
-                  className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-2 hover:underline md:min-h-6"
                 >
                   Kelola
                 </Link>

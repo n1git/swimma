@@ -74,7 +74,7 @@ export async function CoachCertifications({ coachId }: { coachId: string }) {
         <input type="hidden" name="coachId" value={coachId} />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="certName">Nama Sertifikasi</Label>
-          <Input id="certName" name="name" required />
+          <Input id="certName" name="name" required maxLength={200} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="certNumber">Nomor</Label>

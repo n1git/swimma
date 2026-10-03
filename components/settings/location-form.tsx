@@ -21,11 +21,11 @@ export function LocationForm() {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="location-name">Nama Lokasi</Label>
-        <Input id="location-name" name="name" required />
+        <Input id="location-name" name="name" required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="location-address">Alamat</Label>
-        <Input id="location-address" name="address" />
+        <Input id="location-address" name="address" maxLength={2000} />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">
         {pending ? "Menyimpan..." : "Tambah Lokasi"}

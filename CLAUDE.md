@@ -5,7 +5,7 @@ Always use the lean-dev skill.
 ## Catatan tim (per 2026-10-01)
 
 Status
-- Production Vercel: READY. Supabase project `swimma` masih kosong; migrasi 001-019 belum diterapkan dan env Supabase di Vercel belum mengarah ke project itu. `SUPABASE_SERVICE_ROLE_KEY` dan `SUPABASE_JWT_SECRET` harus diisi manual dari dashboard (project butuh legacy HS256 JWT secret).
+- Production Vercel: READY. Supabase project `swimma` masih kosong; migrasi 001-011 sudah diterapkan, 012-030 belum (butuh `SUPABASE_ACCESS_TOKEN` atau `DATABASE_URL`, lihat `docs/DEPLOY.md`), dan env Supabase di Vercel belum mengarah ke project itu. `SUPABASE_SERVICE_ROLE_KEY` dan `SUPABASE_JWT_SECRET` harus diisi manual dari dashboard (project butuh legacy HS256 JWT secret).
 - Setelah migrasi: `npm run seed:superadmin` untuk akun superadmin pertama. Jangan terapkan migrasi 012-019 sebelum kode versi ini dideploy (pemilik dipindah ke `org_owners`, parent dihapus, langganan pindah ke organisasi). Halaman harga di landing kosong sampai 014 diterapkan (harga hanya ada di tabel). Vercel Authentication masih aktif, situs belum publik. GitHub Pages (`mvp/`) gagal sampai Pages diaktifkan.
 - Dua paket, Standard dan Advanced, semua modul `ready` termasuk di keduanya; yang membedakan hanya batas klub dan trial (`KAJIAN_PAKET.md`). Anggota dan lokasi tidak dibatasi.
 
@@ -39,3 +39,6 @@ Aturan teknis
 - Ganti/atur ulang kata sandi mencabut semua sesi lama lewat `profiles.sessions_valid_after`.
 - Aksi server yang dipakai sebagai form harus mengembalikan `ActionState` dan dibungkus `ActionForm`, supaya error tampil ke pengguna.
 - Fungsi `security definer` baru wajib di-`revoke execute ... from public, anon, authenticated` kecuali memang untuk klien.
+- Booking kelas lewat RPC `book_class` (trigger `enforce_booking_rules`): `BK001` kelas sudah mulai, `BK002` tanpa paket aktif di tanggal kelas; hanya admin yang boleh melewatinya dengan `p_late_attendance` (tercatat di log audit). Insert tanpa JWT (seed/service role) tidak dicek.
+- Batas data: nama 200, teks bebas 2.000, tanggal lahir 1900..hari ini (WIB), promo berakhir >= mulai, periode gaji per pelatih tidak tumpang tindih; zod (`lib/validations/limits.ts`) dan `CHECK` di database harus sama.
+- Log audit (`audit_log`) hanya ditambah: lewat trigger atau `logAudit` (`lib/audit.ts`, service role). Superadmin wajib TOTP (`SUPERADMIN_JWT_SECRET`).

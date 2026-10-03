@@ -25,7 +25,7 @@ export function ProductForm({ product, categories }: { product?: Product; catego
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`pf-name-${id}`}>Nama produk</Label>
-        <Input id={`pf-name-${id}`} name="name" defaultValue={product?.name} required />
+        <Input id={`pf-name-${id}`} name="name" defaultValue={product?.name} required maxLength={120} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">

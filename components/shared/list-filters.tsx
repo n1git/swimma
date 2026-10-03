@@ -45,14 +45,17 @@ export function ListFilters({ fields }: { fields: FilterField[] }) {
             placeholder={field.placeholder}
             defaultValue={searchParams.get(field.name) ?? ""}
             onChange={(e) => handleSearchChange(field.name, e.target.value)}
-            className="max-w-xs"
+            className="w-full sm:max-w-xs"
+            aria-label={field.placeholder}
+            type="search"
           />
         ) : (
           <Select
             key={field.name}
             defaultValue={searchParams.get(field.name) ?? ""}
             onChange={(e) => updateParam(field.name, e.target.value)}
-            className="w-auto"
+            className="w-full min-w-0 sm:w-auto"
+            aria-label={field.placeholder}
           >
             <option value="">{field.placeholder}</option>
             {field.options?.map((opt) => (

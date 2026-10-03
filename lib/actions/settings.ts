@@ -44,6 +44,8 @@ export async function createLocation(
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   if (!name) return { ok: false, error: "Nama lokasi wajib diisi" };
+  if (name.length > 200) return { ok: false, error: "Nama lokasi maksimal 200 karakter" };
+  if (address.length > 2000) return { ok: false, error: "Alamat maksimal 2.000 karakter" };
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.from("locations").insert({ name, address: address || null });
@@ -67,6 +69,8 @@ export async function createClassType(
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   if (!name) return { ok: false, error: "Nama jenis kelas wajib diisi" };
+  if (name.length > 200) return { ok: false, error: "Nama jenis kelas maksimal 200 karakter" };
+  if (description.length > 2000) return { ok: false, error: "Deskripsi maksimal 2.000 karakter" };
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase

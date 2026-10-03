@@ -23,11 +23,11 @@ export function PromoForm() {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Judul</Label>
-        <Input id="title" name="title" required />
+        <Input id="title" name="title" required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="body">Isi</Label>
-        <Textarea id="body" name="body" required />
+        <Textarea id="body" name="body" required maxLength={2000} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="image">Gambar (opsional)</Label>

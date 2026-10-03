@@ -24,15 +24,15 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex items-center print:hidden justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2">
-          <span className="font-heading text-base font-semibold tracking-tight text-primary">{clubName}</span>
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-4 py-3 print:hidden sm:px-6">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="min-w-0 truncate font-heading text-base font-semibold tracking-tight text-primary">{clubName}</span>
           <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
             {roleLabel}
           </span>
           {tenantSwitcher}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">{fullName}</span>
           <ThemeToggle />
           <Link href="/change-password" className={buttonVariants({ variant: "ghost", size: "sm" })}>

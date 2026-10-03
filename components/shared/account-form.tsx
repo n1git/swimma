@@ -63,7 +63,7 @@ export function AccountForm({
       <TempPasswordNotice password={state.tempPassword} />
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="fullName">Nama {title}</Label>
-        <Input id="fullName" name="fullName" required />
+        <Input id="fullName" name="fullName" required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
@@ -71,7 +71,7 @@ export function AccountForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="phone">Telepon</Label>
-        <Input id="phone" name="phone" />
+        <Input id="phone" name="phone" maxLength={30} />
       </div>
       {roleOptions ? (
         <div className="flex flex-col gap-1.5">

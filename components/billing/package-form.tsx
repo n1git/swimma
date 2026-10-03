@@ -30,7 +30,7 @@ export function PackageForm() {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="name">Nama Paket</Label>
-        <Input id="name" name="name" required />
+        <Input id="name" name="name" required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="pricingMode">Tipe Paket</Label>
@@ -76,7 +76,7 @@ export function PackageForm() {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">Deskripsi</Label>
-        <Input id="description" name="description" />
+        <Input id="description" name="description" maxLength={2000} />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">
         {pending ? "Menyimpan..." : "Tambah Paket"}

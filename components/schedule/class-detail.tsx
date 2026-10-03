@@ -35,7 +35,7 @@ export async function ClassDetail({ id, role, variant }: { id: string; role: App
   const supabase = await createServerSupabaseClient();
   const isAdmin = role === "admin";
 
-  const [{ data: cls }, { data: bookings }, { data: allMembers }, coaches] = await Promise.all([
+  const [{ data: cls }, { data: bookings }, coaches] = await Promise.all([
     supabase
       .from("classes")
       .select(
@@ -44,7 +44,6 @@ export async function ClassDetail({ id, role, variant }: { id: string; role: App
       .eq("id", id)
       .maybeSingle(),
     supabase.from("bookings").select("id, is_attended, members(id, full_name)").eq("class_id", id),
-    supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
     isAdmin ? getActiveCoaches() : Promise.resolve([]),
   ]);
 
@@ -52,10 +51,7 @@ export async function ClassDetail({ id, role, variant }: { id: string; role: App
 
   const info = cls as unknown as ClassInfo;
   const rows = (bookings ?? []) as unknown as BookingRow[];
-  const bookedMemberIds = new Set(rows.map((b) => b.members.id));
-  const availableMembers = (allMembers ?? [])
-    .filter((m) => !bookedMemberIds.has(m.id))
-    .map((m) => ({ id: m.id, name: m.full_name }));
+  const classStarted = new Date(info.start_time).getTime() <= new Date().getTime();
   const Title = variant === "page" ? "h1" : "h2";
 
   return (
@@ -148,7 +144,7 @@ export async function ClassDetail({ id, role, variant }: { id: string; role: App
             ) : null}
           </TableBody>
         </Table>
-        <AddBookingForm classId={id} availableMembers={availableMembers} />
+        <AddBookingForm classId={id} isAdmin={isAdmin} classStarted={classStarted} />
       </section>
     </div>
   );

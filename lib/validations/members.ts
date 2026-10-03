@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { birthDateField, longText, nameField, phoneField } from "./limits";
 
 const optionalId = z
   .string()
@@ -6,12 +7,12 @@ const optionalId = z
   .transform((v) => (v ? v : undefined));
 
 export const memberSchema = z.object({
-  fullName: z.string().trim().min(2, "Nama anggota wajib diisi"),
-  dateOfBirth: z.string().min(1, "Tanggal lahir wajib diisi"),
+  fullName: nameField("Nama anggota"),
+  dateOfBirth: birthDateField,
   coachId: z.string().uuid("Pilih pelatih"),
-  contactName: z.string().trim().optional(),
-  contactPhone: z.string().trim().optional(),
-  notes: z.string().optional(),
-  address: z.string().optional(),
+  contactName: z.string().trim().max(200, "Nama kontak maksimal 200 karakter").optional(),
+  contactPhone: phoneField.optional(),
+  notes: longText("Catatan").optional(),
+  address: longText("Alamat").optional(),
   preferredLocationId: optionalId,
 });

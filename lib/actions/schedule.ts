@@ -83,17 +83,29 @@ export async function addBooking(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireActionRole(["admin", "receptionist"]);
+  const session = await requireActionRole(["admin", "receptionist"]);
   const memberId = String(formData.get("memberId") ?? "");
   if (!memberId) {
     return { ok: false, error: "Pilih anggota yang akan didaftarkan" };
   }
+  const late = formData.get("lateAttendance") === "on";
+  if (late && session.app_role !== "admin") {
+    return { ok: false, error: "Hanya admin yang bisa mencatat kehadiran susulan" };
+  }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("bookings").insert({ member_id: memberId, class_id: classId });
+  const { error } = await supabase.rpc("book_class", {
+    p_class_id: classId,
+    p_member_id: memberId,
+    p_late_attendance: late,
+  });
 
   if (error) {
     if (error.code === "SW003") return { ok: false, error: error.message };
+    if (error.code === "BK001" || error.code === "BK002") {
+      const hint = session.app_role === "admin" ? " Centang \"Catat kehadiran susulan\" bila memang perlu." : "";
+      return { ok: false, error: `${error.message}.${hint}` };
+    }
     if (error.code === "23505") {
       return { ok: false, error: "Anggota ini sudah terdaftar di kelas ini" };
     }
@@ -104,7 +116,7 @@ export async function addBooking(
   }
 
   revalidatePath(`/admin/schedule/${classId}`);
-  return { ok: true };
+  return { ok: true, message: late ? "Kehadiran susulan dicatat" : "Anggota didaftarkan" };
 }
 
 export async function removeBooking(_prevState: ActionState, formData: FormData): Promise<ActionState> {

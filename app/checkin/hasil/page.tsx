@@ -23,7 +23,7 @@ export default async function CheckinResultPage({
   ]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
+    <main className="flex min-h-screen items-center justify-center bg-secondary p-4">
       <Card className="w-full max-w-sm text-center">
         <CardHeader className="items-center gap-3">
           {success ? (
@@ -60,6 +60,6 @@ export default async function CheckinResultPage({
           </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

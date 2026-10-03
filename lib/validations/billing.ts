@@ -1,20 +1,21 @@
 import { z } from "zod";
+import { longText, nameField } from "./limits";
 
 export const packageSchema = z.discriminatedUnion("pricingMode", [
   z.object({
     pricingMode: z.literal("cycle"),
-    name: z.string().min(2, "Nama paket wajib diisi"),
+    name: nameField("Nama paket"),
     price: z.coerce.number().nonnegative("Harga tidak valid"),
     billingCycle: z.enum(["monthly", "quarterly", "yearly"]),
-    description: z.string().optional(),
+    description: longText("Deskripsi").optional(),
   }),
   z.object({
     pricingMode: z.literal("session_pack"),
-    name: z.string().min(2, "Nama paket wajib diisi"),
+    name: nameField("Nama paket"),
     price: z.coerce.number().nonnegative("Harga tidak valid"),
     sessionsIncluded: z.coerce.number().int().positive("Jumlah sesi tidak valid"),
     validityWeeks: z.coerce.number().int().positive("Masa berlaku tidak valid"),
-    description: z.string().optional(),
+    description: longText("Deskripsi").optional(),
   }),
 ]);
 

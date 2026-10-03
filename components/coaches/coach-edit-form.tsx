@@ -37,11 +37,11 @@ export function CoachEditForm({ coach }: { coach: CoachDetail }) {
         ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="fullName">Nama Pelatih</Label>
-          <Input id="fullName" name="fullName" defaultValue={coach.full_name} required />
+          <Input id="fullName" name="fullName" defaultValue={coach.full_name} required maxLength={200} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="phone">Telepon</Label>
-          <Input id="phone" name="phone" defaultValue={coach.phone ?? ""} />
+          <Input id="phone" name="phone" defaultValue={coach.phone ?? ""} maxLength={30} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="specialization">Spesialisasi</Label>

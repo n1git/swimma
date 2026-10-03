@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const tenantBrandingSchema = z.object({
-  name: z.string().trim().min(1, "Nama klub wajib diisi"),
+  name: z.string().trim().min(1, "Nama klub wajib diisi").max(200, "Nama klub maksimal 200 karakter"),
   logoUrl: z
     .string()
     .trim()

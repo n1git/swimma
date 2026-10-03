@@ -27,7 +27,7 @@ export function ResourceForm({ locations, resource }: { locations: Lookup[]; res
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`rf-name-${id}`}>Nama</Label>
-          <Input id={`rf-name-${id}`} name="name" defaultValue={resource?.name} required />
+          <Input id={`rf-name-${id}`} name="name" defaultValue={resource?.name} required maxLength={80} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`rf-kind-${id}`}>Jenis</Label>

@@ -32,6 +32,7 @@ export async function updateBookingNotes(_prevState: ActionState, formData: Form
   const bookingId = String(formData.get("bookingId"));
   const classId = String(formData.get("classId"));
   const notes = String(formData.get("notes") ?? "").trim();
+  if (notes.length > 2000) return { ok: false, error: "Catatan maksimal 2.000 karakter" };
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase

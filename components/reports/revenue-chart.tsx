@@ -16,7 +16,7 @@ export function RevenueByProgramChart({ data }: { data: RevenueByProgramPoint[] 
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="package_name" fontSize={12} />
           <YAxis fontSize={12} tickFormatter={formatRupiahCompact} width={80} />
-          <Tooltip formatter={(value) => formatRupiahFull(value)} />
+          <Tooltip formatter={(value) => formatRupiahFull(value)} contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", color: "var(--color-card-foreground)" }} labelStyle={{ color: "var(--color-card-foreground)" }} itemStyle={{ color: "var(--color-card-foreground)" }} />
           <Bar dataKey="revenue" fill="var(--color-primary)" name="Pendapatan" />
         </BarChart>
       </ResponsiveContainer>

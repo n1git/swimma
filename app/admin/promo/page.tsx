@@ -34,9 +34,9 @@ export default async function PromoAdminPage() {
             new Date(p.active_from) <= now && (!p.active_until || new Date(p.active_until) >= now);
           return (
             <Card key={p.id}>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{p.title}</CardTitle>
-                <Badge variant={isActive ? "success" : "secondary"}>
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <CardTitle className="min-w-0 break-words leading-snug">{p.title}</CardTitle>
+                <Badge variant={isActive ? "success" : "secondary"} className="shrink-0">
                   {isActive ? "Aktif" : "Tidak Aktif"}
                 </Badge>
               </CardHeader>

@@ -31,12 +31,12 @@ export function AdjustmentForm() {
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="amount">Jumlah (Rp)</Label>
-          <Input id="amount" name="amount" type="number" min={1} step={1000} required />
+          <Input id="amount" name="amount" type="number" min={1} step={1} required />
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="reason">Alasan</Label>
-        <Textarea id="reason" name="reason" required minLength={3} />
+        <Textarea id="reason" name="reason" required minLength={3} maxLength={2000} />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">
         {pending ? "Menyimpan..." : "Tambah Penyesuaian"}

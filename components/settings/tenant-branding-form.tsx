@@ -29,7 +29,7 @@ export function TenantBrandingForm({
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="tenant-name">Nama Klub</Label>
-        <Input id="tenant-name" name="name" defaultValue={name} required />
+        <Input id="tenant-name" name="name" defaultValue={name} required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="tenant-logo">URL Logo</Label>

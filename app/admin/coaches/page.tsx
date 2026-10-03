@@ -87,7 +87,7 @@ export default async function CoachesPage({
               <TableCell>
                 <Link
                   href={`/admin/coaches/${coach.id}`}
-                  className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-2 hover:underline md:min-h-6"
                 >
                   Kelola
                 </Link>

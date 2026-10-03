@@ -21,11 +21,11 @@ export function ClassTypeForm() {
       ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="class-type-name">Nama Jenis Kelas</Label>
-        <Input id="class-type-name" name="name" required />
+        <Input id="class-type-name" name="name" required maxLength={200} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="class-type-description">Deskripsi</Label>
-        <Input id="class-type-description" name="description" />
+        <Input id="class-type-description" name="description" maxLength={2000} />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">
         {pending ? "Menyimpan..." : "Tambah Jenis Kelas"}
