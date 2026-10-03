@@ -73,6 +73,8 @@ export default async function AdminDashboardPage() {
           title="Total Pendapatan"
           value={formatRupiah(data.totalRevenue)}
           spark={data.revenueSpark}
+          delta={data.revenueDelta ?? undefined}
+          deltaLabel="vs 7 hari lalu"
         />
         <MetricCard
           title="Tagihan Belum Bayar"
@@ -82,6 +84,8 @@ export default async function AdminDashboardPage() {
           title="Saldo Kas"
           value={formatRupiah(data.cashBalance)}
           spark={data.balanceSpark}
+          delta={data.balanceDelta ?? undefined}
+          deltaLabel="vs 14 hari lalu"
         />
         <MetricCard
           title="Anggota Aktif / Nonaktif"

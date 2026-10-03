@@ -32,6 +32,8 @@ export interface DashboardData {
     amount: number;
     dueDate: string;
   }[];
+  revenueDelta: number | null;
+  balanceDelta: number | null;
   revenueSpark: number[];
   balanceSpark: number[];
   recentCashEntries: {
@@ -140,7 +142,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     balanceSpark.push(carry);
   }
 
+  const pctChange = (now: number, before: number) =>
+    before > 0 ? Math.round(((now - before) / before) * 1000) / 10 : null;
+  const revenueSeries = sparkDays.map((d) => revenueByDay.get(d) ?? 0);
+  const half = SPARK_DAYS / 2;
+  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+
   return {
+    revenueDelta: pctChange(sum(revenueSeries.slice(half)), sum(revenueSeries.slice(0, half))),
+    balanceDelta: pctChange(balanceSpark[balanceSpark.length - 1], balanceSpark[0]),
     revenueSpark: sparkDays.map((d) => revenueByDay.get(d) ?? 0),
     balanceSpark,
     totalRevenue,

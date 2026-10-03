@@ -2,14 +2,15 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
-function Sparkline({ values }: { values: number[] }) {
+function Sparkline({ values, className }: { values: number[]; className?: string }) {
   if (values.length < 2) return null;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = max - min || 1;
   const points = values.map((v, i) => `${(i / (values.length - 1)) * 80},${28 - ((v - min) / span) * 24 - 2}`).join(" ");
   return (
-    <svg viewBox="0 0 80 28" className="h-7 w-20 shrink-0 text-primary" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 80 28" className={cn("h-8 w-24 shrink-0", className)} aria-hidden="true" focusable="false">
+      <polygon points={`0,28 ${points} 80,28`} fill="currentColor" opacity="0.12" />
       <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -49,7 +50,7 @@ export function MetricCard({
             </p>
           ) : null}
         </div>
-        {spark ? <Sparkline values={spark} /> : null}
+        {spark ? <Sparkline values={spark} className={delta === undefined ? "text-primary" : up ? "text-success" : "text-destructive"} /> : null}
       </CardContent>
     </Card>
   );
