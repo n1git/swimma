@@ -31,7 +31,8 @@ export function PromoForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="image">Gambar (opsional)</Label>
-        <Input id="image" name="image" type="file" accept="image/*" />
+        <Input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="image-hint" />
+        <p id="image-hint" className="text-xs text-muted-foreground">PNG, JPEG, atau WebP, maksimal 2 MB.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">

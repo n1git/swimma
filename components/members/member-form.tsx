@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useActionToast } from "@/components/shared/use-action-toast";
 import { MemberFields } from "./member-fields";
+import { MemberConsentFields } from "./member-consent-fields";
 import type { Lookup } from "@/lib/data/lookups";
 
 export function MemberForm({ locations, coaches }: { locations: Lookup[]; coaches: Lookup[] }) {
@@ -36,6 +37,7 @@ export function MemberForm({ locations, coaches }: { locations: Lookup[]; coache
       ) : null}
 
       <MemberFields coaches={coaches} locations={locations} onNameChange={setName} onBirthDateChange={setDob} />
+      <MemberConsentFields dateOfBirth={dob} />
 
       {duplicates.length > 0 ? (
         <Alert variant="warning">

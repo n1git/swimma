@@ -2,7 +2,13 @@ import { z } from "zod";
 
 export const tenantBrandingSchema = z.object({
   name: z.string().trim().min(1, "Nama klub wajib diisi"),
-  logoUrl: z.string().trim().url("URL logo tidak valid").optional(),
+  logoUrl: z
+    .string()
+    .trim()
+    .max(500, "URL logo terlalu panjang")
+    .url("URL logo tidak valid")
+    .refine((value) => value.startsWith("https://"), "URL logo harus diawali https://")
+    .optional(),
   primaryColor: z
     .string()
     .trim()

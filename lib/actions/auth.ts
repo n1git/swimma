@@ -1,5 +1,6 @@
 "use server";
 
+import { logAudit } from "@/lib/audit";
 import { redirect } from "next/navigation";
 import { getSession, createSession } from "@/lib/auth/session";
 import { checkSession, sessionEndedPath } from "@/lib/auth/guard";
@@ -72,6 +73,15 @@ export async function changePassword(
       .update({ must_change_password: false, sessions_valid_after: validAfter })
       .eq("id", session.sub);
   }
+
+  await logAudit({
+    action: "password.change",
+    targetType: "profile",
+    targetId: session.sub,
+    tenantId: session.tenant_id,
+    actorId: session.sub,
+    actorRole: session.app_role,
+  });
 
   await createSession({
     id: session.sub,

@@ -11,6 +11,7 @@ import { verifyCaptcha } from "@/lib/captcha";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
 import { APP_NAME } from "@/lib/config";
+import { PRIVACY_VERSION } from "@/lib/privacy";
 
 const GENERIC_ERROR = "Pendaftaran tidak dapat diproses. Periksa data Anda atau masuk jika sudah punya akun.";
 
@@ -33,6 +34,19 @@ function existingAccountEmail() {
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+type Created = { organization_id: string; tenant_id: string; owner_id: string; profile_id: string };
+
+async function recordOwnerConsent(created: Created) {
+  await createAdminSupabaseClient().from("consents").insert({
+    tenant_id: created.tenant_id,
+    organization_id: created.organization_id,
+    subject_type: "owner",
+    subject_id: created.owner_id,
+    kind: "terms_privacy",
+    version: PRIVACY_VERSION,
+  });
 }
 
 export async function POST(request: Request) {
@@ -79,12 +93,14 @@ export async function POST(request: Request) {
     const token = randomBytes(32).toString("base64url");
     const tokenHash = createHash("sha256").update(token).digest("hex");
     await supabase.rpc("discard_unverified_registration", { p_email: ownerEmail });
-    const { error } = await supabase.rpc("register_organization_unverified", { ...args, p_token_hash: tokenHash });
-    if (!error) {
+    const { data, error } = await supabase.rpc("register_organization_unverified", { ...args, p_token_hash: tokenHash });
+    const pending = (data as Created[] | null)?.[0];
+    if (!error && pending) {
+      await recordOwnerConsent(pending);
       await sendEmail({ to: ownerEmail, ...verificationEmail(`${SITE_URL}/api/onboarding/verify?token=${token}`, ownerFullName) });
-    } else if (error.code === "23505") {
+    } else if (error?.code === "23505") {
       await sendEmail({ to: ownerEmail, ...existingAccountEmail() });
-    } else if (error.message.includes("club type not available") || error.message.includes("plan not available")) {
+    } else if (error?.message.includes("club type not available") || error?.message.includes("plan not available")) {
       return NextResponse.json({ error: "Paket atau jenis klub tidak tersedia" }, { status: 400 });
     } else {
       return NextResponse.json({ error: "Gagal mendaftarkan klub. Coba lagi nanti." }, { status: 500 });
@@ -93,7 +109,7 @@ export async function POST(request: Request) {
   }
 
   const { data, error } = await supabase.rpc("register_organization", args);
-  const created = (data as { organization_id: string; tenant_id: string; profile_id: string }[] | null)?.[0];
+  const created = (data as Created[] | null)?.[0];
   if (error || !created) {
     if (error?.message.includes("club type not available") || error?.message.includes("plan not available")) {
       return NextResponse.json({ error: "Paket atau jenis klub tidak tersedia" }, { status: 400 });
@@ -101,6 +117,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
 
+  await recordOwnerConsent(created);
   await createSession({
     id: created.profile_id,
     email: ownerEmail,

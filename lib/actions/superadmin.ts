@@ -12,11 +12,13 @@ import {
   planEditSchema,
 } from "@/lib/validations/superadmin";
 import { getJakartaDateString } from "@/lib/format";
+import { logAudit } from "@/lib/audit";
 import { type ActionState } from "./types";
 
 export async function toggleOwnerActive(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  let superadmin: Awaited<ReturnType<typeof requireSuperadminAction>>;
   try {
-    await requireSuperadminAction();
+    superadmin = await requireSuperadminAction();
   } catch {
     return { ok: false, error: "Sesi Anda berakhir. Masuk ulang sebagai admin platform." };
   }
@@ -27,14 +29,28 @@ export async function toggleOwnerActive(_prevState: ActionState, formData: FormD
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
 
-  const { error } = await createAdminSupabaseClient()
+  const { data: owner, error } = await createAdminSupabaseClient()
     .from("org_owners")
     .update({ is_active: parsed.data.isActive === "true" })
-    .eq("id", parsed.data.ownerId);
+    .eq("id", parsed.data.ownerId)
+    .select("organization_id")
+    .maybeSingle();
   if (error) return { ok: false, error: "Gagal memperbarui status pemilik" };
+  await platformAudit(superadmin, parsed.data.isActive === "true" ? "owner.activate" : "owner.deactivate", "owner", parsed.data.ownerId, owner?.organization_id ?? null, {});
 
   revalidatePath("/superadmin");
   return { ok: true, message: parsed.data.isActive === "true" ? "Pemilik diaktifkan" : "Pemilik dinonaktifkan" };
+}
+
+async function platformAudit(
+  superadmin: { id: string; email: string },
+  action: string,
+  targetType: string,
+  targetId: string | null,
+  organizationId: string | null,
+  details: Record<string, unknown>
+) {
+  await logAudit({ action, targetType, targetId, organizationId, details, actorId: superadmin.id, actorRole: "superadmin", actorLabel: superadmin.email });
 }
 
 const SESSION_ENDED: ActionState = { ok: false, error: "Sesi Anda berakhir. Masuk ulang sebagai admin platform." };
@@ -66,6 +82,11 @@ export async function activateOrganization(_prevState: ActionState, formData: Fo
     p_period_end: parsed.data.periodEnd ?? null,
   });
   if (error) return { ok: false, error: "Gagal mengaktifkan langganan" };
+  await platformAudit(superadmin, "organization.status", "organization", parsed.data.organizationId, parsed.data.organizationId, {
+    status: "active",
+    periodStart: parsed.data.periodStart ?? null,
+    periodEnd: parsed.data.periodEnd ?? null,
+  });
 
   revalidatePath("/superadmin");
   return { ok: true, message: "Langganan diaktifkan" };
@@ -87,13 +108,17 @@ export async function setOrganizationStatus(_prevState: ActionState, formData: F
     p_actor: superadmin.email,
   });
   if (error) return { ok: false, error: "Gagal mengubah status langganan" };
+  await platformAudit(superadmin, "organization.status", "organization", parsed.data.organizationId, parsed.data.organizationId, {
+    status: parsed.data.status,
+  });
 
   revalidatePath("/superadmin");
   return { ok: true, message: "Status langganan diperbarui" };
 }
 
 export async function extendTrial(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  if (!(await superadminOrNull())) return SESSION_ENDED;
+  const superadmin = await superadminOrNull();
+  if (!superadmin) return SESSION_ENDED;
 
   const parsed = extendTrialSchema.safeParse({
     organizationId: formData.get("organizationId"),
@@ -108,13 +133,17 @@ export async function extendTrial(_prevState: ActionState, formData: FormData): 
     .eq("status", "trial")
     .select("organization_id");
   if (error || !data?.length) return { ok: false, error: "Gagal memperpanjang trial. Pastikan statusnya Trial." };
+  await platformAudit(superadmin, "organization.trial", "organization", parsed.data.organizationId, parsed.data.organizationId, {
+    trialEndsAt: parsed.data.trialEndsAt,
+  });
 
   revalidatePath("/superadmin");
   return { ok: true, message: "Masa trial diperbarui" };
 }
 
 export async function setClubLimitOverride(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  if (!(await superadminOrNull())) return SESSION_ENDED;
+  const superadmin = await superadminOrNull();
+  if (!superadmin) return SESSION_ENDED;
 
   const parsed = clubLimitOverrideSchema.safeParse({
     organizationId: formData.get("organizationId"),
@@ -127,13 +156,17 @@ export async function setClubLimitOverride(_prevState: ActionState, formData: Fo
     .update({ club_limit_override: parsed.data.clubLimitOverride ?? null })
     .eq("organization_id", parsed.data.organizationId);
   if (error) return { ok: false, error: error.code === "SW004" ? error.message : "Gagal menyimpan batas klub" };
+  await platformAudit(superadmin, "organization.club_limit", "organization", parsed.data.organizationId, parsed.data.organizationId, {
+    clubLimitOverride: parsed.data.clubLimitOverride ?? null,
+  });
 
   revalidatePath("/superadmin");
   return { ok: true, message: "Batas klub diperbarui" };
 }
 
 export async function updatePlan(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  if (!(await superadminOrNull())) return SESSION_ENDED;
+  const superadmin = await superadminOrNull();
+  if (!superadmin) return SESSION_ENDED;
 
   const parsed = planEditSchema.safeParse({
     code: formData.get("code"),
@@ -156,6 +189,14 @@ export async function updatePlan(_prevState: ActionState, formData: FormData): P
     })
     .eq("code", parsed.data.code);
   if (error) return { ok: false, error: "Gagal menyimpan paket" };
+  await platformAudit(superadmin, "plan.update", "plan", null, null, {
+    code: parsed.data.code,
+    pricePerUserMonth: parsed.data.pricePerUserMonth,
+    clubLimit: parsed.data.clubLimit ?? null,
+    trialDays: parsed.data.trialDays,
+    yearlyFreeMonths: parsed.data.yearlyFreeMonths,
+    isActive: parsed.data.isActive === "true",
+  });
 
   revalidatePath("/superadmin");
   revalidatePath("/");

@@ -57,6 +57,7 @@ const adminGroups = (resourceLabel: string): AdminNavGroup[] => [
     items: [
       { href: "/admin/promo", label: "Promo", icon: "promo", module: "promo" },
       { href: "/admin/reports", label: "Laporan", icon: "reports" },
+      { href: "/admin/audit", label: "Log Audit", icon: "audit" },
       { href: "/admin/settings", label: "Pengaturan", icon: "settings" },
     ],
   },

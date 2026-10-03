@@ -1,5 +1,6 @@
 "use server";
 
+import { logAudit } from "@/lib/audit";
 import { z } from "zod";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -53,5 +54,14 @@ export async function resetUserPassword(
     .eq("id", profile.id);
   if (profileError) return { ok: false, error: "Gagal mengatur ulang kata sandi" };
 
+  await logAudit({
+    action: "password.reset",
+    targetType: "profile",
+    targetId: profile.id,
+    details: { role: profile.role },
+    tenantId: session.tenant_id,
+    actorId: session.sub,
+    actorRole: session.app_role,
+  });
   return { ok: true, message: "Kata sandi sementara baru dibuat", tempPassword };
 }

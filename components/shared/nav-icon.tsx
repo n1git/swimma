@@ -24,6 +24,7 @@ import {
   Users,
   Wallet,
   ArrowLeftRight,
+  ScrollText,
 } from "lucide-react";
 import type { NavIconKey } from "./nav-types";
 
@@ -47,6 +48,7 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   promo: Percent,
   reports: ChartColumn,
   settings: Settings,
+  audit: ScrollText,
   club: Building2,
   orgBilling: CreditCard,
   home: House,

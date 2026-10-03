@@ -7,6 +7,7 @@ import { MemberEditForm } from "@/components/members/member-edit-form";
 import { MemberPortalAccess } from "@/components/members/member-portal-access";
 import { isModuleReady } from "@/lib/modules";
 import { MemberVisits } from "@/components/checkin/member-visits";
+import { MemberPrivacy } from "@/components/members/member-privacy";
 
 export default async function MemberDetailPage({
   params,
@@ -44,6 +45,7 @@ export default async function MemberDetailPage({
       />
       {portalReady && member.is_active ? <MemberPortalAccess memberId={member.id} hasAccount={Boolean(member.profile_id)} /> : null}
       {checkinOn ? <MemberVisits memberId={member.id} /> : null}
+      {session?.app_role === "admin" ? <MemberPrivacy memberId={member.id} /> : null}
     </div>
   );
 }

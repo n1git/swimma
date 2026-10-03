@@ -72,6 +72,7 @@ export async function deleteClass(_prevState: ActionState, formData: FormData): 
   const classId = String(formData.get("classId"));
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.from("classes").delete().eq("id", classId).select("id");
+  if (error?.code === "CL001") return { ok: false, error: error.message };
   if (error || !data?.length) return { ok: false, error: "Gagal menghapus kelas" };
   revalidatePath("/admin/schedule");
   redirect("/admin/schedule");

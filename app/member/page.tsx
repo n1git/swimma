@@ -1,3 +1,4 @@
+import { buttonVariants } from "@/components/ui/button";
 import { requireMemberClub } from "@/lib/auth/guard";
 import { getMemberOverview } from "@/lib/data/member-portal";
 import { formatJakartaDate, formatJakartaDateTime, formatJakartaTime } from "@/lib/format";
@@ -161,6 +162,14 @@ export default async function MemberHomePage() {
           </div>
         </section>
       ) : null}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-lg font-semibold">Data Anda</h2>
+        <p className="text-sm text-muted-foreground">Unduh salinan data Anda di klub ini dalam format JSON.</p>
+        <a href="/api/member/export" download className={buttonVariants({ variant: "outline", className: "min-h-11 w-fit" })}>
+          Unduh data saya
+        </a>
+      </section>
     </div>
   );
 }

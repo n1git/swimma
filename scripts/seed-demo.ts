@@ -193,6 +193,9 @@ begin
   end if;
   v_tenants := coalesce(v_tenants, '{}');
   perform set_config('swimma.purge', 'on', true);
+  delete from audit_log where tenant_id = any(v_tenants) or organization_id = any(v_orgs);
+  delete from consents where tenant_id = any(v_tenants) or organization_id = any(v_orgs);
+  delete from email_verifications where organization_id = any(v_orgs);
   update payroll_runs set cash_ledger_entry_id = null where tenant_id = any(v_tenants);
   delete from order_payments where tenant_id = any(v_tenants);
   delete from order_items where tenant_id = any(v_tenants);

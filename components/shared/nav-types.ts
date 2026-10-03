@@ -18,6 +18,7 @@ export type NavIconKey =
   | "promo"
   | "reports"
   | "settings"
+  | "audit"
   | "club"
   | "orgBilling"
   | "home"

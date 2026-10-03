@@ -18,6 +18,7 @@ export const registerClubSchema = z.object({
   planCode: z.enum(PLAN_CODES as [PlanCode, ...PlanCode[]], { message: "Pilih paket" }),
   billingPeriod: z.enum(BILLING_PERIODS as [BillingPeriod, ...BillingPeriod[]], { message: "Pilih periode" }),
   estimatedUsers: z.coerce.number().int("Jumlah pengguna tidak valid").min(1, "Minimal 1 pengguna").max(1000, "Jumlah pengguna terlalu besar"),
+  acceptTerms: z.literal(true, { message: "Setujui Syarat & Ketentuan dan Kebijakan Privasi untuk mendaftar" }),
 });
 
 export const createTenantSchema = z.object({ tenantName: tenantNameSchema, clubType: clubTypeSchema });

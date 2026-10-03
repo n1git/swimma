@@ -1,5 +1,6 @@
 "use server";
 
+import { logAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireActionRole } from "@/lib/auth/guard";
@@ -59,6 +60,15 @@ export async function activateMemberAccount(_prevState: ActionState, formData: F
   }
 
   const created = (data as { out_created: boolean }[] | null)?.[0]?.out_created;
+  await logAudit({
+    action: "member_account.activate",
+    targetType: "member",
+    targetId: member.id,
+    details: { created: Boolean(created) },
+    tenantId: session.tenant_id,
+    actorId: session.sub,
+    actorRole: session.app_role,
+  });
   revalidateMember(member.id);
   return created
     ? { ok: true, message: "Akun anggota dibuat", tempPassword }
@@ -109,6 +119,14 @@ export async function resetMemberPassword(_prevState: ActionState, formData: For
     .update({ sessions_valid_after: new Date().toISOString() })
     .eq("member_account_id", own.member_account_id);
 
+  await logAudit({
+    action: "password.reset",
+    targetType: "member",
+    targetId: member.id,
+    tenantId: session.tenant_id,
+    actorId: session.sub,
+    actorRole: session.app_role,
+  });
   revalidateMember(member.id);
   return { ok: true, message: "Kata sandi sementara baru dibuat", tempPassword };
 }

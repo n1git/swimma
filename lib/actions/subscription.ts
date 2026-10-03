@@ -7,6 +7,7 @@ import { requireOwnerAction } from "@/lib/auth/owner";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { BILLING_PERIODS, PLAN_CODES } from "@/lib/pricing";
 import { internalUserCostChange, type InternalUserCostChange } from "@/lib/data/platform-pricing";
+import { logAudit } from "@/lib/audit";
 import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 const changePlanSchema = z.object({
@@ -39,6 +40,16 @@ export async function changePlan(_prevState: ActionState, formData: FormData): P
     return { ok: false, error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal mengubah paket" };
   }
 
+  await logAudit({
+    action: "subscription.plan_change",
+    targetType: "organization",
+    targetId: owner.organizationId,
+    details: { plan: parsed.data.planCode, period: parsed.data.billingPeriod },
+    tenantId: owner.tenantId,
+    organizationId: owner.organizationId,
+    actorId: owner.profileId,
+    actorRole: "admin",
+  });
   revalidatePath("/admin/klub/langganan");
   revalidatePath("/admin/klub");
   return { ok: true, message: "Paket diperbarui. Penagihan dan aktivasi dilakukan oleh admin platform." };

@@ -65,6 +65,7 @@ export function RegisterClubForm({
         estimatedUsers: users,
         clubType: formData.get("clubType") || undefined,
         captchaToken: captchaToken || undefined,
+        acceptTerms: formData.get("acceptTerms") === "on",
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -198,6 +199,20 @@ export function RegisterClubForm({
               Minimal 10 karakter, berisi huruf dan angka, dan bukan kata sandi umum.
             </p>
           </div>
+          <label className="flex items-start gap-3 text-sm">
+            <input type="checkbox" name="acceptTerms" required className="mt-0.5 size-5 shrink-0 accent-primary" />
+            <span>
+              Saya menyetujui{" "}
+              <a href="/syarat" target="_blank" className="font-medium text-primary underline-offset-4 hover:underline">
+                Syarat & Ketentuan
+              </a>{" "}
+              dan{" "}
+              <a href="/privasi" target="_blank" className="font-medium text-primary underline-offset-4 hover:underline">
+                Kebijakan Privasi
+              </a>
+              .
+            </span>
+          </label>
           {captchaSiteKey ? <TurnstileWidget siteKey={captchaSiteKey} nonce={nonce} onToken={onCaptcha} /> : null}
           <Button type="submit" disabled={loading || Boolean(captchaSiteKey && !captchaToken)}>
             {loading ? "Mendaftarkan..." : "Daftarkan klub"}

@@ -7,7 +7,7 @@
 - [x] Phase 2: money and billing (migration 026; hosted pending)
 - [x] Phase 3: performance and pagination (migration 027; hosted pending)
 - [x] Phase 4: public auth (migration 028; hosted pending)
-- [ ] Phase 5: uploads, audit log, privacy
+- [x] Phase 5: uploads, audit log, privacy (migration 029; hosted pending)
 - [ ] Phase 6: UI, validation, finish
 
 Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN` or `DATABASE_URL` in the environment; hosted is at migration 011). Started with the user's go-ahead although the hosted part of `fix-hosted` is still open.
@@ -69,3 +69,10 @@ Hosted: pending for every phase that adds migrations (no `SUPABASE_ACCESS_TOKEN`
 - Registration with email configured keeps the organization unverified until the emailed single-use link (24 hours, stored hashed) is opened; no session before that; re-registering an unverified email replaces the pending registration. Captcha via Turnstile when configured. Both steps are skipped with a startup warning when unset.
 - Pages send a nonce-based Content-Security-Policy with `default-src 'self'`; enforced (no violations on the local page sweep).
 - Local checks in `audit/appsec/p4_*` passed, including a run with email and captcha configured (Cloudflare test keys). Hosted pending.
+
+## Phase 5 done
+
+- Promo images: 2 MB, PNG/JPEG/WebP, checked by size and file signature on the server with the extension taken from the detected type; bucket limits set where the storage schema supports them; the image is removed with its promo; `npm run promo:remove-orphans` lists or removes unreferenced files. Classes with recorded attendance cannot be deleted. Logo URLs must use https.
+- Append-only audit log written by database triggers and server functions (password resets and changes, staff role and status, member status and anonymisation, account activation, invoice payment and void, order void, plan and subscription changes, platform admin actions); `/admin/audit` for club admins with an organization view for owners.
+- Consent records with policy version at registration and member creation (guardian name for members under 18), described on the privacy draft; member anonymisation (admin, reason, typed confirmation) keeps financial and attendance rows; JSON export for admins per member and for members themselves; `docs/RESTORE.md` (not yet rehearsed).
+- Local checks in `audit/fix/audit.sql` and `audit/appsec/f5_*` passed. Upload to real storage and object removal not verifiable locally (no storage service). Hosted pending.

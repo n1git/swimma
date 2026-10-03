@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/config";
 import { getContact } from "@/lib/site";
 import { LegalPage } from "@/components/landing/legal-page";
+import { PRIVACY_VERSION } from "@/lib/privacy";
 
 export const metadata: Metadata = {
   title: "Kebijakan Privasi (Draf)",
@@ -31,7 +32,9 @@ export default function PrivacyPage() {
         <li>Kegiatan klub: jadwal kelas, booking kelas dan fasilitas, kehadiran beserta catatan pelatih, langganan, tagihan, pesanan kasir, pembayaran yang dicatat manual, buku kas, dan gaji pelatih.</li>
         <li>Check-in: anggota, titik check-in, waktu, paket, dan cara check-in. Alamat IP dan data perangkat tidak disimpan untuk check-in.</li>
         <li>Booking tamu: nama dan nomor telepon tamu bila diisi. Pesanan kasir tanpa anggota: nama pelanggan bila diisi.</li>
-        <li>Gambar promo yang diunggah klub.</li>
+        <li>Gambar promo yang diunggah klub (PNG, JPEG, atau WebP, maksimal 2 MB).</li>
+        <li>Catatan persetujuan: siapa yang setuju, versi kebijakan, waktu, dan staf yang mencatat.</li>
+        <li>Log audit: tindakan penting (misalnya atur ulang kata sandi, perubahan status, pembatalan) beserta pelaku dan waktunya, tanpa kata sandi.</li>
         <li>Pembatasan percobaan login dan pendaftaran: alamat IP disimpan sementara sebagai kunci penghitung dan dibersihkan secara berkala.</li>
       </ul>
 
@@ -55,12 +58,24 @@ export default function PrivacyPage() {
         membaca data klub yang sedang aktif dalam sesinya, sesuai perannya.
       </p>
 
-      <h2>Penyimpanan dan penghapusan</h2>
+      <h2>Persetujuan</h2>
       <p>
-        Saat langganan dihentikan, akses klub dimatikan tetapi data tidak dihapus otomatis. Permintaan akses, perbaikan,
-        atau penghapusan data diajukan melalui klub Anda atau melalui kontak {APP_NAME}
-        {contact.email ? ` di ${contact.email}` : ""}.
+        Versi kebijakan ini: <strong>{PRIVACY_VERSION}</strong>. Pemilik menyetujuinya saat mendaftarkan klub. Saat
+        menambah anggota, staf mencatat bahwa anggota atau walinya menyetujui pencatatan data; untuk anggota di bawah 18
+        tahun staf juga mencatat persetujuan dan nama orang tua atau wali. Setiap persetujuan disimpan dengan versi dan
+        waktunya.
       </p>
+
+      <h2>Akses, ekspor, dan penghapusan</h2>
+      <ul>
+        <li>Anggota yang punya akun dapat mengunduh salinan datanya sendiri (JSON) dari portal anggota.</li>
+        <li>Admin klub dapat mengunduh data seorang anggota (JSON) dan menganonimkan anggota atas permintaan: nama, kontak, alamat, catatan, dan akun login dihapus, sedangkan catatan keuangan dan kehadiran tetap ada tanpa identitas.</li>
+        <li>
+          Saat langganan dihentikan, akses klub dimatikan tetapi data tidak dihapus otomatis. Permintaan lain diajukan
+          melalui klub Anda atau melalui kontak {APP_NAME}
+          {contact.email ? ` di ${contact.email}` : ""}.
+        </li>
+      </ul>
     </LegalPage>
   );
 }

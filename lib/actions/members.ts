@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireActionRole } from "@/lib/auth/guard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { memberSchema } from "@/lib/validations/members";
+import { isMinor, PRIVACY_VERSION } from "@/lib/privacy";
 import { PLAN_LIMIT_CODES, type ActionState } from "./types";
 
 export interface DuplicateMemberMatch {
@@ -56,21 +57,39 @@ function memberColumns(input: NonNullable<ReturnType<typeof parseMember>["data"]
 }
 
 export async function createMember(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  await requireActionRole(["admin", "receptionist"]);
+  const session = await requireActionRole(["admin", "receptionist"]);
 
   const parsed = parseMember(formData);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
+  if (formData.get("consentMemberData") !== "on") {
+    return { ok: false, error: "Centang persetujuan pencatatan data anggota" };
+  }
+  const minor = isMinor(parsed.data.dateOfBirth);
+  const guardianName = String(formData.get("guardianName") ?? "").trim();
+  if (minor && (formData.get("consentGuardian") !== "on" || guardianName.length < 2 || guardianName.length > 200)) {
+    return { ok: false, error: "Anggota di bawah 18 tahun: isi nama orang tua/wali dan centang persetujuannya" };
+  }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("members").insert(memberColumns(parsed.data));
+  const { data: created, error } = await supabase.from("members").insert(memberColumns(parsed.data)).select("id").single();
 
-  if (error) {
+  if (error || !created) {
     return {
       ok: false,
-      error: PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menyimpan data anggota",
+      error: error && PLAN_LIMIT_CODES.has(error.code) ? error.message : "Gagal menyimpan data anggota",
     };
+  }
+
+  const consent = { tenant_id: session.tenant_id, subject_type: "member", subject_id: created.id, version: PRIVACY_VERSION };
+  const consents = [
+    { ...consent, kind: "member_data", guardian_name: null },
+    ...(minor ? [{ ...consent, kind: "guardian", guardian_name: guardianName }] : []),
+  ];
+  const { error: consentError } = await supabase.from("consents").insert(consents);
+  if (consentError) {
+    return { ok: false, error: "Anggota tersimpan, tetapi persetujuan gagal dicatat. Hubungi admin." };
   }
 
   revalidatePath("/admin/members");
